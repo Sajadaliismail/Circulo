@@ -19,7 +19,7 @@ function App() {
         <Route path="/login" element={<LandingPage children={<SignInSide />}  />} />
         <Route path="/signup" element={<LandingPage children={<SignUp/>}  />} />
         <Route path="/resetpassword" element={<LandingPage children={<ResetPassword/>}  />} />
-        <Route path="/verify" element={<LandingPage children={<VerifyOtp/>}  />} />
+        <Route path="/verify"  element={<LandingPage children={<VerifyOtp/>}  />} />
         {/* Other routes */}
       </Routes>
     </Router>
