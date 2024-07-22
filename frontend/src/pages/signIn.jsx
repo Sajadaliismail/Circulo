@@ -12,35 +12,45 @@ import {
   Grid,
   Typography
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import {useNavigate} from 'react-router-dom'
 
 import { object, string } from 'yup';
-import Copyright from './copyright';
 import { Logo } from './logoComponent';
+import Copyright from './copyright';
+import { useDispatch } from 'react-redux';
+import { signin } from '../feautures/auth/authAsyncThunks';
 
 const validationSchema = object({
   email: string().email('Invalid email').required('Email is required'),
-  password: string().required('Password is required').min(6, 'Password must be at least 6 characters'),
+  password: string().required('Password is required'),
 });
 
 
-const defaultTheme = createTheme();
 
 export default function SignInSide() {
+  const [formData,setFormData] = useState({email:'',password:''})
+  const [errors, setErrors] = useState({});
+  
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  
+  const handleInput =(event)=>{
+    event.preventDefault()
+     const { name, value } = event.target;
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: value,
+    }));
+  }
   const handleSubmit = (event) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    validationSchema.validate({
-        email: data.get('email'),
-        password: data.get('password'),
-      }, { abortEarly: false })
+    validationSchema.validate(formData, { abortEarly: false })
       .then(() => {
-        // Handle form submission
-        console.log('Form data is valid:', data);
         setErrors({})
+        dispatch(signin(formData))
+        console.log('ent');
+
       })
       .catch((err) => {
         const newErrors = {};
@@ -50,14 +60,9 @@ export default function SignInSide() {
         setErrors(newErrors);
         console.log(newErrors);
       });
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    
   };
 
-  const navigate = useNavigate()
-  const [errors, setErrors] = useState({});
 
   
 
@@ -87,8 +92,10 @@ export default function SignInSide() {
                 name="email"
                 autoComplete="email"
                 autoFocus
+                value={formData.email}
                 error={!!errors.email}
-        helperText={errors.email}
+                helperText={errors.email}
+                onChange={handleInput}
               />
               <TextField
                 margin="normal"
@@ -99,8 +106,10 @@ export default function SignInSide() {
                 type="password"
                 id="password"
                 autoComplete="current-password"
+                value={formData.password}
                 error={!!errors.password}
                 helperText={errors.password}
+                onChange={handleInput}
               />
               <FormControlLabel
                 control={<Checkbox value="remember" color="primary" />}

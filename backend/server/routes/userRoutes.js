@@ -4,5 +4,8 @@ const authController = require('../controllers/userControllers/authController')
 const route = express.Router()
 
 route.post('/signup',validateForm,authController.signup)
+route.post('/sendotp',authController.sendOtpEmail)
+route.post('/verifyotp',authController.verifyOtp)
+route.post('/signin',authController.signin)
 
-module.exports = route
+module.exports = route 

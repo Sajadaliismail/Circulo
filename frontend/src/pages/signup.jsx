@@ -22,10 +22,12 @@ import { signup } from '../feautures/auth/authAsyncThunks';
 import {  useSnackbar } from 'notistack';
 import { Logo } from './logoComponent';
 import { setError } from '../feautures/auth/authSlice';
+import VerifyOtp from './verifyOTp';
 
 function SignUp() {
   const [errors, setErrors] = useState(errorState);
   const [formData,setFormData] = useState(formValues)
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
   const {error} = useSelector((state)=>state.auth)
    const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate()
@@ -43,11 +45,11 @@ function SignUp() {
         const resultAction = await dispatch(signup(formData));
 
       if (signup.fulfilled.match(resultAction)) {
-        navigate('/verify');
+        enqueueSnackbar('Signup succesful, OTP send to your Email',{variant:'success'})
+      setShowOTPVerification(true);
       } else{
         dispatch(setError({err:'Some unexpected error occured'}))
       }
-      
     } catch (error) {
         dispatch(setError({err:'Some unexpected error occured'}))
     }
@@ -111,6 +113,9 @@ function SignUp() {
 
   return (
     <>
+     {showOTPVerification ? (
+        <VerifyOtp />
+      ) : (
           <Box
             sx={signupStyle.grid}>
           <Logo/>
@@ -154,6 +159,7 @@ function SignUp() {
               <Copyright/>  
             </Box>
           </Box>
+      )}
     
     </>
  
