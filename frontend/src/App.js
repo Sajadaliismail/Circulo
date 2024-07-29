@@ -1,30 +1,60 @@
-import './App.css';
-import Homepage from './pages/homePage';
-// import  Button from '@mui/material/Button';
-import SignInSide from './pages/signIn';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import SignUp from './pages/signup';
-import LandingPage from './pages/landingPage';
-import ResetPassword from './pages/resetPassword';
-import { SnackbarProvider } from 'notistack';
-import VerifyOtp from './pages/verifyOTp';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { SnackbarProvider } from "notistack";
+import Homepage from "./pages/homePage";
+import LandingPage from "./pages/landingPage";
+import SignInSide from "./components/AuthPageComponents/signIn";
+import SignUp from "./components/AuthPageComponents/signup";
+import ResetPassword from "./components/CommonComponents/resetPassword";
+import { AuthRoutes, ProtectedRoute } from "./ProtectedRoutes";
 
 function App() {
   return (
-    <>
     <SnackbarProvider maxSnack={5}>
-    <Router>
-      <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/login" element={<LandingPage children={<SignInSide />}  />} />
-        <Route path="/signup" element={<LandingPage children={<SignUp/>}  />} />
-        <Route path="/resetpassword" element={<LandingPage children={<ResetPassword/>}  />} />
-        <Route path="/verify" element={<LandingPage children={<VerifyOtp/>}  />} />
-        {/* Other routes */}
-      </Routes>
-    </Router>
+      <Router>
+        <Routes>
+          <Route
+            path="/signup"
+            element={
+              <AuthRoutes
+                element={
+                  <LandingPage>
+                    <SignUp />
+                  </LandingPage>
+                }
+              />
+            }
+          />
+          <Route
+            path="/resetpassword"
+            element={
+              <AuthRoutes
+                element={
+                  <LandingPage>
+                    <ResetPassword />
+                  </LandingPage>
+                }
+              />
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <AuthRoutes
+                element={
+                  <LandingPage>
+                    <SignInSide />
+                  </LandingPage>
+                }
+              />
+            }
+          />
+          <Route path="/verify" element={<ProtectedRoute />} />
+          <Route path="/" element={<ProtectedRoute element={<Homepage />} />} />
+          <Route path="/setup" element={<ProtectedRoute />} />
+        </Routes>
+      </Router>
     </SnackbarProvider>
-    </>
   );
 }
 

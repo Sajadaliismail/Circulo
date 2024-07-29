@@ -1,12 +1,22 @@
-import { createTheme, CssBaseline, Grid, Paper, Typography } from "@mui/material";
+import { Backdrop, CircularProgress, createTheme, CssBaseline, Grid, LinearProgress, Paper, Typography } from "@mui/material";
 import { ThemeProvider } from "@emotion/react";
 import { landingPageStyles } from "./Style";
+import { useSelector } from "react-redux";
 
 const theme = createTheme();
 
 function LandingPage(props) {
+  const {status} = useSelector((state)=>state.auth)
   return (
     <ThemeProvider theme={theme}>
+{status === 'loading' && (
+  <Backdrop
+    sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 10 }}
+    open={true}
+  >
+    <CircularProgress color="inherit" variant="indeterminate" />
+  </Backdrop>
+)}
       <Grid container component="main" sx={landingPageStyles.gridContainer}>
         <CssBaseline />
         <Grid item sm={4} md={8} sx={landingPageStyles.backgroundGrid}>
