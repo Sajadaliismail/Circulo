@@ -13,6 +13,7 @@ const corsOption = {
   optionsSuccessStatus: 200,
   credentials: true,
 };
+
 app.use(cors(corsOption));
 
 app.use("/", route);
