@@ -120,27 +120,26 @@ export const updatePassword = createAsyncThunk(
   }
 );
 
-
 export const addressSetup = createAsyncThunk(
-    'auth/addressSetup',
-    async (formData,{rejectWithValue,dispatch})=>{
-        try {
-            const token = localStorage.getItem('jwt');
-            const response = await fetch(`${BACKEND}/updateaddress`,{
-                method:'POST',
-                headers:{
-                    'Content-Type':'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body:JSON.stringify(formData)
-            })
-            const data = await response.json()
-            if(!response.ok){
-                return rejectWithValue({message:data.error})
-            }
-            return data.success
-        } catch (error) {
-            return rejectWithValue({message:'Error updating address'})
-        }
+  "auth/addressSetup",
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const response = await fetch(`${BACKEND}/updateaddress`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return rejectWithValue({ message: data.error });
+      }
+      return data.success;
+    } catch (error) {
+      return rejectWithValue({ message: "Error updating address" });
     }
-)
+  }
+);

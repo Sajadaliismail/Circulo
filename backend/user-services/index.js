@@ -1,23 +1,30 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const connectDb = require("./server/dbConnection/mongodbConnection");
-const route = require("./server/routes/userRoutes");
+
+const connectDb = require("./Server/DBConnection/mongodbConnection");
+const route = require("./Server/Routes/userRoutes");
+const { subscribeMessage } = require("./Server/Services/rabbitmq");
+const { updatePost } = require("./Server/Repositories/userRepository");
+
+const PORT = process.env.PORT;
+const CORS_ORIGIN = process.env.CORS_ORIGIN;
+
 const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 const corsOption = {
-  origin: "http://localhost:3000",
+  origin: CORS_ORIGIN,
   optionsSuccessStatus: 200,
   credentials: true,
 };
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOption));
 
+subscribeMessage("post_created", updatePost);
 app.use("/", route);
+
 connectDb();
-app.listen(3002, () => {
-  console.log("Server is connected");
+app.listen(PORT, () => {
+  console.log(`User services listening on PORT ${PORT}!`);
 });

@@ -10,6 +10,7 @@ const AddressForm = ({ errors, setErrors, location, setLocation }) => {
 
     try {
       const results = await geocodeByPlaceId(placeId);
+      console.log(results);
       const addressComponents = results[0].address_components;
 
       let city = "";

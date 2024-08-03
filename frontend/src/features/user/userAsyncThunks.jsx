@@ -12,7 +12,6 @@ export const fetchUser = createAsyncThunk("user/fetchUser", async () => {
       },
     });
     const data = await response.json();
-    console.log(data, token);
 
     return data;
   } catch (error) {
@@ -40,48 +39,3 @@ export const uploadImage = createAsyncThunk(
     } catch (error) {}
   }
 );
-
-export const addPost = createAsyncThunk(
-  "user/addPost",
-  async ({ imgData, post }, { dispatch }) => {
-    console.log(imgData, post);
-    try {
-      const formData = new FormData();
-      formData.append("image", imgData);
-      formData.append("post", post);
-      const token = localStorage.getItem("jwt");
-      const response = await fetch(`${BACKEND}/addpost`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      console.log(response);
-      const data = await response.json();
-      console.log(data);
-      dispatch(fetchPosts());
-      return true;
-    } catch (error) {
-      console.log(error);
-      return;
-    }
-  }
-);
-
-export const fetchPosts = createAsyncThunk("user/fetchPosts", async () => {
-  try {
-    const token = localStorage.getItem("jwt");
-    const response = await fetch(`${BACKEND}/fetchposts`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await response.json();
-    console.log(data);
-    // return data.userData
-    return data;
-  } catch (error) {}
-});

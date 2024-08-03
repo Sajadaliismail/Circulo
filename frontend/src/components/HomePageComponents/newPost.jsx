@@ -6,7 +6,7 @@ import Avatar from "@mui/material/Avatar";
 import { Button, Chip, Paper, TextareaAutosize } from "@mui/material";
 import { ImageTwoTone } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
-import { addPost } from "../../features/user/userAsyncThunks";
+import { addPost } from "../../features/posts/postsAsyncThunks";
 import { useSnackbar } from "notistack";
 
 function NewPost() {
@@ -14,9 +14,8 @@ function NewPost() {
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [postContent, setPostContent] = useState("");
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -27,19 +26,20 @@ function NewPost() {
     }
   };
 
-  const handleSubmit = async(e)=>{
-    if(postContent.trim()==='' && !image ) {
-        enqueueSnackbar('Your post seems to be empty',{variant:'error'})
-        return 
+  const handleSubmit = async (e) => {
+    if (postContent.trim() === "" && !image) {
+      enqueueSnackbar("Your post seems to be empty", { variant: "error" });
+      return;
     }
     e.preventDefault();
-   const result =await  dispatch(addPost({imgData:image,post:postContent}))
-   console.log(result);
-   if(addPost.fulfilled.match(result)){
-    setImagePreview(null)
-    setPostContent('')
-   }
-  }
+    const result = await dispatch(
+      addPost({ imgData: image, post: postContent })
+    );
+    if (addPost.fulfilled.match(result)) {
+      setImagePreview(null);
+      setPostContent("");
+    }
+  };
 
   const handleAttachImageClick = () => {
     document.getElementById("image-upload").click();
@@ -96,8 +96,29 @@ function NewPost() {
               }}
             />
           </Box>
-          <Box>
-            {imagePreview && <img src={imagePreview} alt="Preview" />}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center", // Center the image horizontally
+              alignItems: "center", // Center the image vertically
+              overflow: "hidden", // Hide any overflow
+              width: "100%", // Adjust as needed
+              height: "auto", // Adjust as needed
+              // maxWidth: "400px", // Adjust as needed
+              // maxHeight: "400px", // Adjust as needed
+            }}
+          >
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Preview"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain", // Ensures the image fits within the container without distortion
+                }}
+              />
+            )}
           </Box>
           <Box
             sx={{

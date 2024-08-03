@@ -59,7 +59,6 @@ const SetupPage = () => {
         setErrors(validationErrors);
         return;
       } else {
-        dispatch(addressSetup(location));
       }
     }
     setErrors({});
@@ -68,6 +67,8 @@ const SetupPage = () => {
 
   const handleFinish = (e) => {
     e.preventDefault();
+    dispatch(addressSetup(location));
+
     //  navigate('/')
   };
 
