@@ -1,13 +1,13 @@
-import React, { lazy, useEffect, useMemo, useState, Suspense } from 'react';
+import React, { lazy, useEffect, useMemo, useState, Suspense } from "react";
 
-import { sampleData } from './sample';
-import OnlinePeopleAccordion from './online';
-import ChatBoxHeader from './chatboxheade';
+import { sampleData } from "./sample";
+import OnlinePeopleAccordion from "./online";
+import ChatBoxHeader from "./chatboxheade";
 
-const ChatBox = lazy(() => import('./chatboxinterface'));
-const AvatarWithUsername = lazy(() => import('./withusername'));
+const ChatBox = lazy(() => import("./chatboxinterface"));
+const AvatarWithUsername = lazy(() => import("./withusername"));
 
-function ChatAPp() {
+function ChatApp() {
   const [conversations, setConversations] = useState([]);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ function ChatAPp() {
     const newConversations = [...conversations].map((conversation) => {
       if (conversation.converSationId === conversationId) {
         conversation.messages.push({
-          messageId: '999',
+          messageId: "999",
           message,
         });
       }
@@ -87,8 +87,11 @@ function ChatAPp() {
 
   return (
     <div className="fixed bottom-0 right-80">
-      <div className=" gap-3" style={{ height: 'max-content' ,display:'flex',alignItems:'end'}}>
-        {conversationsOpened && 
+      <div
+        className=" gap-3"
+        style={{ height: "max-content", display: "flex", alignItems: "end" }}
+      >
+        {conversationsOpened &&
           conversationsOpened.map((conversation) =>
             !conversation.minimized ? (
               <ChatBox
@@ -123,4 +126,4 @@ function ChatAPp() {
   );
 }
 
-export default ChatAPp;
+export default ChatApp;

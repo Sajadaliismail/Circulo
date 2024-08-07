@@ -7,6 +7,7 @@ import SignInSide from "./components/AuthPageComponents/signIn";
 import SignUp from "./components/AuthPageComponents/signup";
 import ResetPassword from "./components/CommonComponents/resetPassword";
 import { AuthRoutes, ProtectedRoute } from "./ProtectedRoutes";
+import ChatPage from "./pages/chatPage";
 
 function App() {
   return (
@@ -51,6 +52,10 @@ function App() {
           />
           <Route path="/verify" element={<ProtectedRoute />} />
           <Route path="/" element={<ProtectedRoute element={<Homepage />} />} />
+          <Route
+            path="/chats"
+            element={<ProtectedRoute element={<ChatPage />} />}
+          />
           <Route path="/setup" element={<ProtectedRoute />} />
         </Routes>
       </Router>

@@ -21,14 +21,10 @@ const friendsSlice = createSlice({
         state.suggestions = action.payload.suggestions;
       })
       .addCase(getRequests.fulfilled, (state, action) => {
-        console.log(action.payload);
-
         state.requestsPending = action.payload.requests;
       })
       .addCase(getFriends.fulfilled, (state, action) => {
-        console.log(action.payload);
-
-        state.friends = action.payload.requests;
+        state.friends = action.payload.friends;
       });
   },
 });

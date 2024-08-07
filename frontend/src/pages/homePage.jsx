@@ -10,7 +10,7 @@ import NewPost from "../components/HomePageComponents/newPost";
 import Posts from "../components/HomePageComponents/posts";
 import { createTheme } from "@mui/material/styles";
 import ChatInterface from "../components/chats";
-import ChatAPp from "../components/chatbox/chatbox";
+import ChatApp from "../components/chatbox/chatbox";
 import OnlinePeopleAccordion from "../components/chatbox/online";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUser } from "../features/user/userAsyncThunks";
@@ -78,9 +78,9 @@ export default function Homepage() {
                 <Grid xs={0} md={3}>
                   <Suggestions />
                 </Grid>
+                {/* <ChatApp /> */}
               </Grid>
             </Box>
-            <ChatAPp />
           </>
         )}
       </ThemeProvider>

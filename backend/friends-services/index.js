@@ -9,7 +9,7 @@ const {
   updateProfilePicture,
 } = require("./Server/Services/services");
 
-const PORT = process.env.PORT || 3006;
+const PORT = process.env.PORT;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
 const app = express();
 

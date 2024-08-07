@@ -49,6 +49,7 @@ const store = configureStore({
 
 // Create the persistor
 const persistor = persistStore(store);
+// persistor.purge();
 
 // Export the store and persistor
 export { store, persistor };

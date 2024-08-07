@@ -71,7 +71,7 @@ const getFriends = async (req, res) => {
   try {
     const result = await getFriendsService(userId);
 
-    res.status(200).json({ requests: result });
+    res.status(200).json({ friends: result });
   } catch (error) {
     res.status(500).send("Server error");
   }

@@ -69,7 +69,7 @@ function Suggestions() {
         >
           <Typography variant="h6">Suggestions</Typography>
 
-          {suggestions.length === 0 ? (
+          {suggestions && suggestions.length === 0 ? (
             <Typography variant="body2">No suggestions available.</Typography>
           ) : (
             suggestions.map((people) => (

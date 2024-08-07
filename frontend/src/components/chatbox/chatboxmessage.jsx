@@ -1,7 +1,13 @@
-import { useState } from 'react';
-import MoreVert from '@mui/icons-material/MoreVert';
-import { ClickAwayListener, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-import AvatarWithUsername from './withusername';
+import { useState } from "react";
+import MoreVert from "@mui/icons-material/MoreVert";
+import {
+  ClickAwayListener,
+  IconButton,
+  Menu,
+  MenuItem,
+  Typography,
+} from "@mui/material";
+import AvatarWithUsername from "./withusername";
 
 const ChatBoxMessage = ({
   messageId,
@@ -41,11 +47,17 @@ const ChatBoxMessage = ({
 
   if (author) {
     return (
-      <div className="flex my-2" >
-        <AvatarWithUsername username={author || ''} src={avatar} hiddenName={true} />
+      <div className="flex my-2">
+        <AvatarWithUsername
+          username={author || ""}
+          src={avatar}
+          hiddenName={true}
+        />
         <div className="grid">
           <Typography variant="caption">{author}</Typography>
-          <div className={'w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl'}>{message}</div>
+          <div className={"w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl"}>
+            {message}
+          </div>
         </div>
       </div>
     );
@@ -73,31 +85,31 @@ const ChatBoxMessage = ({
                 elevation: 0,
                 sx: {
                   width: 100,
-                  overflow: 'visible',
-                  filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                  overflow: "visible",
+                  filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
                   mt: 1.5,
-                  '& .MuiAvatar-root': {
+                  "& .MuiAvatar-root": {
                     width: 32,
                     height: 32,
                     ml: -0.5,
                     mr: 1,
                   },
-                  '&:before': {
+                  "&:before": {
                     content: '""',
-                    display: 'block',
-                    position: 'absolute',
+                    display: "block",
+                    position: "absolute",
                     top: 0,
                     right: 14,
                     width: 10,
                     height: 10,
-                    bgcolor: 'background.paper',
-                    transform: 'translateY(-50%) rotate(45deg)',
+                    bgcolor: "background.paper",
+                    transform: "translateY(-50%) rotate(45deg)",
                     zIndex: 0,
                   },
                 },
               }}
-              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              transformOrigin={{ horizontal: "right", vertical: "top" }}
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
             >
               <MenuItem onClick={removeMessage}>Remove </MenuItem>
               <MenuItem onClick={handleClose}>Chỉnh sửa</MenuItem>
@@ -105,7 +117,11 @@ const ChatBoxMessage = ({
           </>
         </ClickAwayListener>
       )}
-      <div className={'w-fit max-w-[90%] bg-blue-500 text-white p-2 rounded-xl'}>{message}</div>
+      <div
+        className={"w-fit max-w-[90%] bg-blue-500 text-white p-2 rounded-xl"}
+      >
+        {message}
+      </div>
     </div>
   );
 };
