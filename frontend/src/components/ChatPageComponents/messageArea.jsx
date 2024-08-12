@@ -1,4 +1,5 @@
-import { Send } from "@mui/icons-material";
+// "use strict";
+import { AttachFile, Send } from "@mui/icons-material";
 import {
   Grid,
   List,
@@ -8,36 +9,47 @@ import {
   Typography,
   Avatar,
   Box,
-  Paper,
 } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import { RecieverMessageList, SenderMessageList } from "./message";
 
 const MessageArea = ({
+  handleSubmitImage,
+  setImage,
   handleSubmit,
   message,
   setMessage,
   friend,
   messages,
+  handleEmoji,
 }) => {
-  function convertUTCToIST(utcDateString) {
-    const utcDate =
-      typeof utcDateString === "number"
-        ? new Date(utcDateString)
-        : new Date(utcDateString);
-    if (isNaN(utcDate.getTime())) {
-      return "Invalid Date";
-    }
-    const options = {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    };
-    return utcDate.toLocaleString("en-IN", options);
-  }
+  const messageEl = useRef(null);
 
-  if (!friend || !friend.id) {
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      if (messageEl.current) {
+        messageEl.current.scroll({
+          top: messageEl.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    });
+
+    if (messageEl.current) {
+      observer.observe(messageEl.current, { childList: true });
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]);
+    handleSubmitImage();
+  };
+
+  if (!friend || !friend._id) {
     return (
       <Grid
         container
@@ -48,7 +60,7 @@ const MessageArea = ({
         }}
       >
         <Typography variant="h4" sx={{ marginX: "auto" }}>
-          Click on any of the chat
+          Click on any of the chataf
         </Typography>
       </Grid>
     );
@@ -71,49 +83,28 @@ const MessageArea = ({
       </Box>
 
       <List
+        ref={messageEl}
         sx={{
-          height: "70vh",
+          paddingX: "20px",
+          height: "60vh",
           overflowY: "auto",
           flexGrow: 1,
+          overflowX: "hidden",
+          scrollbarWidth: "none",
         }}
       >
-        {messages && messages.messages && messages.messages.length ? (
-          messages.messages.map((mess) => (
-            <Paper
-              key={mess._id}
-              elevation={2}
-              sx={{
-                marginLeft: mess.senderId === friend.id ? "15px" : "auto",
-                marginRight: "10px",
-                maxWidth: "45%",
-                bgcolor: mess.senderId === friend.id ? "#3c94ecd1" : "#d7ffcc",
-                minHeight: "40px",
-                alignContent: "center",
-                padding: 1,
-                borderRadius: 3,
-                marginBottom: 1,
-              }}
-            >
-              <Typography variant="subtitle2">
-                {mess.senderId === friend.id
-                  ? `${friend.firstName} ${friend.lastName}`
-                  : "You"}
-              </Typography>
-
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  textAlign: mess.senderId === friend.id ? "left" : "right",
-                  fontSize: "20px",
-                }}
-              >
-                {mess.message}
-              </Typography>
-              <Typography variant="caption">
-                {convertUTCToIST(mess.timestamp)}
-              </Typography>
-            </Paper>
-          ))
+        {messages?.messages?.length ? (
+          messages.messages.map((mess) =>
+            mess?.senderId == friend.id ? (
+              <SenderMessageList
+                mess={mess}
+                friend={friend.id}
+                handleEmoji={handleEmoji}
+              ></SenderMessageList>
+            ) : (
+              <RecieverMessageList mess={mess}></RecieverMessageList>
+            )
+          )
         ) : (
           <Typography variant="h4" sx={{ marginX: "auto" }}>
             No messages
@@ -122,7 +113,7 @@ const MessageArea = ({
       </List>
       <Divider />
       <Grid container sx={{ padding: "20px" }}>
-        <Grid item xs={11}>
+        <Grid item xs={10}>
           <TextField
             id="outlined-basic-email"
             label="Type your message"
@@ -130,6 +121,20 @@ const MessageArea = ({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
+        </Grid>
+        <Grid item xs={1} align="right">
+          <input
+            accept="image/*"
+            style={{ display: "none" }}
+            id="contained-button-file"
+            type="file"
+            onChange={handleImageChange}
+          />
+          <label htmlFor="contained-button-file">
+            <Fab component="span">
+              <AttachFile></AttachFile>
+            </Fab>
+          </label>
         </Grid>
         <Grid item xs={1} align="right">
           <Fab

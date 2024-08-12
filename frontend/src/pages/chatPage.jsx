@@ -1,62 +1,42 @@
 import Header from "../components/CommonComponents/header";
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import Paper from "@mui/material/Paper";
 import Grid from "@mui/material/Grid";
-import { createTheme } from "@mui/material/styles";
-import { Avatar, Divider, List, TextField, Typography } from "@mui/material";
+import { Divider, List, TextField, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import MessageArea from "../components/ChatPageComponents/messageArea";
-import { fetchchats } from "../features/chats/chatsAsycnThunks";
+import {
+  fetchAllChats,
+  fetchChatFriends,
+  fetchchats,
+} from "../features/chats/chatsAsycnThunks";
 import {
   setChats,
+  setEmoji,
   setReadMessages,
+  setReceivedChats,
+  setSentMessages,
   setUnreadMessages,
 } from "../features/chats/chatsSlice";
 import { getFriends } from "../features/friends/friendsAsyncThunks";
 import UserList from "../components/ChatPageComponents/UserList";
 import chatSocket from "../features/utilities/Socket-io";
-
-const lightTheme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#1976d2",
-    },
-    secondary: {
-      main: "#f50057",
-    },
-  },
-  typography: {
-    fontFamily: "Roboto, sans-serif",
-  },
-});
-
-const darkTheme = createTheme({
-  palette: {
-    mode: "dark",
-    primary: {
-      main: "#2196f3",
-    },
-    secondary: {
-      main: "#2196f3",
-    },
-  },
-  typography: {
-    fontFamily: "Roboto, sans-serif",
-  },
-});
+import { darkTheme, lightTheme } from "./Style";
+import { UploadImage } from "../Utilities/UploadImage";
 
 export default function ChatPage() {
   const dispatch = useDispatch();
-  const [message, setMessage] = useState("");
-
   const { chats, roomId } = useSelector((state) => state.chats);
   const { user } = useSelector((state) => state.user);
-  const { friends } = useSelector((state) => state.friends);
+  const { chatFriends } = useSelector((state) => state.chats);
 
+  const [message, setMessage] = useState("");
+  const [image, setImage] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [friend, setFriend] = useState({});
   const friendRef = useRef(friend);
+
   const [currentTheme, setCurrentTheme] = useState("light");
 
   useEffect(() => {
@@ -68,25 +48,77 @@ export default function ChatPage() {
     });
   }, [dispatch]);
 
+  const handleSubmitImage = async () => {
+    const id = friend._id;
+    await UploadImage(
+      id,
+      setImageUrl,
+      imageUrl,
+      dispatch,
+      setSentMessages,
+      chatSocket,
+      image
+    );
+  };
+  useEffect(() => {
+    dispatch(fetchAllChats());
+    dispatch(fetchChatFriends());
+  }, []);
+
   useEffect(() => {
     const id = user._id;
     chatSocket.emit("authenticate", id);
 
-    chatSocket.on("newMessageNotification", (data) => {
-      const { senderId } = data;
-      dispatch(setUnreadMessages({ senderId }));
-    });
+    chatSocket.on(
+      "newMessageNotification",
+      ({ senderId, roomId, hasOpened, message, timestamp, type, _id }) => {
+        dispatch(
+          setChats({
+            senderId,
+            roomId,
+            hasOpened,
+            message,
+            timestamp,
+            type,
+            _id,
+          })
+        );
+        // dispatch(setReceivedChats(data));
+        // const { senderId } = data;
+        dispatch(setUnreadMessages({ senderId }));
+      }
+    );
 
-    const receiveMessageHandler = ({ messages, roomId, hasOpened }) => {
-      dispatch(setChats({ messages, roomId, hasOpened }));
+    chatSocket.on("emoji_recieved", ({ id, emoji }) => {
+      dispatch(setEmoji({ id, emoji }));
+    });
+    const receiveMessageHandler = ({
+      senderId,
+      roomId,
+      hasOpened,
+      message,
+      timestamp,
+      type,
+      _id,
+    }) => {
+      // console.log(senderId, roomId, hasOpened, message, timestamp, type, _id);
+      dispatch(setReadMessages(senderId));
+
+      // dispatch(
+      //   setChats({ senderId, roomId, hasOpened, message, timestamp, type })
+      // );
     };
 
-    if (friendRef.current.id) {
-      chatSocket.on("receiveMessage", receiveMessageHandler);
+    if (friendRef.current._id) {
+      chatSocket.on("emoji_recieved", (arg) => {
+        console.log(arg);
+      });
     }
+    chatSocket.on("receiveMessage", receiveMessageHandler);
 
     return () => {
       chatSocket.off("newMessageNotification");
+      chatSocket.off("emoji_recieved");
       chatSocket.off("receiveMessage", receiveMessageHandler);
     };
   }, [user._id, dispatch]);
@@ -95,20 +127,31 @@ export default function ChatPage() {
     setCurrentTheme(currentTheme === "light" ? "dark" : "light");
   };
 
-  const handleSubmit = (id, e) => {
-    e.preventDefault();
-    chatSocket.emit("message", { userId: id, message });
-    setMessage("");
+  const handleSubmit = (id) => {
+    if (message.trim()) {
+      chatSocket.emit("message", { userId: id, message, type: "text" });
+      dispatch(
+        setSentMessages({ message, timestamp: Date.now(), type: "text" })
+      );
+      setMessage("");
+    }
   };
 
   const handleChat = async (friend, e) => {
-    e.preventDefault();
-    dispatch(fetchchats(friend.id));
-    dispatch(setReadMessages(friend.id));
+    const id = friend._id;
+
+    dispatch(fetchchats(id));
+    dispatch(setReadMessages(id));
     setFriend(friend);
     friendRef.current = friend;
     setMessage("");
-    chatSocket.emit("join_room", { userId: friend.id });
+    chatSocket.emit("join_room", { userId: id });
+  };
+
+  const handleEmoji = (id, emoji, friendId) => {
+    chatSocket.emit("emoji_send", { id: id, emoji: emoji, friendId: friendId });
+
+    dispatch(setEmoji({ id, emoji }));
   };
 
   const theme = currentTheme === "light" ? lightTheme : darkTheme;
@@ -119,6 +162,7 @@ export default function ChatPage() {
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h5">Inbox</Typography>
+          {/* <VideoCall></VideoCall> */}
         </Grid>
         <Grid item xs={12} container component={Paper}>
           <Grid
@@ -140,11 +184,11 @@ export default function ChatPage() {
                 fullWidth
               />
               <List>
-                {friends?.length &&
-                  friends.map((friend) => (
+                {chatFriends?.length &&
+                  chatFriends.map((friend) => (
                     <UserList
-                      key={friend.id}
-                      friend={friend}
+                      key={friend._id}
+                      friend={friend.userDetails}
                       handleChat={handleChat}
                     />
                   ))}
@@ -153,13 +197,18 @@ export default function ChatPage() {
             <Divider />
           </Grid>
           <Grid item xs={9} sx={{ display: "flex", flexDirection: "column" }}>
-            <MessageArea
-              handleSubmit={handleSubmit}
-              message={message}
-              setMessage={setMessage}
-              friend={friend}
-              messages={chats[roomId]}
-            />
+            {friend?._id && (
+              <MessageArea
+                setImage={setImage}
+                handleSubmitImage={handleSubmitImage}
+                handleEmoji={handleEmoji}
+                handleSubmit={handleSubmit}
+                message={message}
+                setMessage={setMessage}
+                friend={friend}
+                messages={chats[roomId]}
+              />
+            )}
           </Grid>
         </Grid>
       </Grid>

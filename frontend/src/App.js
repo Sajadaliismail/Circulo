@@ -8,6 +8,7 @@ import SignUp from "./components/AuthPageComponents/signup";
 import ResetPassword from "./components/CommonComponents/resetPassword";
 import { AuthRoutes, ProtectedRoute } from "./ProtectedRoutes";
 import ChatPage from "./pages/chatPage";
+import VideoCall from "./pages/VideoCall";
 
 function App() {
   return (
@@ -55,6 +56,10 @@ function App() {
           <Route
             path="/chats"
             element={<ProtectedRoute element={<ChatPage />} />}
+          />
+          <Route
+            path="/video"
+            element={<ProtectedRoute element={<VideoCall />} />}
           />
           <Route path="/setup" element={<ProtectedRoute />} />
         </Routes>

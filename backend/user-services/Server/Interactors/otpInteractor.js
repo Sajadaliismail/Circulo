@@ -35,11 +35,6 @@ const verifyOtpInteractor = async (otp, email) => {
 
   return {
     token,
-    message: "OTP verified",
-    isEmailVerified: true,
-    isSetupComplete: user.isSetupComplete,
-    firstName: user.firstName,
-    email: user.email,
   };
 };
 

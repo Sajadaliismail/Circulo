@@ -8,7 +8,7 @@ import {
 import { useSelector } from "react-redux";
 
 const UserList = ({ friend, handleChat }) => {
-  const { unReadMessages } = useSelector((state) => state.chats);
+  const { unReadMessages, chats } = useSelector((state) => state.chats);
 
   return (
     <ListItemButton
@@ -18,7 +18,7 @@ const UserList = ({ friend, handleChat }) => {
     >
       <ListItemIcon>
         <Badge
-          badgeContent={unReadMessages[friend.id]}
+          badgeContent={chats[friend._id]}
           color="error"
           invisible={false}
           variant="standard"
@@ -29,7 +29,7 @@ const UserList = ({ friend, handleChat }) => {
           </Avatar>
         </Badge>
       </ListItemIcon>
-      <ListItemText primary={`${friend.firstName} ${friend.lastName}`} />
+      <ListItemText primary={`${friend?.firstName} ${friend?.lastName}`} />
       <ListItemText secondary="" align="right" />
     </ListItemButton>
   );

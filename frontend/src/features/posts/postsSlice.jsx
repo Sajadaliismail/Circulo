@@ -39,13 +39,11 @@ const postSlice = createSlice({
       .addCase(fetchPosts.fulfilled, (state, action) => {
         const newPosts = action.payload.posts;
         const prevPostsIdSet = new Set(state.posts.map((post) => post._id));
-        console.log(prevPostsIdSet);
         const filteredPosts = newPosts.filter(
           (post) => !prevPostsIdSet.has(post._id)
         );
 
         const updatedPosts = [...state.posts, ...filteredPosts];
-        console.log(updatedPosts, "updated");
         state.status = "";
         state.error = {};
         state.posts = updatedPosts;

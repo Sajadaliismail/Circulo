@@ -4,12 +4,14 @@ import {
   Paper,
   CircularProgress,
   Box,
+  Button,
 } from "@mui/material";
 import Post from "./post";
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPosts, handleLike } from "../../features/posts/postsAsyncThunks";
 import debounce from "lodash/debounce";
+import { SyncLoader } from "react-spinners";
 import { setPages } from "../../features/posts/postsSlice";
 
 function Posts() {
@@ -55,7 +57,9 @@ function Posts() {
   );
 
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
+    document
+      .getElementById("postsContainer")
+      .addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
@@ -68,35 +72,47 @@ function Posts() {
   return (
     <>
       <CssBaseline />
-      <Container>
-        <Paper
+      <Container
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          height: "100vh",
+        }}
+      >
+        <Box
+          id="postsContainer"
           elevation={1}
-          sx={{ height: "100vh", borderRadius: "10px", position: "relative" }}
+          sx={{
+            flex: "1 1 auto",
+            borderRadius: "10px",
+            position: "relative",
+            overflowY: "auto",
+            scrollbarWidth: "none",
+          }}
         >
           {posts &&
             posts.map((post) => (
               <Post handLike={handLike} key={post._id} postData={post} />
             ))}
-        </Paper>
-        {pages * limits < count ? (
-          <>
-            <Box
-              sx={{
-                position: "",
-                bottom: 0,
-                padding: "10px",
-                width: "100%",
-                alignItems: "center",
-                backgroundColor: "white",
-                borderTop: "1px solid #ccc",
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          </>
-        ) : (
-          <>end</>
-        )}
+          <Box
+            sx={{
+              padding: "15px",
+              width: "100%",
+              alignItems: "center",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            {pages * limits < count ? (
+              <SyncLoader size={8} color="#1976d2" />
+            ) : (
+              <Button onClick={() => dispatch(fetchMorePosts)}>
+                Load More
+              </Button>
+            )}
+          </Box>
+        </Box>
       </Container>
     </>
   );

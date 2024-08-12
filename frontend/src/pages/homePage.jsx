@@ -67,15 +67,25 @@ export default function Homepage() {
           <>
             <Header toggleTheme={toggleTheme} />
             <Box sx={{ flexGrow: 1 }}>
-              <Grid container rowGap={10} col spacing={0}>
-                <Grid xs={0} md={3}>
+              <Grid container rowGap={10} spacing={0}>
+                <Grid
+                  item
+                  xs={0}
+                  md={3}
+                  sx={{ display: { xs: "none", md: "block" } }}
+                >
                   <Profile />
                 </Grid>
-                <Grid xs={12} md={6}>
+                <Grid item xs={12} md={6}>
                   <NewPost />
                   <Posts />
                 </Grid>
-                <Grid xs={0} md={3}>
+                <Grid
+                  item
+                  xs={0}
+                  md={3}
+                  sx={{ display: { xs: "none", md: "block" } }}
+                >
                   <Suggestions />
                 </Grid>
                 {/* <ChatApp /> */}
