@@ -50,7 +50,7 @@ function LandingPage() {
           <CircularProgress color="inherit" variant="indeterminate" />
         </Backdrop>
       )}
-      <Grid sx={landingPageStyles.gridContainer}>
+      <Grid container component="main" sx={landingPageStyles.gridContainer}>
         <CssBaseline />
         <Grid item xs={12} sx={landingPageStyles.backgroundGrid}>
           <Typography
