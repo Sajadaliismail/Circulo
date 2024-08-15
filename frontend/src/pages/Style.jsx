@@ -2,8 +2,9 @@ import { createTheme } from "@mui/material/styles";
 
 export const landingPageStyles = {
   gridContainer: {
-    height: "100vh",
-    overFlow: "hidden",
+    maxHeight: "100vh",
+    overFlowX: "hidden",
+    margin: "0",
   },
   backgroundGrid: {
     backgroundImage: 'url("/bg.png")',
@@ -12,12 +13,13 @@ export const landingPageStyles = {
     backgroundSize: "cover",
     textAlign: "center",
     paddingTop: "20px",
+    width: "100%",
   },
   typography: {
     fontFamily: "'Roboto', sans-serif",
     textShadow: "4px 4px 4px rgba(0, 0, 0, 0.8)",
     color: "white",
-    display: { md: "block" },
+    // display: { md: "block" },
   },
 };
 

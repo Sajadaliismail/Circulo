@@ -9,7 +9,7 @@ export const SVGComponent = ({ text }) => {
   const textWidth = calculateTextWidth(fontSize);
 
   return (
-    <svg width="600" height="60" viewBox="0 0 600 60">
+    <svg width="300" height="60" viewBox="0 0 600 60">
       <defs>
         <path id="curvePath" d="M100,100 C200,20 400,20 500,100" />
       </defs>
