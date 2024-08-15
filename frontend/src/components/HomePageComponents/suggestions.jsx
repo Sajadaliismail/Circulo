@@ -8,6 +8,7 @@ import {
   Divider,
   Icon,
   Paper,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { useEffect } from "react";
@@ -34,7 +35,6 @@ function Suggestions() {
   }, [dispatch]);
 
   const handleRequest = async (id) => {
-    console.log(id);
     await dispatch(sentRequest({ friendId: id }));
     dispatch(getSuggestions());
   };
@@ -60,71 +60,95 @@ function Suggestions() {
             height: "100vh",
             marginY: "10px",
             paddingY: "10px",
-            borderRadius: "10px",
+            borderRadius: "25px",
             paddingX: "15px",
             display: "flex",
             flexDirection: "column",
             rowGap: "10px",
           }}
         >
+          <Typography variant="h6">Friend requests</Typography>
+          <Box
+            sx={{
+              overflowY: "scroll",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              scrollbarWidth: "none",
+              maxHeight: "50vh",
+            }}
+          >
+            {requestsPending?.length > 0 ? (
+              requestsPending.map((people) => (
+                <Box
+                  key={people.id}
+                  display={"flex"}
+                  alignItems={"center"}
+                  gap={2}
+                >
+                  <Avatar src={people?.profilePicture}>
+                    {people.firstName[0]}
+                  </Avatar>
+                  {people.firstName} {people.lastName}
+                  <ButtonGroup sx={{ marginLeft: "auto" }}>
+                    <Button
+                      size="small"
+                      onClick={() => handleCancelRequest(people.id)}
+                    >
+                      <Close />
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => handleAcceptRequest(people.id)}
+                    >
+                      <Done />
+                    </Button>
+                  </ButtonGroup>
+                </Box>
+              ))
+            ) : (
+              <Typography variant="body2">
+                No pending friend requests
+              </Typography>
+            )}
+          </Box>
+          <Divider variant="fullWidth"></Divider>
+
           <Typography variant="h6">Suggestions</Typography>
 
-          {suggestions && suggestions.length === 0 ? (
+          {suggestions && suggestions?.length === 0 ? (
             <Typography variant="body2">No suggestions available.</Typography>
           ) : (
-            suggestions.map((people) => (
-              <Box
-                key={people.id}
-                display={"flex"}
-                alignItems={"center"}
-                gap={2}
-              >
-                <Avatar src={people?.profilePicture}>
-                  {people.firstName[0]}
-                </Avatar>
-                {people.firstName} {people.lastName}
-                <Button
-                  disabled={people.hasRequested}
-                  onClick={() => handleRequest(people.id)}
-                  sx={{ marginLeft: "auto" }}
+            <Box
+              sx={{
+                overflowY: "scroll",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                scrollbarWidth: "none",
+              }}
+            >
+              {suggestions.map((people) => (
+                <Box
+                  key={people.id}
+                  display={"flex"}
+                  alignItems={"center"}
+                  gap={2}
                 >
-                  {people.hasRequested ? "Request sent" : "Connect"}
-                </Button>
-              </Box>
-            ))
-          )}
-          <Divider variant="fullWidth"></Divider>
-          <Typography variant="h6">Friend requests</Typography>
-          {requestsPending.length > 0 ? (
-            requestsPending.map((people) => (
-              <Box
-                key={people.id}
-                display={"flex"}
-                alignItems={"center"}
-                gap={2}
-              >
-                <Avatar src={people?.profilePicture}>
-                  {people.firstName[0]}
-                </Avatar>
-                {people.firstName} {people.lastName}
-                <ButtonGroup sx={{ marginLeft: "auto" }}>
+                  <Avatar src={people?.profilePicture}>
+                    {people.firstName[0]}
+                  </Avatar>
+                  {people.firstName} {people.lastName}
                   <Button
-                    size="small"
-                    onClick={() => handleCancelRequest(people.id)}
+                    disabled={people.hasRequested}
+                    onClick={() => handleRequest(people.id)}
+                    sx={{ marginLeft: "auto" }}
                   >
-                    <Close />
+                    {people.hasRequested ? "Request sent" : "Connect"}
                   </Button>
-                  <Button
-                    size="small"
-                    onClick={() => handleAcceptRequest(people.id)}
-                  >
-                    <Done />
-                  </Button>
-                </ButtonGroup>
-              </Box>
-            ))
-          ) : (
-            <Typography variant="body2">No pending friend requests</Typography>
+                </Box>
+              ))}
+            </Box>
           )}
         </Paper>
       </Container>

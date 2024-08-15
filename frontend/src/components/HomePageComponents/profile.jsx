@@ -1,4 +1,4 @@
-import { Edit } from "@mui/icons-material";
+import { Edit, EditNotifications, ModeEdit } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -22,7 +22,7 @@ function Profile() {
       <Container>
         <Paper
           elevation={5}
-          sx={{ height: "100vh", marginY: "10px", borderRadius: "10px" }}
+          sx={{ height: "100vh", marginY: "10px", borderRadius: "25px", py: 2 }}
         >
           <Box
             sx={{
@@ -30,43 +30,60 @@ function Profile() {
               justifyContent: "center",
               flexDirection: "column",
               alignItems: "center",
+              position: "relative",
+              "&:hover .overlay": {
+                height: "25%",
+              },
             }}
           >
             <Avatar
+              className="imgUpload"
               src={user?.profilePicture}
               sx={{
                 width: 150,
                 height: 150,
                 fontSize: "10vmin",
-                "&:hover .edit-button": {
-                  opacity: 1,
-                },
               }}
             >
-              {user.firstName[0].toUpperCase()}
-            </Avatar>
-            <input
-              accept="image/*"
-              style={{ display: "none" }}
-              id="file-upload"
-              type="file"
-              // onChange={handleImageUpload}
-            />
-            <label htmlFor="file-upload">
-              <IconButton
-                component="span"
-                className="edit-button"
+              <Box
+                className={"overlay"}
                 sx={{
                   position: "absolute",
                   bottom: 0,
+                  left: 0,
                   right: 0,
-                  opacity: 0,
-                  transition: "opacity 0.3s",
+                  backgroundColor: "primary.main",
+                  overflow: "hidden",
+                  width: "100%",
+                  height: 0,
+                  transition: ".5s ease",
+                  fontSize: "15px",
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
                 }}
               >
-                <Edit />
-              </IconButton>
-            </label>
+                <input
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  id="file-upload"
+                  type="file"
+                />
+                <label
+                  htmlFor="file-upload"
+                  style={{
+                    bottom: "-20px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ModeEdit />
+                </label>
+              </Box>
+              {user.firstName[0].toUpperCase()}
+            </Avatar>
+
             <Typography>
               {user.firstName} {user.lastName}
             </Typography>
@@ -74,6 +91,7 @@ function Profile() {
             <Typography>
               {user.state},{user.country}
             </Typography>
+            <Typography>{user.email}</Typography>
           </Box>
           <Divider variant="fullWidth"></Divider>
           <Friends />

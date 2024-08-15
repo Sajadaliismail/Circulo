@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import {
+  Avatar,
   Box,
   Button,
   Paper,
@@ -19,11 +20,19 @@ import { addressSetup } from "../features/auth/authAsyncThunks";
 import { useNavigate } from "react-router-dom";
 import { uploadImage } from "../features/user/userAsyncThunks";
 import { useSnackbar } from "notistack";
+import { motion } from "framer-motion";
+import {
+  getSuggestions,
+  sentRequest,
+} from "../features/friends/friendsAsyncThunks";
+import { setIsSetupComplete } from "../features/auth/authSlice";
 
 const steps = ["Upload Image", "Your Circle", "People in your circle"];
 
 const SetupPage = () => {
-  const { firstName } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { firstName, lastName } = useSelector((state) => state.auth);
+  const { suggestions } = useSelector((state) => state.friends);
   const { enqueueSnackbar } = useSnackbar();
 
   const [activeStep, setActiveStep] = useState(0);
@@ -38,7 +47,7 @@ const SetupPage = () => {
     postalCode: "",
   });
 
-  const handleNext = (e) => {
+  const handleNext = async (e) => {
     e.preventDefault();
     if (activeStep === 0 && croppedImg) {
       const fileName = Date.now() + "" + firstName;
@@ -59,6 +68,8 @@ const SetupPage = () => {
         setErrors(validationErrors);
         return;
       } else {
+        await dispatch(addressSetup(location));
+        dispatch(getSuggestions(location.postalCode));
       }
     }
     setErrors({});
@@ -67,9 +78,12 @@ const SetupPage = () => {
 
   const handleFinish = (e) => {
     e.preventDefault();
-    dispatch(addressSetup(location));
-
-    //  navigate('/')
+    dispatch(setIsSetupComplete());
+    navigate("/");
+  };
+  const handleRequest = async (id) => {
+    await dispatch(sentRequest({ friendId: id }));
+    dispatch(getSuggestions(location.postalCode));
   };
 
   return (
@@ -77,84 +91,137 @@ const SetupPage = () => {
       <Navbar />
       <Box
         sx={{
-          padding: "5px",
+          padding: "20px",
           display: "flex",
           flexDirection: "column",
-          justifyContent: {
-            xs: "flex-start",
-            sm: "center",
-          },
-          alignItems: {
-            xs: "center",
-            sm: "center",
-          },
+          justifyContent: "center",
+          alignItems: "flex-end",
           height: "100vh",
+          backgroundImage: `url("/bg3.jpg")`,
+          backgroundSize: "cover",
         }}
       >
-        <Typography
-          variant="h5"
-          component="h1"
-          sx={{ my: 3, color: "primary.main", textDecoration: "underline" }}
-        >
-          Setting up your Account
-        </Typography>
-        <Box
-          component={Paper}
-          elevation={8}
-          borderRadius={2}
-          padding={5}
-          sx={{
-            width: "100%",
-            maxWidth: "600px",
+        <motion.div
+          initial={{ opacity: 0, x: 0, y: 500 }}
+          animate={{ opacity: 1, x: 0, y: 0 }}
+          exit={{ opacity: 0, x: 50, y: 50 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 5,
+            mass: 0.5,
+            bounce: 0.5,
           }}
+          width={"100%"}
         >
-          <Stepper activeStep={activeStep}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-          {activeStep === steps.length ? (
-            <FinalStep />
-          ) : (
-            <>
-              <Box sx={{ mt: 2, mb: 1 }}>
-                {activeStep === 0 && (
-                  <ImageUpload
-                    setCroppedImg={setCroppedImg}
-                    croppedImg={croppedImg}
-                    name={firstName}
-                  />
-                )}
-                {activeStep === 1 && (
-                  <AddressForm
-                    errors={errors}
-                    setErrors={setErrors}
-                    location={location}
-                    setLocation={setLocation}
-                  />
-                )}
-                {activeStep === 2 && (
-                  <Box>
-                    <Typography variant="h6" sx={{ textAlign: "center" }}>
-                      People around you.
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 2 }}>
-                <Button
-                  onClick={
-                    activeStep === steps.length - 1 ? handleFinish : handleNext
-                  }
+          <Box
+            component={Paper}
+            elevation={8}
+            borderRadius={10}
+            padding={5}
+            sx={{
+              width: "100%",
+              maxWidth: "800px",
+              textAlign: "center",
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
+                mb: 2,
+                color: "Black",
+              }}
+            >
+              {`Hello, ${firstName} ${lastName}! Let’s get started!`}
+            </Typography>
+
+            <Stepper activeStep={activeStep}>
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+            {activeStep === steps.length ? (
+              <FinalStep />
+            ) : (
+              <>
+                <Box sx={{ mt: 2, mb: 1 }}>
+                  {activeStep === 0 && (
+                    <ImageUpload
+                      setCroppedImg={setCroppedImg}
+                      croppedImg={croppedImg}
+                      name={firstName}
+                    />
+                  )}
+                  {activeStep === 1 && (
+                    <AddressForm
+                      errors={errors}
+                      setErrors={setErrors}
+                      location={location}
+                      setLocation={setLocation}
+                    />
+                  )}
+                  {activeStep === 2 && (
+                    <Box>
+                      <Typography variant="h6" sx={{ textAlign: "center" }}>
+                        People around you.
+                      </Typography>
+                      <Box
+                        sx={{
+                          overflowY: "scroll",
+                          scrollbarWidth: "none",
+                          height: "30vh",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2,
+                        }}
+                      >
+                        {suggestions &&
+                          suggestions?.map((people) => (
+                            <Box
+                              key={people.id}
+                              display={"flex"}
+                              alignItems={"center"}
+                              gap={2}
+                            >
+                              <Avatar src={people?.profilePicture}>
+                                {people.firstName[0]}
+                              </Avatar>
+                              {people.firstName} {people.lastName}
+                              <Button
+                                disabled={people?.hasRequested}
+                                onClick={() => handleRequest(people.id)}
+                                sx={{ marginLeft: "auto" }}
+                              >
+                                {people.hasRequested
+                                  ? "Request sent"
+                                  : "Connect"}
+                              </Button>
+                            </Box>
+                          ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+                <Box
+                  sx={{ display: "flex", justifyContent: "flex-end", pt: 2 }}
                 >
-                  {activeStep === steps.length - 1 ? "Finish" : "Next"}
-                </Button>
-              </Box>
-            </>
-          )}
-        </Box>
+                  <Button
+                    onClick={
+                      activeStep === steps.length - 1
+                        ? handleFinish
+                        : handleNext
+                    }
+                  >
+                    {activeStep === steps.length - 1 ? "Finish" : "Next"}
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Box>
+        </motion.div>
       </Box>
     </>
   );

@@ -41,11 +41,15 @@ const signInUser = async (req, res) => {
 };
 
 const updatePassword = async (req, res) => {
+  console.log(req.body);
+
   try {
     const { email, password } = req.body;
     await passwordUpdateInteractor(email, password);
     return res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
+    console.log(error);
+
     return res.status(404).json({ error: error.message });
   }
 };

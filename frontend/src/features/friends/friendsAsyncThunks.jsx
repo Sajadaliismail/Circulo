@@ -19,11 +19,11 @@ export const addFriend = createAsyncThunk("friends/addFriend", async (id) => {
 
 export const getSuggestions = createAsyncThunk(
   "friends/suggestions",
-  async () => {
+  async (postalCode) => {
     try {
       const token = localStorage.getItem("jwt");
       const response = await fetch(
-        `http://localhost:3006/friends/suggestions`,
+        `http://localhost:3006/friends/suggestions?postalCode=${postalCode}`,
         {
           method: "GET",
           headers: {
@@ -50,6 +50,8 @@ export const getFriends = createAsyncThunk("friends/getFriends", async () => {
       },
     });
     const data = await response.json();
+    console.log(data);
+
     return data;
   } catch (error) {
     console.log(error);

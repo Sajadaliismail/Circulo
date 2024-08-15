@@ -23,7 +23,7 @@ const signInInteractor = async (data) => {
   if (!userData.isEmailVerified) {
     return {
       email: userData.email,
-      isEmailVerified: true,
+      isEmailVerified: false,
       isSetupComplete: userData.isSetupComplete,
       firstName: userData.firstName,
       lastName: userData.lastName,

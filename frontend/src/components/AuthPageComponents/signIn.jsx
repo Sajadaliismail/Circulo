@@ -12,6 +12,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
+import { motion } from "framer-motion";
 
 import { useNavigate } from "react-router-dom";
 
@@ -22,13 +23,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { signin } from "../../features/auth/authAsyncThunks";
 import VerifyOtp from "./verifyOTp";
 import { useSnackbar } from "notistack";
+import { resetErrors } from "../../features/auth/authSlice";
+import { SVGComponent } from "../CommonComponents/svgComponent";
 
 const validationSchema = object({
   email: string().email("Invalid email").required("Email is required"),
   password: string().required("Password is required"),
 });
 
-export default function SignInSide() {
+export default function SignInSide({ signup, resetpassword, VerifyOtp }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showOtp, setShowOtp] = useState(false);
@@ -41,6 +44,7 @@ export default function SignInSide() {
   useEffect(() => {
     Object.values(error).forEach((val) => {
       enqueueSnackbar(val, { variant: "error" });
+      dispatch(resetErrors());
     });
   }, [error, enqueueSnackbar]);
 
@@ -63,17 +67,16 @@ export default function SignInSide() {
       if (signin.fulfilled.match(resultAction)) {
         console.log(resultAction);
         const { isEmailVerified } = resultAction.payload;
-        console.log(isEmailVerified);
         if (!isEmailVerified) {
           enqueueSnackbar("Please verify your email", { variant: "info" });
           setShowOtp(true);
+          VerifyOtp();
         } else {
           enqueueSnackbar("Login successful", { variant: "success" });
           navigate("/");
         }
       }
     } catch (err) {
-      console.log(err);
       if (err.inner) {
         const newErrors = err.inner.reduce((acc, error) => {
           acc[error.path] = error.message;
@@ -93,7 +96,7 @@ export default function SignInSide() {
       ) : (
         <Box
           sx={{
-            my: 8,
+            my: 6,
             mx: 4,
             display: "flex",
             flexDirection: "column",
@@ -101,10 +104,7 @@ export default function SignInSide() {
           }}
         >
           <Logo />
-
-          <Typography component="h1" variant="h5">
-            Sign in
-          </Typography>
+          <SVGComponent text={"SIGN IN"} />
           <Box
             component="form"
             noValidate
@@ -143,18 +143,23 @@ export default function SignInSide() {
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
             />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
-              Sign In
-            </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{ mt: 3, mb: 2, width: "50%" }}
+              >
+                Sign In
+              </Button>
+            </motion.div>
             <Grid container>
-              <Grid item xs>
+              <Grid item xs sx={{ display: "flex" }}>
                 <Link
-                  onClick={() => navigate("/resetpassword")}
+                  onClick={resetpassword}
                   sx={{ cursor: "pointer" }}
                   variant="body2"
                 >
@@ -163,7 +168,7 @@ export default function SignInSide() {
               </Grid>
               <Grid item>
                 <Link
-                  onClick={() => navigate("/signup")}
+                  onClick={signup}
                   sx={{ cursor: "pointer" }}
                   variant="body2"
                 >

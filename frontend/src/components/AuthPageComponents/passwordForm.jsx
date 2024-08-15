@@ -15,8 +15,9 @@ import { updatePassword } from "../../features/auth/authAsyncThunks"; // Import 
 import Copyright from "../CommonComponents/copyright";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
+import { resetErrors } from "../../features/auth/authSlice";
 
-const PasswordForm = () => {
+const PasswordForm = ({ signin }) => {
   const dispatch = useDispatch();
   const { email } = useSelector((state) => state.auth);
   const [password, setPassword] = useState("");
@@ -53,8 +54,9 @@ const PasswordForm = () => {
     const result = await dispatch(updatePassword({ email, password }));
     if (updatePassword.fulfilled.match(result)) {
       enqueueSnackbar("Password updated successfully", { variant: "success" });
-      navigate("/login");
       enqueueSnackbar("Please login now", { variant: "info" });
+      signin();
+      dispatch(resetErrors());
     } else {
       enqueueSnackbar("Error updating the password", { variant: "error" });
     }

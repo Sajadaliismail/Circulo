@@ -29,7 +29,7 @@ function Posts() {
 
   useEffect(() => {
     fetchMorePosts();
-  }, [dispatch, pages]);
+  }, []);
 
   useEffect(() => {
     setInitialPosts(posts);
@@ -37,9 +37,10 @@ function Posts() {
 
   const handleScroll = useCallback(
     debounce(() => {
-      const scrollTop = window.scrollY;
+      const div = document.getElementById("postsContainer");
+      const scrollTop = div.scrollTop;
       const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
+      const documentHeight = div.scrollHeight;
 
       if (scrollTop + windowHeight >= documentHeight - 10) {
         if (!loading) {
@@ -60,7 +61,10 @@ function Posts() {
     document
       .getElementById("postsContainer")
       .addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () =>
+      document
+        .getElementById("postsContainer")
+        .removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
   const handLike = async (postId) => {

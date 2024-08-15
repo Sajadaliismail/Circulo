@@ -5,6 +5,7 @@ const {
   getRequestsService,
   cancelFriendRequest,
   getFriendsService,
+  getFriendsServiceApi,
 } = require("../Services/services");
 
 const sendFriendRequest = async (req, res) => {
@@ -48,8 +49,10 @@ const cancelRequest = async (req, res) => {
 
 const suggestions = async (req, res) => {
   const userId = req.userId;
+  const postalCode = req.query;
+
   try {
-    const result = await getSuggestions(userId);
+    const result = await getSuggestions(userId, postalCode);
     res.status(200).json({ suggestions: result });
   } catch (error) {
     res.status(500).send("Server error");
@@ -76,6 +79,19 @@ const getFriends = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+
+const getFriendsApi = async (req, res) => {
+  const { userId } = req.params;
+  console.log(userId);
+
+  try {
+    const result = await getFriendsServiceApi(userId);
+
+    res.status(200).json({ friends: result });
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+};
 module.exports = {
   sendFriendRequest,
   acceptRequest,
@@ -83,4 +99,5 @@ module.exports = {
   getRequests,
   cancelRequest,
   getFriends,
+  getFriendsApi,
 };

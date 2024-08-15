@@ -5,7 +5,7 @@ import Homepage from "./pages/homePage";
 import LandingPage from "./pages/landingPage";
 import SignInSide from "./components/AuthPageComponents/signIn";
 import SignUp from "./components/AuthPageComponents/signup";
-import ResetPassword from "./components/CommonComponents/resetPassword";
+import ResetPassword from "./components/AuthPageComponents/resetPassword";
 import { AuthRoutes, ProtectedRoute } from "./ProtectedRoutes";
 import ChatPage from "./pages/chatPage";
 import VideoCall from "./pages/VideoCall";
@@ -16,42 +16,9 @@ function App() {
       <Router>
         <Routes>
           <Route
-            path="/signup"
-            element={
-              <AuthRoutes
-                element={
-                  <LandingPage>
-                    <SignUp />
-                  </LandingPage>
-                }
-              />
-            }
-          />
-          <Route
-            path="/resetpassword"
-            element={
-              <AuthRoutes
-                element={
-                  <LandingPage>
-                    <ResetPassword />
-                  </LandingPage>
-                }
-              />
-            }
-          />
-          <Route
             path="/login"
-            element={
-              <AuthRoutes
-                element={
-                  <LandingPage>
-                    <SignInSide />
-                  </LandingPage>
-                }
-              />
-            }
+            element={<AuthRoutes element={<LandingPage></LandingPage>} />}
           />
-          <Route path="/verify" element={<ProtectedRoute />} />
           <Route path="/" element={<ProtectedRoute element={<Homepage />} />} />
           <Route
             path="/chats"

@@ -14,9 +14,13 @@ const sendOtpEmail = async (req, res) => {
 const verifyOtp = async (req, res) => {
   try {
     const { inputOtp, email } = req.body;
+
     const result = await otpInteractor.verifyOtpInteractor(inputOtp, email);
+
     return res.status(200).json(result);
   } catch (err) {
+    console.log(err);
+
     return res.status(404).json({ error: err.message });
   }
 };

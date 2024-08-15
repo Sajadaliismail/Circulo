@@ -146,30 +146,50 @@ const getFriendsService = async (userId) => {
       `MATCH (u:User {id : $userId})<-[r:FRIEND]-(friends) RETURN friends`,
       { userId }
     );
-    const result = friends.records.map(
-      (record) => record.get("friends").properties
-    );
-    console.log(result, "asff");
+    const result = friends.records.map((record) => {
+      const res = record.get("friends").properties;
+      return res;
+    });
+
     return result;
   } catch (error) {
     console.log(error);
   }
 };
-const getSuggestions = async (userId) => {
+
+const getFriendsServiceApi = async (userId) => {
   const session = driver.session();
   try {
-    const userResult = await session.run(
-      `MATCH (u:User {id: $userId})
-       RETURN u.postalCode AS postalCode`,
+    const friends = await session.run(
+      `MATCH (u:User {id : $userId})<-[r:FRIEND]-(friends) RETURN friends`,
       { userId }
     );
+    const result = friends.records.map((record) => {
+      const res = record.get("friends").properties;
+      return res.id;
+    });
 
-    if (userResult.records.length === 0) {
-      throw new Error("User not found");
+    return result;
+  } catch (error) {
+    console.log(error);
+  }
+};
+const getSuggestions = async (userId, { postalCode }) => {
+  const session = driver.session();
+  try {
+    if (!postalCode) {
+      const userResult = await session.run(
+        `MATCH (u:User {id: $userId})
+       RETURN u.postalCode AS postalCode`,
+        { userId }
+      );
+
+      if (userResult.records.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const postalCode = userResult.records[0].get("postalCode");
     }
-
-    const postalCode = userResult.records[0].get("postalCode");
-
     // Function to run query and map results
     const runQuery = async (query, params) => {
       const result = await session.run(query, params);
@@ -259,8 +279,21 @@ const getSuggestions = async (userId) => {
     const uniqueSuggestions = Array.from(
       new Map(friendsOfFriends.map((item) => [item.id, item])).values()
     );
+    const Users = await session.run(
+      `MATCH(u:User {postalCode:$postalCode}) RETURN u`,
+      {
+        postalCode,
+      }
+    );
+    if (!uniqueSuggestions.length) {
+      const usersData = Users.records.map(
+        (record) => record.get("u").properties
+      );
+      return usersData;
+    }
     if (uniqueSuggestions.length < 20)
       return uniqueSuggestions.concat(outgoingRequestsWithDetails).slice(0, 20);
+
     return;
   } catch (error) {
     console.error("Error getting suggestions:", error);
@@ -279,4 +312,5 @@ module.exports = {
   cancelFriendRequest,
   getRequestsService,
   getFriendsService,
+  getFriendsServiceApi,
 };

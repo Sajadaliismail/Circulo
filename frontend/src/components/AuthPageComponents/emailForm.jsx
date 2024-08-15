@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, Grid, Paper, TextField } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { sendOtp } from "../../features/auth/authAsyncThunks";
-import { setEmail } from "../../features/auth/authSlice";
+import { resetErrors, setEmail } from "../../features/auth/authSlice";
 import { useSnackbar } from "notistack";
+import { motion } from "framer-motion";
 
-const EmailForm = ({ onOtpSent }) => {
+const EmailForm = ({ setShowOTP }) => {
   const dispatch = useDispatch();
   const { email, error } = useSelector((state) => state.auth);
   const [emailError, setEmailError] = useState("");
@@ -29,9 +30,12 @@ const EmailForm = ({ onOtpSent }) => {
     const result = await dispatch(sendOtp({ email }));
     if (sendOtp.fulfilled.match(result)) {
       enqueueSnackbar("OTP sent to your email", { variant: "success" });
-      onOtpSent();
-    } else {
+      setShowOTP(true);
+      dispatch(resetErrors());
+    } else if (sendOtp.rejected.match(result)) {
       enqueueSnackbar("Email is not registered", { variant: "error" });
+    } else {
+      enqueueSnackbar("Server error", { variant: "error" });
     }
   };
 
@@ -40,7 +44,7 @@ const EmailForm = ({ onOtpSent }) => {
       component="form"
       noValidate
       sx={{ mt: 1, width: "100%" }}
-      onSubmit={handleSendOtp}
+      onSubmit={(e) => handleSendOtp(e)}
     >
       <TextField
         margin="normal"
@@ -57,9 +61,20 @@ const EmailForm = ({ onOtpSent }) => {
         helperText={emailError || error.message}
         error={!!emailError}
       />
-      <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-        Send OTP
-      </Button>
+
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      >
+        <Button
+          type="submit"
+          variant="contained"
+          sx={{ mt: 3, mb: 2, width: "50%" }}
+        >
+          Send OTP
+        </Button>
+      </motion.div>
     </Box>
   );
 };

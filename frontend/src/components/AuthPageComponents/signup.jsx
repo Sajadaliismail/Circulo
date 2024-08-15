@@ -27,16 +27,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { signup } from "../../features/auth/authAsyncThunks";
 import { useSnackbar } from "notistack";
 import { Logo } from "../CommonComponents/logoComponent";
-import { setError } from "../../features/auth/authSlice";
+import { resetErrors, setError } from "../../features/auth/authSlice";
 import VerifyOtp from "./verifyOTp";
+import { SVGComponent } from "../CommonComponents/svgComponent";
+import { motion } from "framer-motion";
 
-function SignUp() {
+function SignUp({ signin }) {
   const [errors, setErrors] = useState(errorState);
   const [formData, setFormData] = useState(formValues);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
   const { error } = useSelector((state) => state.auth);
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleSubmit = async (event) => {
@@ -55,6 +56,7 @@ function SignUp() {
           variant: "success",
         });
         setShowOTPVerification(true);
+        dispatch(resetErrors());
       } else {
         dispatch(setError({ err: "Some unexpected error occured" }));
       }
@@ -137,13 +139,13 @@ function SignUp() {
         <Box sx={signupStyle.grid}>
           <Logo />
           <Typography component="h1" variant="h5">
-            Sign up
+            <SVGComponent text={"SIGN UP"} />
           </Typography>
           <Box
             component="form"
             noValidate
             onSubmit={handleSubmit}
-            sx={{ mt: 3, width: "100%" }}
+            sx={{ mt: 2, width: "100%" }}
           >
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -155,10 +157,10 @@ function SignUp() {
               <Grid item xs={12}>
                 {renderTextField("email", "Email Address", "email")}
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 {renderTextField("password", "Password", "password")}
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 {renderTextField(
                   "cnf_password",
                   "Confirm password",
@@ -172,18 +174,24 @@ function SignUp() {
                 {renderSelectField("birthYear", "Birth Year", years)}
               </Grid>
             </Grid>
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
-              Sign Up
-            </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{ mt: 3, mb: 2, width: "100%" }}
+              >
+                Sign Up
+              </Button>
+            </motion.button>
+
             <Grid container justifyContent="flex-end">
               <Grid item>
                 <Link
-                  onClick={() => navigate("/login")}
+                  onClick={signin}
                   sx={{ cursor: "pointer" }}
                   variant="body2"
                 >

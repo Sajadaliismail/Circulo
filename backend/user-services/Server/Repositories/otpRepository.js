@@ -2,27 +2,31 @@ const OTP = require("../Models/otpModel");
 
 const otpSave = async (email, otp) => {
   try {
-    const findOTP = await findOtp({ email });
-    if (findOTP !== null) {
+    const findOTP = await findOtp(email);
+    if (findOTP.otp !== null) {
       await findAndUpdate({ email, otp });
     } else {
       const dbOTP = new OTP({
-        email,
-        otp,
+        email: email,
+        otp: otp,
       });
       await dbOTP.save();
     }
+
     return true;
   } catch (error) {
     throw new Error("Server error, Please try again later");
   }
 };
 
-const findOtp = async ({ email }) => {
+const findOtp = async (email) => {
   try {
     const otp = await OTP.findOne({ email: email });
-    return otp;
+
+    return { otp, email };
   } catch (error) {
+    console.log(error);
+
     throw new Error("Error fetching OTP");
   }
 };

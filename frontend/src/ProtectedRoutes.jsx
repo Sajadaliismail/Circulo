@@ -29,8 +29,8 @@ export const ProtectedRoute = ({ element }) => {
 };
 
 export const AuthRoutes = ({ element }) => {
-  const { isLoggedIn } = useSelector((state) => state.auth);
-  if (!isLoggedIn) {
+  const { isLoggedIn, isEmailVerified } = useSelector((state) => state.auth);
+  if (!isLoggedIn || !isEmailVerified) {
     return element;
   } else return <Navigate to={"/"} />;
 };

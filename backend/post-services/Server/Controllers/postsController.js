@@ -27,15 +27,21 @@ const addPosts = async (req, res) => {
 const fetchPosts = async (req, res) => {
   try {
     const userId = req.userId;
-    const { page, limits } = req.query;
-    console.log(page, limits);
-    const data = await postsInteractor.fetchPostInteractor(
-      userId,
-      parseInt(page),
-      parseInt(limits)
+    const response = await fetch(
+      `http://localhost:3006/friends/api/friendsListUser/${userId}`
     );
 
-    return res.status(200).json({ posts: data.posts, count: data.count });
+    const friends = await response.json();
+    if (response.ok) {
+      const { page, limits } = req.query;
+      const data = await postsInteractor.fetchPostInteractor(
+        userId,
+        parseInt(page),
+        parseInt(limits),
+        friends.friends
+      );
+      return res.status(200).json({ posts: data.posts, count: data.count });
+    }
   } catch (error) {
     console.log(error);
   }

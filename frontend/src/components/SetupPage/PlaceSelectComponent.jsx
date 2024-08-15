@@ -50,7 +50,7 @@ const AddressForm = ({ errors, setErrors, location, setLocation }) => {
   };
 
   return (
-    <Box>
+    <Box textAlign={"left"}>
       <Box
         sx={{
           ". css-166bipr-Input__input": {

@@ -8,6 +8,7 @@ const generateToken = require("../Utilities/generateToken");
 const sendOtpInteractor = async (email) => {
   const otp = generateOTP();
   console.log(otp);
+
   const user = await userRepository.findUserByEmail(email);
   if (!user) {
     throw new Error("Email is not registered.");
@@ -19,22 +20,31 @@ const sendOtpInteractor = async (email) => {
 };
 
 const verifyOtpInteractor = async (otp, email) => {
-  const result = await otpRepository.findOtp({ email });
+  const result = await otpRepository.findOtp(email);
   if (!result) {
     throw new Error("OTP not found");
   }
 
-  if (result.otp !== otp) {
+  if (result?.otp?.otp !== otp) {
     throw new Error("Invalid OTP");
   }
 
-  const user = await userRepository.updateUserFields(email, {
-    isEmailVerified: true,
-  });
+  const user = await userRepository.updateUserFields(
+    email,
+    {
+      isEmailVerified: true,
+    },
+    { new: true }
+  );
   const token = generateToken(user._id);
 
   return {
     token,
+    email,
+    isEmailVerified: user.isEmailVerified,
+    isSetupComplete: user.isSetupComplete,
+    firstName: user.firstName,
+    lastName: user.lastName,
   };
 };
 

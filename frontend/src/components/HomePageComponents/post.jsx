@@ -42,7 +42,6 @@ function Post({ postData, handLike }) {
         }
       );
       const data = await response.json();
-      console.log(data);
       setComments(data.posts);
     } catch (error) {
       console.log(error);
@@ -57,11 +56,11 @@ function Post({ postData, handLike }) {
         <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
           <Avatar
             sx={{ width: 30, height: 30 }}
-            src={postData.authorDetails?.profilePicture}
+            src={postData?.authorDetails?.profilePicture}
           >
-            {postData.authorDetails?.firstName?.[0]?.toUpperCase()}
+            {postData?.authorDetails?.firstName?.[0]?.toUpperCase()}
           </Avatar>
-          {postData.authorDetails?.firstName}
+          {postData?.authorDetails?.firstName}
         </Box>
         <Divider variant="fullWidth"></Divider>
         <Box

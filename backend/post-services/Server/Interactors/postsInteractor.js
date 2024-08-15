@@ -28,8 +28,8 @@ const handleLikeInteractor = async (postId, userId) => {
   return await postRepository.handleLikes(postId, userId);
 };
 
-const fetchPostInteractor = async (id, page, limit) => {
-  return await postRepository.fetchPosts(id, page, limit);
+const fetchPostInteractor = async (id, page, limit, friends) => {
+  return await postRepository.fetchPosts(id, page, limit, friends);
 };
 
 module.exports = {

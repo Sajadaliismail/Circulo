@@ -95,10 +95,10 @@ const MessageArea = ({
       >
         {messages?.messages?.length ? (
           messages.messages.map((mess) =>
-            mess?.senderId == friend.id ? (
+            mess?.senderId == friend._id ? (
               <SenderMessageList
                 mess={mess}
-                friend={friend.id}
+                friend={friend._id}
                 handleEmoji={handleEmoji}
               ></SenderMessageList>
             ) : (
@@ -138,7 +138,7 @@ const MessageArea = ({
         </Grid>
         <Grid item xs={1} align="right">
           <Fab
-            onClick={(e) => handleSubmit(friend.id, e)}
+            onClick={(e) => handleSubmit(friend._id, e)}
             color="primary"
             aria-label="send"
           >

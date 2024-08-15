@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Grid, Paper, Typography } from "@mui/material";
 import Copyright from "../CommonComponents/copyright";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import { useEffect, useState } from "react";
@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { sendOtp, verifyOtp } from "../../features/auth/authAsyncThunks";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function VerifyOtp() {
   const [count, setCount] = useState(60);
@@ -65,17 +66,29 @@ export default function VerifyOtp() {
       <Box component="form" noValidate sx={{ mt: 5, width: "100%" }}>
         <MuiOtpInput length={6} value={otp} onChange={handleChange} />
         <Box sx={{ display: "flex", justifyContent: "space-around" }}>
-          <Button variant="contained" sx={{ mt: 3 }} onClick={handleSubmit}>
-            Proceed
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ mt: 3 }}
-            disabled={count > 0}
-            onClick={handleResend}
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
           >
-            Resend OTP {count > 0 && `(${count})`}
-          </Button>
+            <Button variant="contained" sx={{ mt: 3 }} onClick={handleSubmit}>
+              Proceed
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          >
+            <Button
+              variant="contained"
+              sx={{ mt: 3 }}
+              disabled={count > 0}
+              onClick={handleResend}
+            >
+              Resend OTP {count > 0 && `(${count})`}
+            </Button>
+          </motion.div>
         </Box>
         <Copyright sx={{ mt: 5 }} />
       </Box>

@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Post = require("../Models/PostSchema");
 
 const createPost = async (data) => {
@@ -6,8 +7,15 @@ const createPost = async (data) => {
   return post._id;
 };
 
-const fetchPosts = async (id, page, limit) => {
+const fetchPosts = async (id, page, limit, friends) => {
+  console.log(friends);
+  const friendsObjectIdArray = friends.map(
+    (id) => new mongoose.Types.ObjectId(id)
+  );
   const posts = await Post.aggregate([
+    {
+      $match: { author: { $in: friendsObjectIdArray } },
+    },
     {
       $addFields: {
         hasLiked: { $in: [id, "$likes"] },
@@ -78,8 +86,11 @@ const fetchPosts = async (id, page, limit) => {
   ])
     .skip((page - 1) * limit)
     .limit(limit);
-  const count = await Post.countDocuments();
-  console.log(posts);
+  const count = await Post.countDocuments({
+    author: { $in: friendsObjectIdArray },
+  });
+  console.log(posts, count);
+
   return { posts, count };
 };
 

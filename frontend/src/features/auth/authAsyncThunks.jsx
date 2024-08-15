@@ -90,12 +90,16 @@ export const verifyOtp = createAsyncThunk(
         body: JSON.stringify(formData),
       });
       const data = await response.json();
+      console.log(data);
+
       if (!response.ok) {
         return rejectWithValue(data);
       }
       localStorage.setItem("jwt", data.token);
       return data;
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   }
 );
 

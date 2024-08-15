@@ -24,6 +24,7 @@ import UserList from "../components/ChatPageComponents/UserList";
 import chatSocket from "../features/utilities/Socket-io";
 import { darkTheme, lightTheme } from "./Style";
 import { UploadImage } from "../Utilities/UploadImage";
+import VideoCall from "./VideoCall";
 
 export default function ChatPage() {
   const dispatch = useDispatch();
