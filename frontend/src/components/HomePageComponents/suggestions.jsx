@@ -22,8 +22,9 @@ import {
   sentRequest,
 } from "../../features/friends/friendsAsyncThunks";
 import { Close, Done } from "@mui/icons-material";
+import HoverComponent from "../CommonComponents/HoverComponen";
 
-function Suggestions() {
+function Suggestions({ fetchUserData }) {
   const { suggestions, requestsPending } = useSelector(
     (state) => state.friends
   );
@@ -34,21 +35,28 @@ function Suggestions() {
     dispatch(getFriends());
   }, [dispatch]);
 
-  const handleRequest = async (id) => {
-    await dispatch(sentRequest({ friendId: id }));
-    dispatch(getSuggestions());
+  const updateStateAfterAction = async (action, updates = []) => {
+    await dispatch(action);
+    updates.forEach((update) => dispatch(update));
   };
 
-  const handleCancelRequest = async (id) => {
-    dispatch(cancelRequest({ friendId: id }));
-    dispatch(getSuggestions());
-    dispatch(getRequests());
+  const handleRequest = (id) => {
+    updateStateAfterAction(sentRequest({ friendId: id }), [getSuggestions()]);
   };
 
-  const handleAcceptRequest = async (id) => {
-    dispatch(acceptRequest({ friendId: id }));
-    dispatch(getSuggestions());
-    dispatch(getRequests());
+  const handleCancelRequest = (id) => {
+    updateStateAfterAction(cancelRequest({ friendId: id }), [
+      getSuggestions(),
+      getRequests(),
+    ]);
+  };
+
+  const handleAcceptRequest = (id) => {
+    updateStateAfterAction(acceptRequest({ friendId: id }), [
+      getSuggestions(),
+      getFriends(),
+      getRequests(),
+    ]);
   };
   return (
     <>
@@ -76,6 +84,7 @@ function Suggestions() {
               gap: 2,
               scrollbarWidth: "none",
               maxHeight: "50vh",
+              minHeight: "30vh",
             }}
           >
             {requestsPending?.length > 0 ? (
@@ -85,6 +94,16 @@ function Suggestions() {
                   display={"flex"}
                   alignItems={"center"}
                   gap={2}
+                  position="relative"
+                  onMouseOver={() => {
+                    fetchUserData(people.id);
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    [`&:hover .requests-${people.id}`]: {
+                      visibility: "visible",
+                    },
+                  }}
                 >
                   <Avatar src={people?.profilePicture}>
                     {people.firstName[0]}
@@ -104,6 +123,7 @@ function Suggestions() {
                       <Done />
                     </Button>
                   </ButtonGroup>
+                  <HoverComponent component={"requests"} id={people.id} />
                 </Box>
               ))
             ) : (
@@ -134,6 +154,16 @@ function Suggestions() {
                   display={"flex"}
                   alignItems={"center"}
                   gap={2}
+                  position="relative"
+                  onMouseOver={() => {
+                    fetchUserData(people.id);
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    [`&:hover .suggestions-${people.id}`]: {
+                      visibility: "visible",
+                    },
+                  }}
                 >
                   <Avatar src={people?.profilePicture}>
                     {people.firstName[0]}
@@ -146,6 +176,7 @@ function Suggestions() {
                   >
                     {people.hasRequested ? "Request sent" : "Connect"}
                   </Button>
+                  <HoverComponent component={"suggestions"} id={people.id} />
                 </Box>
               ))}
             </Box>

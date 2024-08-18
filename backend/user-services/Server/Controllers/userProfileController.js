@@ -35,6 +35,18 @@ const fetchUser = async (req, res) => {
   }
 };
 
+const fetchUserDetails = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    console.log(userId);
+
+    const result = await userInteractor.fetchUserInteractor(userId);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(404).json({ error: error.message });
+  }
+};
+
 const uploadImage = async (req, res) => {
   try {
     const userId = req.userId;
@@ -52,4 +64,4 @@ const uploadImage = async (req, res) => {
   }
 };
 
-module.exports = { addressSetup, fetchUser, uploadImage };
+module.exports = { addressSetup, fetchUser, uploadImage, fetchUserDetails };

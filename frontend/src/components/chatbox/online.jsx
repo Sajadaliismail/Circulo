@@ -10,6 +10,7 @@ import {
   styled,
 } from "@mui/material";
 import { BorderAllRounded, ExpandLess } from "@mui/icons-material";
+import { useSelector } from "react-redux";
 
 const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -21,15 +22,20 @@ const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
   borderTopRightRadius: "8px",
 }));
 
-const OnlinePeopleAccordion = ({ conversationsOpened, openConversation }) => {
+const OnlinePeopleAccordion = ({
+  conversationsOpened,
+  // openConversation,
+  handleChat,
+}) => {
+  const { friends } = useSelector((state) => state.friends);
   const [onlinePeople, setOnlinePeople] = useState([]);
   useEffect(() => {
-    setOnlinePeople(sampleData);
-  }, [sampleData]);
+    setOnlinePeople(friends);
+  }, [friends]);
 
-  const handleConversationClick = (id) => {
-    openConversation(id); // Call the function passed from parent
-  };
+  // const handleConversationClick = (id) => {
+  //   openConversation(id);
+  // };
 
   return (
     <>
@@ -54,13 +60,14 @@ const OnlinePeopleAccordion = ({ conversationsOpened, openConversation }) => {
           <AccordionDetails>
             <Box>
               <Typography variant="h6" gutterBottom>
-                Online People
+                Friends
               </Typography>
               <Box>
                 {onlinePeople.map((person) => (
                   <Box
                     onClick={() => {
-                      handleConversationClick(person.converSationId);
+                      handleChat(person);
+                      // handleConversationClick(person.id);
                     }}
                     key={person.id}
                     sx={{
@@ -69,8 +76,15 @@ const OnlinePeopleAccordion = ({ conversationsOpened, openConversation }) => {
                       marginBottom: 1,
                     }}
                   >
-                    <Avatar sx={{ marginRight: 1 }} src={person.avatar} />
-                    <Typography>{person.name}</Typography>
+                    <Avatar
+                      sx={{ marginRight: 1 }}
+                      src={person?.profilePicture}
+                    >
+                      {person?.firstName[0]}
+                    </Avatar>
+                    <Typography>
+                      {person.firstName} {person.lastName}
+                    </Typography>
                   </Box>
                 ))}
               </Box>

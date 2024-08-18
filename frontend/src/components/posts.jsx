@@ -16,7 +16,7 @@ function Posts() {
       <Container>
         <Paper elevation={1} sx={{ height: "100vh", borderRadius: "10px" }}>
           {posts &&
-            posts.map((post, index) => (
+            posts?.map((post, index) => (
               <>
                 <Post key={index} postData={post}></Post>
               </>

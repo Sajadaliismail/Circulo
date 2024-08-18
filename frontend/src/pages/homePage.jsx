@@ -14,6 +14,7 @@ import ChatApp from "../components/chatbox/chatbox";
 import OnlinePeopleAccordion from "../components/chatbox/online";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUser } from "../features/user/userAsyncThunks";
+import { fetchUserDetails } from "../features/friends/friendsAsyncThunks";
 
 const lightTheme = createTheme({
   palette: {
@@ -47,6 +48,7 @@ const darkTheme = createTheme({
 
 export default function Homepage() {
   const { user } = useSelector((state) => state.user);
+  const { userData } = useSelector((state) => state.friends);
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -59,6 +61,12 @@ export default function Homepage() {
   };
 
   const theme = currentTheme === "light" ? lightTheme : darkTheme;
+
+  const fetchUserData = (id) => {
+    if (!userData[id]) {
+      dispatch(fetchUserDetails(id));
+    }
+  };
 
   return (
     <>
@@ -74,11 +82,11 @@ export default function Homepage() {
                   md={3}
                   sx={{ display: { xs: "none", md: "block" } }}
                 >
-                  <Profile />
+                  <Profile fetchUserData={fetchUserData} />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <NewPost />
-                  <Posts />
+                  <Posts fetchUserData={fetchUserData} />
                 </Grid>
                 <Grid
                   item
@@ -86,9 +94,9 @@ export default function Homepage() {
                   md={3}
                   sx={{ display: { xs: "none", md: "block" } }}
                 >
-                  <Suggestions />
+                  <Suggestions fetchUserData={fetchUserData} />
                 </Grid>
-                {/* <ChatApp /> */}
+                <ChatApp />
               </Grid>
             </Box>
           </>

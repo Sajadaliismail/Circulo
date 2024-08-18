@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MoreVert from "@mui/icons-material/MoreVert";
 import {
   ClickAwayListener,
@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import AvatarWithUsername from "./withusername";
+import { useSelector } from "react-redux";
 
 const ChatBoxMessage = ({
   messageId,
@@ -15,11 +16,18 @@ const ChatBoxMessage = ({
   author,
   avatar,
   onEdit,
+  data,
   onRemove,
 }) => {
   const [actionMessageId, setActionMessageId] = useState();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const { userData } = useSelector((state) => state.friends);
+  const { user } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    console.log(user, author);
+  });
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -47,18 +55,33 @@ const ChatBoxMessage = ({
 
   if (author) {
     return (
-      <div className="flex my-2">
-        <AvatarWithUsername
-          username={author || ""}
-          src={avatar}
-          hiddenName={true}
-        />
+      <div
+        className={`flex my-2 ${
+          author === user._id ? "justify-end" : "justify-start"
+        }`}
+      >
+        {author !== user._id && (
+          <AvatarWithUsername
+            username={userData[author]?.firstName || ""}
+            profilePicture={userData[author]?.profilePicture}
+            hiddenName={true}
+          />
+        )}
         <div className="grid">
-          <Typography variant="caption">{author}</Typography>
-          <div className={"w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl"}>
+          {/* <Typography variant="caption">
+            {userData[author]?.firstName}
+          </Typography> */}
+          <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl">
             {message}
           </div>
         </div>
+        {author === user._id && (
+          <AvatarWithUsername
+            username={userData[author]?.firstName || ""}
+            profilePicture={userData[author]?.profilePicture}
+            hiddenName={true}
+          />
+        )}
       </div>
     );
   }

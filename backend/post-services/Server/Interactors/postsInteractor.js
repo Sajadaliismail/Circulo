@@ -21,7 +21,7 @@ const createPostInteractor = async (fileName, post, userId) => {
     author: userId,
   };
 
-  return await postRepository.createPost(postData);
+  return await postRepository.createPost(postData, userId);
 };
 
 const handleLikeInteractor = async (postId, userId) => {

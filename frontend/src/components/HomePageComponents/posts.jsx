@@ -14,7 +14,7 @@ import debounce from "lodash/debounce";
 import { SyncLoader } from "react-spinners";
 import { setPages } from "../../features/posts/postsSlice";
 
-function Posts() {
+function Posts({ fetchUserData }) {
   const { posts, count, pages } = useSelector((state) => state.posts);
   const dispatch = useDispatch();
   const limits = 10;
@@ -97,7 +97,12 @@ function Posts() {
         >
           {posts &&
             posts.map((post) => (
-              <Post handLike={handLike} key={post._id} postData={post} />
+              <Post
+                fetchUserData={fetchUserData}
+                handLike={handLike}
+                key={post._id}
+                postData={post}
+              />
             ))}
           <Box
             sx={{

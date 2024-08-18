@@ -16,8 +16,10 @@ import { useState } from "react";
 import CommentComponent from "./comments";
 import { useDispatch } from "react-redux";
 import { addComment } from "../../features/posts/postsAsyncThunks";
+import { convertUTCToIST } from "../../pages/Utilitis";
+import HoverComponent from "../CommonComponents/HoverComponen";
 
-function Post({ postData, handLike }) {
+function Post({ postData, handLike, fetchUserData }) {
   const [open, setOpen] = useState(true);
   const dispatch = useDispatch();
   const [commentContent, setCommentContent] = useState("");
@@ -28,6 +30,8 @@ function Post({ postData, handLike }) {
   };
 
   const handleOpen = async () => {
+    console.log(postData);
+
     setOpen((prev) => !prev);
     try {
       const token = localStorage.getItem("jwt");
@@ -51,16 +55,38 @@ function Post({ postData, handLike }) {
     <>
       <Paper
         elevation={5}
-        sx={{ borderRadius: "10px", padding: "5px", my: "8px" }}
+        sx={{ borderRadius: "10px", padding: "10px", my: "10px" }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <Box
+          onMouseOver={() => {
+            fetchUserData(postData?.authorDetails._id);
+          }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            cursor: "pointer",
+
+            [`&:hover .posts-${postData._id}-${postData?.authorDetails._id}`]: {
+              visibility: "visible",
+            },
+            position: "relative",
+          }}
+        >
           <Avatar
-            sx={{ width: 30, height: 30 }}
+            sx={{ width: 30, height: 30, my: 1 }}
             src={postData?.authorDetails?.profilePicture}
           >
             {postData?.authorDetails?.firstName?.[0]?.toUpperCase()}
           </Avatar>
           {postData?.authorDetails?.firstName}
+          <Typography variant="caption" sx={{ marginLeft: "auto" }}>
+            {convertUTCToIST(postData?.createdAt)}
+          </Typography>
+          <HoverComponent
+            component={`posts-${postData._id}`}
+            id={postData?.authorDetails._id}
+          />
         </Box>
         <Divider variant="fullWidth"></Divider>
         <Box
@@ -81,9 +107,9 @@ function Post({ postData, handLike }) {
               alt="postImage"
               sx={{
                 width: "100%",
-                height: "auto", // Maintains aspect ratio
-                objectFit: "cover", // Ensures the image covers the container
-                borderRadius: "10px", // Optional: Add border radius if needed
+                height: "auto",
+                objectFit: "cover",
+                borderRadius: "10px",
               }}
             />
           )}

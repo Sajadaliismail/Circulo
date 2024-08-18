@@ -12,9 +12,13 @@ import {
 } from "@mui/material";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getFriends } from "../../features/friends/friendsAsyncThunks";
+import {
+  getFriends,
+  fetchUserDetails,
+} from "../../features/friends/friendsAsyncThunks";
+import HoverComponent from "../CommonComponents/HoverComponen";
 
-function Friends() {
+function Friends({ fetchUserData }) {
   const { friends } = useSelector((state) => state.friends);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -43,15 +47,26 @@ function Friends() {
         ) : (
           friends?.map((people) => (
             <Box
-              key={people?.id}
+              key={`friends${people?.id}`}
               display={"flex"}
               alignItems={"center"}
               gap={2}
+              position="relative"
+              onMouseOver={() => {
+                fetchUserData(people.id);
+              }}
+              sx={{
+                cursor: "pointer",
+                [`&:hover .friends-${people.id}`]: {
+                  visibility: "visible",
+                },
+              }}
             >
               <Avatar src={people?.profilePicture}>
                 {people?.firstName[0]}
               </Avatar>
               {people?.firstName} {people?.lastName}
+              <HoverComponent component={"friends"} id={people.id} />
             </Box>
           ))
         )}

@@ -71,8 +71,8 @@ function LandingPage() {
               flexDirection: "column",
               alignItems: "center",
               marginX: "auto",
-              paddingX: { xs: 2, sm: 3, md: 4 }, // Responsive padding
-              paddingY: { xs: 4, sm: 5, md: 6 }, // Responsive padding
+              paddingX: { xs: 2, sm: 3, md: 4 },
+              paddingY: { xs: 4, sm: 5, md: 6 },
             }}
           >
             <AnimatePresence mode="wait">
@@ -89,7 +89,7 @@ function LandingPage() {
                     "linear-gradient(0deg, rgba(89,167,167,1) 0%, rgba(207,219,235,1) 50%, rgba(174,197,207,1) 100%)",
                   boxShadow:
                     "0px 6px 10px -2px rgba(0,0,0,0.8), 0px 8px 12px 0px rgba(0,0,0,0.6), 0px 4px 8px 0px rgba(0,0,0,0.8)",
-                  borderRadius: "50px",
+                  borderRadius: "10px",
                   marginTop: "10px",
                 }}
               >

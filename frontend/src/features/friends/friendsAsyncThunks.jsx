@@ -50,7 +50,6 @@ export const getFriends = createAsyncThunk("friends/getFriends", async () => {
       },
     });
     const data = await response.json();
-    console.log(data);
 
     return data;
   } catch (error) {
@@ -143,6 +142,32 @@ export const sentRequest = createAsyncThunk(
         }
       );
       const data = await response.json();
+      return data;
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+);
+
+export const fetchUserDetails = createAsyncThunk(
+  "friends/fetchUserDetails",
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const response = await fetch(
+        `http://localhost:3002/fetchUserData?userId=${id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        rejectWithValue("User Not found");
+      }
       return data;
     } catch (error) {
       console.log(error);

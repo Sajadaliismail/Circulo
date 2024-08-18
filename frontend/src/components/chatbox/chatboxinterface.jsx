@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
-import Card from '@mui/material/Card';
-import ChatBoxHeader from './chatboxheade';
-import ChatBoxFooter from './chatboxfooter';
-import ChatBoxMessage from './chatboxmessage';
+import { useEffect, useRef, useState } from "react";
+import Card from "@mui/material/Card";
+import ChatBoxHeader from "./chatboxheade";
+import ChatBoxFooter from "./chatboxfooter";
+import ChatBoxMessage from "./chatboxmessage";
+import { useSelector } from "react-redux";
 
 const ChatBox = ({
   avatar,
@@ -14,16 +15,29 @@ const ChatBox = ({
   onLoadPrevious,
   onRemove,
   title,
+  chatBoxOpen,
+  data,
 }) => {
   const messagesEndRef = useRef(null);
+  const { user } = useSelector((state) => state.user);
+  const { userData } = useSelector((state) => state.friends);
+
+  const [friendId, setFriendId] = useState("");
+  useEffect(() => {
+    if (data.user1 == user._id) setFriendId(data.user2);
+    else setFriendId(data.user1);
+  }, []);
 
   useEffect(() => {
     console.log(conversations);
+
     scrollToBottom();
 
-    const conversation = document.getElementById(`conversation-${conversationId}`);
+    const conversation = document.getElementById(
+      `conversation-${conversationId}`
+    );
 
-    conversation?.addEventListener('scroll', (e) => {
+    conversation?.addEventListener("scroll", (e) => {
       const el = e.target;
 
       if (el.scrollTop === 0) {
@@ -32,7 +46,7 @@ const ChatBox = ({
     });
 
     return () => {
-      conversation?.removeEventListener('scroll', (e) => {
+      conversation?.removeEventListener("scroll", (e) => {
         const el = e.target;
 
         if (el.scrollTop === 0) {
@@ -44,7 +58,7 @@ const ChatBox = ({
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -54,24 +68,36 @@ const ChatBox = ({
   };
 
   return (
-    <Card variant="outlined" className="w-80 md:w-96" sx={{ borderRadius: 5,  width:350  } }>
+    <Card
+      variant="outlined"
+      className="w-80 md:w-96"
+      sx={{
+        borderRadius: 5,
+        width: 350,
+      }}
+    >
       <ChatBoxHeader
-        title={title}
+        title={`${userData[friendId]?.firstName} ${userData[friendId]?.lastName}`}
+        profilePicture={userData[friendId]?.profilePicture}
         onClose={() => onClose(conversationId)}
         onMinimize={() => onMinimize(conversationId)}
       />
-      <div className="p-2 h-96 overflow-auto " id={`conversation-${conversationId}`}>
-        { conversations.map((conversation) => (
-          <ChatBoxMessage
-            key={conversation.messageId}
-            messageId={conversation.messageId}
-            message={conversation.message}
-            author={conversation.author}
-            avatar={conversation.avatar}
-            onRemove={(messageId) => onRemove(conversationId, messageId)}
-
-          />
-        ))}
+      <div
+        className="p-2 h-96 overflow-auto "
+        id={`conversation-${conversationId}`}
+      >
+        {conversations &&
+          conversations.map((conversation) => (
+            <ChatBoxMessage
+              key={conversation.messageId}
+              messageId={conversation.messageId}
+              message={conversation.message}
+              data={conversation}
+              author={conversation.senderId}
+              avatar={conversation.avatar}
+              onRemove={(messageId) => onRemove(conversationId, messageId)}
+            />
+          ))}
         <div ref={messagesEndRef} />
       </div>
       <ChatBoxFooter onSubmit={onSubmitMessage} />

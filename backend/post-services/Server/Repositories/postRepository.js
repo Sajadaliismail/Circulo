@@ -1,17 +1,106 @@
 const { default: mongoose } = require("mongoose");
 const Post = require("../Models/PostSchema");
 
-const createPost = async (data) => {
+const createPost = async (data, id) => {
   const post = new Post(data);
   await post.save();
-  return post._id;
+  if (!post) {
+    throw new Error("Error creating new Post");
+  }
+  const postData = await fetchPostCreated(id, post._id);
+  return postData;
+};
+
+const fetchPostCreated = async (id, postId) => {
+  const posts = await Post.aggregate([
+    {
+      $match: { _id: postId },
+    },
+    {
+      $addFields: {
+        hasLiked: { $in: [id, "$likes"] },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "authorDetails",
+      },
+    },
+    {
+      $unwind: "$authorDetails",
+    },
+    {
+      $lookup: {
+        from: "comments",
+        let: { postId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$post", "$$postId"] } } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "userDetails",
+            },
+          },
+          {
+            $unwind: {
+              path: "$userDetails",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              content: 1,
+              likes: 1,
+              likesCount: 1,
+              createdAt: 1,
+              "userDetails.firstName": 1,
+            },
+          },
+        ],
+        as: "comments",
+      },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+    {
+      $project: {
+        _id: 1,
+        content: 1,
+        image: 1,
+        likes: 1,
+        likesCount: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        hasLiked: 1,
+        "authorDetails.profilePicture": 1,
+        "authorDetails.firstName": 1,
+        "authorDetails._id": 1,
+        comments: 1,
+      },
+    },
+  ]);
+  if (!posts[0]) {
+    throw new Error("Error fetching the Post data");
+  }
+  return posts[0];
 };
 
 const fetchPosts = async (id, page, limit, friends) => {
-  console.log(friends);
-  const friendsObjectIdArray = friends.map(
+  let friendsObjectIdArray = friends.map(
     (id) => new mongoose.Types.ObjectId(id)
   );
+  friendsObjectIdArray = [
+    ...friendsObjectIdArray,
+    new mongoose.Types.ObjectId(id),
+  ];
+
   const posts = await Post.aggregate([
     {
       $match: { author: { $in: friendsObjectIdArray } },
@@ -38,7 +127,7 @@ const fetchPosts = async (id, page, limit, friends) => {
         let: { postId: "$_id" },
         pipeline: [
           { $match: { $expr: { $eq: ["$post", "$$postId"] } } },
-          { $sort: { createdAt: -1 } },
+          { $sort: { createdAt: 1 } },
           { $limit: 10 },
           {
             $lookup: {
@@ -69,6 +158,9 @@ const fetchPosts = async (id, page, limit, friends) => {
       },
     },
     {
+      $sort: { createdAt: -1 },
+    },
+    {
       $project: {
         _id: 1,
         content: 1,
@@ -80,6 +172,7 @@ const fetchPosts = async (id, page, limit, friends) => {
         hasLiked: 1,
         "authorDetails.profilePicture": 1,
         "authorDetails.firstName": 1,
+        "authorDetails._id": 1,
         comments: 1,
       },
     },
@@ -89,7 +182,8 @@ const fetchPosts = async (id, page, limit, friends) => {
   const count = await Post.countDocuments({
     author: { $in: friendsObjectIdArray },
   });
-  console.log(posts, count);
+
+  console.log(posts);
 
   return { posts, count };
 };

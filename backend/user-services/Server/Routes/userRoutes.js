@@ -25,4 +25,10 @@ route.post(
 route.post("/updateaddress", verifyToken, userProfileController.addressSetup);
 route.get("/fetchuser", verifyToken, userProfileController.fetchUser);
 
+route.get(
+  "/fetchUserData",
+  verifyToken,
+  userProfileController.fetchUserDetails
+);
+
 module.exports = route;

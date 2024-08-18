@@ -11,12 +11,13 @@ const addPosts = async (req, res) => {
       post,
       userId
     );
+
     const message = {
       _id: userId,
       postId: result._id,
     };
     publishMessage("post_created", message);
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ result });
   } catch (error) {
     console.log(error);
 
@@ -27,8 +28,14 @@ const addPosts = async (req, res) => {
 const fetchPosts = async (req, res) => {
   try {
     const userId = req.userId;
+    const token = req.headers.authorization;
     const response = await fetch(
-      `http://localhost:3006/friends/api/friendsListUser/${userId}`
+      `http://localhost:3006/friends/api/friendsListUser/${userId}`,
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
     );
 
     const friends = await response.json();

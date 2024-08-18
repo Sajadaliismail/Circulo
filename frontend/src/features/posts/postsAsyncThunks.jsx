@@ -15,7 +15,7 @@ export const addPost = createAsyncThunk(
         body: formData,
       });
       const data = await response.json();
-      return true;
+      return data;
     } catch (error) {
       console.log(error);
       return;
@@ -41,7 +41,6 @@ export const fetchPosts = createAsyncThunk(
         }
       );
       const data = await response.json();
-      console.log(data);
       return data;
     } catch (error) {}
   }
@@ -83,7 +82,6 @@ export const addComment = createAsyncThunk(
         body: JSON.stringify(formdata),
       });
       const data = await response.json();
-      console.log(data);
     } catch (error) {}
   }
 );

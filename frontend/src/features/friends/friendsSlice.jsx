@@ -1,5 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getFriends, getRequests, getSuggestions } from "./friendsAsyncThunks";
+import {
+  fetchUserDetails,
+  getFriends,
+  getRequests,
+  getSuggestions,
+} from "./friendsAsyncThunks";
 
 const initialState = {
   friends: [],
@@ -9,6 +14,7 @@ const initialState = {
   requestsPending: [],
   status: "",
   error: "",
+  userData: {},
 };
 
 const friendsSlice = createSlice({
@@ -25,6 +31,10 @@ const friendsSlice = createSlice({
       })
       .addCase(getFriends.fulfilled, (state, action) => {
         state.friends = action.payload.friends;
+      })
+      .addCase(fetchUserDetails.fulfilled, (state, action) => {
+        const { _id } = action?.payload;
+        state.userData[_id] = action.payload;
       });
   },
 });

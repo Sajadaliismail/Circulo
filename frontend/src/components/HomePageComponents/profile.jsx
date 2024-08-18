@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import Friends from "./friends";
 
-function Profile() {
+function Profile({ fetchUserData }) {
   const { user } = useSelector((state) => state.user);
 
   return (
@@ -93,8 +93,9 @@ function Profile() {
             </Typography>
             <Typography>{user.email}</Typography>
           </Box>
+
           <Divider variant="fullWidth"></Divider>
-          <Friends />
+          <Friends fetchUserData={fetchUserData} />
         </Paper>
       </Container>
     </>

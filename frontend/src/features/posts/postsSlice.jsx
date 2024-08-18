@@ -29,6 +29,8 @@ const postSlice = createSlice({
       .addCase(addPost.fulfilled, (state, action) => {
         state.status = "";
         state.error = {};
+        const prevPosts = state.posts;
+        state.posts = [action.payload.result, ...prevPosts];
       })
       .addCase(addPost.rejected, (state, action) => {
         state.status = "";
@@ -37,17 +39,19 @@ const postSlice = createSlice({
         state.status = "loading";
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
-        const newPosts = action.payload.posts;
-        const prevPostsIdSet = new Set(state.posts.map((post) => post._id));
-        const filteredPosts = newPosts.filter(
-          (post) => !prevPostsIdSet.has(post._id)
-        );
+        const newPosts = action.payload?.posts;
+        if (newPosts) {
+          const prevPostsIdSet = new Set(state.posts.map((post) => post._id));
+          const filteredPosts = newPosts?.filter(
+            (post) => !prevPostsIdSet.has(post._id)
+          );
 
-        const updatedPosts = [...state.posts, ...filteredPosts];
+          const updatedPosts = [...state.posts, ...filteredPosts];
+          state.posts = updatedPosts;
+          state.count = action.payload.count;
+        }
         state.status = "";
         state.error = {};
-        state.posts = updatedPosts;
-        state.count = action.payload.count;
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.status = "";

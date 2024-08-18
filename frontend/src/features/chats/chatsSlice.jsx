@@ -95,16 +95,50 @@ const chatsSlice = createSlice({
         return mess;
       });
     },
+    setChatBox: (state) => {
+      const currState = state.chats;
+      state.chats = Object.fromEntries(
+        Object.entries(currState).map(([key, chat]) => [
+          key,
+          {
+            ...chat,
+            chatBoxOpen: false,
+            minimized: false,
+          },
+        ])
+      );
+    },
+    setMinimize: (state, action) => {
+      const id = action.payload;
+      const curr = state.chats[id];
+      state.chats[id] = { ...curr, minimized: !curr.minimized };
+    },
+    setClosed: (state, action) => {
+      const id = action.payload;
+      const curr = state.chats[id];
+      state.chats[id] = { ...curr, chatBoxOpen: false };
+    },
+    setOpen: (state, action) => {
+      const id = action.payload;
+      const curr = state.chats[id];
+      state.chats[id] = { ...curr, chatBoxOpen: true };
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchchats.fulfilled, (state, action) => {
-        const { roomId, messages, hasOpened, unreadCount } = action.payload;
+        const { roomId, messages, hasOpened, unreadCount, user1, user2 } =
+          action.payload;
+        const curr = state.chats[roomId];
 
         state.chats[roomId] = {
+          ...curr,
           messages,
           hasOpened,
           unreadCount,
+          roomId: roomId,
+          user1,
+          user2,
         };
         state.roomId = roomId;
       })
@@ -114,6 +148,9 @@ const chatsSlice = createSlice({
             state.chats[chat.roomId] = {
               messages: chat.messages,
               unReadCount: chat.unreadCount,
+              roomId: chat.roomId,
+              user1: chat.user1,
+              user2: chat.user2,
             };
           });
         }
@@ -131,5 +168,9 @@ export const {
   setReceivedChats,
   setSentMessages,
   setEmoji,
+  setChatBox,
+  setOpen,
+  setClosed,
+  setMinimize,
 } = chatsSlice.actions;
 export default chatsSlice.reducer;
