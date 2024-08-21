@@ -30,14 +30,13 @@ function Friends({ fetchUserData }) {
       <CssBaseline />
       <Container
         sx={{
-          height: "100vh",
+          height: "60vh",
           marginY: "10px",
-          paddingY: "10px",
-
           paddingX: "15px",
           display: "flex",
           flexDirection: "column",
-          rowGap: "10px",
+          overflowY: "scroll",
+          scrollbarWidth: "none",
         }}
       >
         <Typography variant="h6">Friends</Typography>
@@ -52,14 +51,24 @@ function Friends({ fetchUserData }) {
               alignItems={"center"}
               gap={2}
               position="relative"
-              onMouseOver={() => {
-                fetchUserData(people.id);
-              }}
+              // onMouseOver={() => {
+              //   fetchUserData(people.id);
+              // }}
               sx={{
-                cursor: "pointer",
-                [`&:hover .friends-${people.id}`]: {
-                  visibility: "visible",
+                padding: 1,
+                borderRadius: "12px",
+                letterSpacing: "0.5px",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                  boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.3)",
+                  backgroundColor: "#c4c9d4",
+                  color: "black",
                 },
+                cursor: "pointer",
+                // [`&:hover .friends-${people.id}`]: {
+                //   visibility: "visible",
+                // },
               }}
             >
               <Avatar src={people?.profilePicture}>

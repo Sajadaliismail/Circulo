@@ -1,5 +1,8 @@
 const express = require("express");
 const authenticateToken = require("../Middlewares/authenticationJWT");
+const jwt = require("jsonwebtoken");
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 const { Rooms } = require("../Models/mongoDb");
 const { default: mongoose } = require("mongoose");
 
@@ -40,6 +43,12 @@ route.get("/fetchchat", authenticateToken, async (req, res) => {
           path: "$messageDetails",
           preserveNullAndEmptyArrays: true,
         },
+      },
+      {
+        $sort: { "messageDetails.timestamp": -1 },
+      },
+      {
+        $limit: 30,
       },
       {
         $sort: { "messageDetails.timestamp": 1 },
@@ -106,7 +115,7 @@ route.get("/fetchAllChats", authenticateToken, async (req, res) => {
   try {
     const userId = req.userId;
 
-    const chat = await Rooms.aggregate([
+    const chats = await Rooms.aggregate([
       {
         $match: {
           $or: [
@@ -141,7 +150,7 @@ route.get("/fetchAllChats", authenticateToken, async (req, res) => {
         },
       },
       {
-        $sort: { "messageDetails.timestamp": 1 },
+        $sort: { "messageDetails.timestamp": -1 }, // Sort messages by timestamp in descending order
       },
       {
         $group: {
@@ -169,7 +178,11 @@ route.get("/fetchAllChats", authenticateToken, async (req, res) => {
               ],
             },
           },
+          latestMessageTimestamp: { $max: "$messageDetails.timestamp" }, // Get the latest message timestamp for sorting
         },
+      },
+      {
+        $sort: { latestMessageTimestamp: -1 }, // Sort chat rooms by the latest message timestamp in descending order
       },
       {
         $project: {
@@ -182,10 +195,10 @@ route.get("/fetchAllChats", authenticateToken, async (req, res) => {
         },
       },
     ]);
-    return res.status(200).json({ success: true, chat: chat });
+
+    return res.status(200).json({ success: true, chats: chats });
   } catch (error) {
     console.log(error);
-
     return res.status(400).json({ failed: true });
   }
 });
@@ -216,35 +229,41 @@ route.get("/fetchChatFriends", authenticateToken, async (req, res) => {
             },
           },
           roomId: 1,
+          updatedAt: 1,
         },
       },
       {
         $group: {
           _id: "$roomId",
           chatFriends: { $addToSet: "$otherUserId" },
+          updatedAt: { $first: "$updatedAt" },
         },
       },
       {
         $unwind: "$chatFriends",
       },
+      // {
+      //   $lookup: {
+      //     from: "users",
+      //     foreignField: "_id",
+      //     localField: "chatFriends",
+      //     as: "userDetails",
+      //   },
+      // },
+      // { $unwind: "$userDetails" },
+      // {
+      //   $project: {
+      //     _id: 1,
+      //     chatFriends: 1,
+      //     "userDetails.firstName": 1,
+      //     "userDetails.lastName": 1,
+      //     "userDetails.profilePicture": 1,
+      //     "userDetails._id": 1,
+      //     updatedAt: 1,
+      //   },
+      // },
       {
-        $lookup: {
-          from: "users",
-          foreignField: "_id",
-          localField: "chatFriends",
-          as: "userDetails",
-        },
-      },
-      { $unwind: "$userDetails" },
-      {
-        $project: {
-          _id: 1,
-          chatFriends: 1,
-          "userDetails.firstName": 1,
-          "userDetails.lastName": 1,
-          "userDetails.profilePicture": 1,
-          "userDetails._id": 1,
-        },
+        $sort: { updatedAt: -1 },
       },
     ]);
 
@@ -254,4 +273,35 @@ route.get("/fetchChatFriends", authenticateToken, async (req, res) => {
     return res.status(400).json({ error });
   }
 });
+
+// route.post("/auth/refresh-token", (req, res) => {
+//   try {
+//     const refreshToken = req.cookies.refreshToken;
+
+//     if (!refreshToken)
+//       return res.status(403).json({ message: "No refresh token provided" });
+
+//     jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, user) => {
+//       if (err)
+//         return res.status(403).json({ message: "Invalid refresh token" });
+
+//       const newAccessToken = jwt.sign(
+//         { userId: user.userId },
+//         ACCESS_TOKEN_SECRET,
+//         { expiresIn: "15m" }
+//       );
+
+//       res.cookie("accessToken", newAccessToken, {
+//         httpOnly: true,
+//         sameSite: "None",
+//         secure: true,
+//         maxAge: 7 * 24 * 60 * 60 * 1000,
+//       });
+//       res.status(200).json({ accessToken: newAccessToken });
+//     });
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// });
+
 module.exports = route;

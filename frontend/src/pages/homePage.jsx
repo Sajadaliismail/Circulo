@@ -96,7 +96,7 @@ export default function Homepage() {
                 >
                   <Suggestions fetchUserData={fetchUserData} />
                 </Grid>
-                <ChatApp />
+                <ChatApp fetchUserData={fetchUserData} />
               </Grid>
             </Box>
           </>

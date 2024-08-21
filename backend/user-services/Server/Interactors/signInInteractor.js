@@ -1,6 +1,9 @@
 const { compare } = require("bcrypt");
 const userRepository = require("../Repositories/userRepository");
-const generateToken = require("../Utilities/generateToken");
+const {
+  generateToken,
+  generateRefreshToken,
+} = require("../Utilities/generateToken");
 
 const signInInteractor = async (data) => {
   const { email, password } = data;
@@ -31,8 +34,10 @@ const signInInteractor = async (data) => {
   }
 
   const token = generateToken(userData._id);
+  const refreshToken = generateRefreshToken(userData._id);
 
   return {
+    refreshToken,
     token,
     isEmailVerified: true,
     isSetupComplete: userData.isSetupComplete,

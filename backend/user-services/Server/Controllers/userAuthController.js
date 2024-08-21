@@ -4,7 +4,6 @@ const signInInteractor = require("../Interactors/signInInteractor");
 
 const signupUser = async (req, res) => {
   try {
-    const userData = req.body;
     const user = await createUserInteractor(userData);
     return res.status(200).json({ email: user.email });
   } catch (error) {
@@ -24,6 +23,19 @@ const signInUser = async (req, res) => {
       return res.status(206).json(result);
     }
 
+    res.cookie("accessToken", result.token, {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json(result);
   } catch (error) {
     console.log(error);
@@ -41,8 +53,6 @@ const signInUser = async (req, res) => {
 };
 
 const updatePassword = async (req, res) => {
-  console.log(req.body);
-
   try {
     const { email, password } = req.body;
     await passwordUpdateInteractor(email, password);

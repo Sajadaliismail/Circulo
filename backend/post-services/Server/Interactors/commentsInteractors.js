@@ -13,7 +13,7 @@ const createCommentInteractor = async (comment, userId, postId) => {
 };
 
 const handleLikeInteractor = async (commentId, userId) => {
-  await commentRepository.handleLikes(commentId, userId);
+  return await commentRepository.handleLikes(commentId, userId);
 };
 
 const fetchCommentInteractor = async (id, postId) => {

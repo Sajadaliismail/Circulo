@@ -12,6 +12,8 @@
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
     "cloudinary": "^2.4.0",
+    "cookie": "^0.6.0",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

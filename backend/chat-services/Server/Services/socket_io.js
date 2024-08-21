@@ -19,6 +19,7 @@ const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
     origin: CORS_ORIGIN,
+    credentials: true,
   },
 });
 
@@ -37,12 +38,14 @@ io.on("connection", (socket) => {
     joinRoom(userId, socket);
   });
 
-  socket.on("emoji_send", async ({ id, emoji, friendId }) => {
-    await SendEmoji(id, emoji, friendId, io, socket);
+  socket.on("emoji_send", async ({ id, emoji, friendId, roomId }) => {
+    await SendEmoji(id, emoji, friendId, io, socket, roomId);
   });
 
-  socket.on("message", async ({ userId, message, type }) => {
-    await handleMessage(userId, message, type, io, socket);
+  socket.on("message", async ({ userId, message, type, roomId }) => {
+    console.log(userId, message, type, roomId);
+
+    await handleMessage(userId, message, type, io, socket, roomId);
   });
 
   socket.on("disconnect", () => {

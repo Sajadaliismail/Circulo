@@ -21,7 +21,6 @@ const updateChatMessages = (
   type,
   _id
 ) => {
-  console.log(roomId, senderId, message, timestamp, type);
   let newChats;
   if (type === "text") {
     newChats = { senderId, timestamp, message, _id };
@@ -29,6 +28,7 @@ const updateChatMessages = (
     newChats = { senderId, timestamp, imageUrl: message, _id };
   }
   const prevChats = state.chats[roomId]?.messages || [];
+
   return [...prevChats, newChats];
 };
 
@@ -39,6 +39,8 @@ const chatsSlice = createSlice({
     setChats: (state, action) => {
       const { roomId, hasOpened, senderId, message, timestamp, type, _id } =
         action.payload;
+      const curr = state.chats[roomId];
+
       state.chats[roomId] = {
         messages: updateChatMessages(
           state,
@@ -49,16 +51,25 @@ const chatsSlice = createSlice({
           type,
           _id
         ),
-        hasOpened,
+        ...curr,
       };
     },
     setReceivedChats: (state, action) => {
-      const { message, senderId, roomId, timestamp } = action.payload;
+      const { message, senderId, roomId, timestamp, type, _id } =
+        action.payload;
+      const curr = state.chats[roomId];
+
       state.chats[roomId] = {
-        messages: updateChatMessages(state, roomId, [
-          { message, senderId, timestamp },
-        ]),
-        hasOpened: false,
+        messages: updateChatMessages(
+          state,
+          roomId,
+          senderId,
+          message,
+          timestamp,
+          type,
+          _id
+        ),
+        ...curr,
       };
     },
     setUnreadMessages: (state, action) => {
@@ -121,7 +132,7 @@ const chatsSlice = createSlice({
     setOpen: (state, action) => {
       const id = action.payload;
       const curr = state.chats[id];
-      state.chats[id] = { ...curr, chatBoxOpen: true };
+      state.chats[id] = { ...curr, chatBoxOpen: true, minimized: false };
     },
   },
   extraReducers: (builder) => {
@@ -143,7 +154,7 @@ const chatsSlice = createSlice({
         state.roomId = roomId;
       })
       .addCase(fetchAllChats.fulfilled, (state, action) => {
-        if (action.payload.length) {
+        if (action.payload?.length) {
           action.payload.map((chat) => {
             state.chats[chat.roomId] = {
               messages: chat.messages,

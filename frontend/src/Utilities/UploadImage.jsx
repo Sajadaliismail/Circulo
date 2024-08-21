@@ -1,12 +1,4 @@
-export const UploadImage = async (
-  id,
-  setImageUrl,
-  imageUrl,
-  dispatch,
-  setSentMessages,
-  chatSocket,
-  image
-) => {
+export const UploadImage = async (id, setImageUrl, chatSocket, image) => {
   const formData = new FormData();
   formData.append("file", image);
   formData.append("upload_preset", "circulo");
@@ -26,13 +18,6 @@ export const UploadImage = async (
         message: message,
         type: "image",
       });
-      dispatch(
-        setSentMessages({
-          message: imageUrl,
-          timestamp: Date.now(),
-          type: "image",
-        })
-      );
     }
   } catch (err) {
     console.error("Error uploading image:", err);

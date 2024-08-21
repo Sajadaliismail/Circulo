@@ -16,5 +16,6 @@ route.post("/handlelike", authenticateToken, postsController.handleLike);
 
 route.post("/addcomment", authenticateToken, commentController.addComment);
 route.get("/fetchComments", authenticateToken, commentController.fetchComment);
+route.post("/likeComments", authenticateToken, commentController.handleLike);
 
 module.exports = route;

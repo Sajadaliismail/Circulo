@@ -17,6 +17,19 @@ const verifyOtp = async (req, res) => {
 
     const result = await otpInteractor.verifyOtpInteractor(inputOtp, email);
 
+    res.cookie("accessToken", result.token, {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json(result);
   } catch (err) {
     console.log(err);

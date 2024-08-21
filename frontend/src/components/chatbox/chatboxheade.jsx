@@ -1,21 +1,34 @@
-import { lazy } from "react";
+import { lazy, useEffect, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import MinimizeIcon from "@mui/icons-material/Remove";
-import { IconButton } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
+import { useSelector } from "react-redux";
 
 const AvatarWithUsername = lazy(() => import("./withusername"));
 
-const ChatBoxHeader = ({ title, onClose, onMinimize, profilePicture }) => {
+const ChatBoxHeader = ({ onClose, onMinimize, data }) => {
+  const { userData } = useSelector((state) => state.friends);
+  const { user } = useSelector((state) => state.user);
+  const [friendId, setFriendId] = useState("");
+
+  useEffect(() => {
+    if (data.user1 == user._id) setFriendId(data.user2);
+    else setFriendId(data.user1);
+  }, []);
+
   return (
     <div
-      className="flex justify-between items-center bg-blue-600 text-white p-1 rounded-lg "
-      style={{ width: "350px" }}
+      onClick={onMinimize}
+      className="flex justify-between items-center text-white p-1 rounded-lg ps-2 w-[350px] bg-blue-600 hover:bg-blue-700 cursor-pointer"
     >
-      <AvatarWithUsername username={title} profilePicture={profilePicture} />
+      <Box className="flex items-center">
+        <AvatarWithUsername
+          username={`${userData[friendId]?.firstName} ${userData[friendId]?.lastName}`}
+          profilePicture={userData[friendId]?.profilePicture}
+        />
+        <span className="text-base font-bold">{`${userData[friendId]?.firstName} ${userData[friendId]?.lastName}`}</span>
+      </Box>
       <div className="flex mr-3">
-        <IconButton onClick={onMinimize}>
-          <MinimizeIcon className="text-white" />
-        </IconButton>
         <IconButton onClick={onClose}>
           <CloseIcon className="text-white" />
         </IconButton>

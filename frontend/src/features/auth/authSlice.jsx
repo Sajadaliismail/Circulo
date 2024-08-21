@@ -16,6 +16,7 @@ const initialState = {
   email: "",
   firstName: "",
   lastName: "",
+  accessToken: null,
 };
 
 const authSlice = createSlice({
@@ -30,12 +31,19 @@ const authSlice = createSlice({
     },
     setLogout: (state) => {
       state.isLoggedIn = false;
+      // localStorage.removeItem("jwt");
     },
     resetErrors: (state) => {
       state.error = {};
     },
     setIsSetupComplete: (state) => {
       state.isSetupComplete = true;
+    },
+    setAccessToken: (state, action) => {
+      state.accessToken = action.payload;
+    },
+    clearAccessToken: (state) => {
+      state.accessToken = null;
     },
   },
   extraReducers: (builder) => {
@@ -126,5 +134,6 @@ export const {
   setLogout,
   setIsSetupComplete,
   resetErrors,
+  setAccessToken,
 } = authSlice.actions;
 export default authSlice.reducer;

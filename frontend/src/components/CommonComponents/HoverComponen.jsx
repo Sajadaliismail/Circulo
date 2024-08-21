@@ -12,48 +12,50 @@ const HoverComponent = ({ id, component }) => {
   return (
     <>
       {userData && (
-        <Box
-          component={Paper}
-          elevation={5}
-          className={`${component}-${id}`}
-          sx={{
-            visibility: "hidden",
-            textWrap: "nowrap",
-            position: "absolute",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            alignContent: "center",
-            top: "100%",
-            left: 0,
-            gap: 2,
-            borderStyle: "solid",
-            borderColor: "black",
-            borderRadius: 3,
-            paddingX: 2,
-            justifyContent: "space-around",
-            zIndex: 1,
-          }}
-        >
-          <Box>
-            <Avatar
-              sx={{ width: 55, height: 55 }}
-              src={userData[id]?.profilePicture}
-              onClick={handleOpen}
-            >
-              {userData[id]?.firstName[0]?.toUpperCase()}
-            </Avatar>
+        <>
+          <Box
+            component={Paper}
+            elevation={5}
+            className={`${component}-${id}`}
+            sx={{
+              visibility: "hidden",
+              textWrap: "nowrap",
+              position: "absolute",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              alignContent: "center",
+              left: 0,
+              gap: 2,
+              borderStyle: "solid",
+              borderColor: "black",
+              borderRadius: 3,
+              paddingX: 2,
+              justifyContent: "space-around",
+              zIndex: 10,
+            }}
+          >
+            <Box>
+              <Avatar
+                sx={{ width: 55, height: 55 }}
+                src={userData[id]?.profilePicture}
+                onClick={handleOpen}
+              >
+                {userData[id]?.firstName[0]?.toUpperCase()}
+              </Avatar>
+            </Box>
+            <Box>
+              <Typography variant="body1">
+                {userData[id]?.firstName} {userData[id]?.lastName}
+              </Typography>
+              <Typography variant="caption">
+                {userData[id]?.city}, {userData[id]?.state},{" "}
+                {userData[id]?.country}
+              </Typography>
+              <Typography variant="subtitle2">{userData[id]?.email}</Typography>
+            </Box>
           </Box>
-          <Box>
-            <Typography variant="body1">
-              {userData[id]?.firstName} {userData[id]?.lastName}
-            </Typography>
-            <Typography variant="caption">
-              {userData[id]?.city}, {userData[id]?.state},{" "}
-              {userData[id]?.country}
-            </Typography>
-            <Typography variant="subtitle2">{userData[id]?.email}</Typography>
-          </Box>
+
           <Modal
             open={open}
             onClose={handleClose}
@@ -74,6 +76,7 @@ const HoverComponent = ({ id, component }) => {
                 fontSize: "25px",
                 borderRadius: 5,
                 color: "white",
+                zIndex: 1200,
               }}
             >
               <Avatar
@@ -85,7 +88,7 @@ const HoverComponent = ({ id, component }) => {
               {userData[id]?.firstName} {userData[id]?.lastName}
             </Box>
           </Modal>
-        </Box>
+        </>
       )}
     </>
   );

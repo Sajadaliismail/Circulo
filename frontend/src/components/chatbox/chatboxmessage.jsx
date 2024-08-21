@@ -25,10 +25,6 @@ const ChatBoxMessage = ({
   const { userData } = useSelector((state) => state.friends);
   const { user } = useSelector((state) => state.user);
 
-  useEffect(() => {
-    console.log(user, author);
-  });
-
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -68,9 +64,6 @@ const ChatBoxMessage = ({
           />
         )}
         <div className="grid">
-          {/* <Typography variant="caption">
-            {userData[author]?.firstName}
-          </Typography> */}
           <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl">
             {message}
           </div>
@@ -80,6 +73,7 @@ const ChatBoxMessage = ({
             username={userData[author]?.firstName || ""}
             profilePicture={userData[author]?.profilePicture}
             hiddenName={true}
+            data={data}
           />
         )}
       </div>

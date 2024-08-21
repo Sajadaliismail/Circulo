@@ -1,14 +1,14 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 const BACKEND = process.env.REACT_APP_BACKEND;
 
-export const fetchUser = createAsyncThunk("user/fetchUser", async () => {
+export const fetchUser = createAsyncThunk("user/fetchUser", async (_) => {
   try {
-    const token = localStorage.getItem("jwt");
     const response = await fetch(`${BACKEND}/fetchuser`, {
       method: "GET",
+      credentials: "include",
+
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
     const data = await response.json();
@@ -22,20 +22,14 @@ export const fetchUser = createAsyncThunk("user/fetchUser", async () => {
 export const uploadImage = createAsyncThunk(
   "user/uploadImage",
   async (formData) => {
-    console.log(formData);
     try {
       const imageData = new FormData();
       imageData.append("image", formData);
-
-      const token = localStorage.getItem("jwt");
       const response = await fetch(`${BACKEND}/uploadImage`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
         body: imageData,
       });
-      console.log(response);
     } catch (error) {}
   }
 );

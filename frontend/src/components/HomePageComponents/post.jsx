@@ -26,23 +26,25 @@ function Post({ postData, handLike, fetchUserData }) {
   const [comments, setComments] = useState([]);
 
   const submitComment = async () => {
-    dispatch(addComment({ comment: commentContent, postId: postData._id }));
+    dispatch(
+      addComment({ comment: commentContent, postId: postData._id })
+    ).then((action) => {
+      if (action.payload) {
+        setComments((comment) => {
+          return [action.payload, ...comment];
+        });
+      }
+    });
   };
 
   const handleOpen = async () => {
-    console.log(postData);
-
     setOpen((prev) => !prev);
     try {
-      const token = localStorage.getItem("jwt");
       const response = await fetch(
         `http://localhost:3004/posts/fetchComments?postId=${postData._id}`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         }
       );
       const data = await response.json();
@@ -51,11 +53,32 @@ function Post({ postData, handLike, fetchUserData }) {
       console.log(error);
     }
   };
+
+  const handleLike = async (_id) => {
+    const response = await fetch(`http://localhost:3004/posts/likeComments`, {
+      method: "POST",
+      credentials: "include",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ _id }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      setComments((comments) => {
+        return comments.map((comment) =>
+          comment._id === data._id ? data : comment
+        );
+      });
+    }
+  };
   return (
     <>
       <Paper
         elevation={5}
-        sx={{ borderRadius: "10px", padding: "10px", my: "10px" }}
+        sx={{ borderRadius: "10px", padding: "10px", my: "10px", mx: "5px" }}
       >
         <Box
           onMouseOver={() => {
@@ -97,6 +120,9 @@ function Post({ postData, handLike, fetchUserData }) {
             gap: "5px",
             textAlign: "start",
             width: "100%",
+            backgroundColor: "#f5f5f5 ",
+            padding: 1,
+            borderRadius: 2,
           }}
         >
           <Typography variant="body2">{postData.content}</Typography>
@@ -145,7 +171,11 @@ function Post({ postData, handLike, fetchUserData }) {
           </ButtonGroup>
         </Box>
         {!open && (
-          <Paper elevation={8} sx={{ paddingX: "10px", marginTop: "10px" }}>
+          <Box
+            sx={{
+              marginTop: "10px",
+            }}
+          >
             <Typography variant="body1" sx={{ fontWeight: "200" }}>
               Comments
             </Typography>
@@ -170,7 +200,7 @@ function Post({ postData, handLike, fetchUserData }) {
               <Button
                 onClick={submitComment}
                 variant="contained"
-                className="ms-auto "
+                className="ms-auto"
                 sx={{ borderRadius: "50px" }}
               >
                 Comment
@@ -179,10 +209,14 @@ function Post({ postData, handLike, fetchUserData }) {
             <Box>
               {comments &&
                 comments.map((comment) => (
-                  <CommentComponent key={comment._id} comment={comment} />
+                  <CommentComponent
+                    key={comment._id}
+                    comment={comment}
+                    handleLike={handleLike}
+                  />
                 ))}
             </Box>
-          </Paper>
+          </Box>
         )}
       </Paper>
     </>

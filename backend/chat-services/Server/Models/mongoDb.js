@@ -18,6 +18,22 @@ const roomSchema = new mongoose.Schema({
   user2: { type: mongoose.Types.ObjectId, ref: "user" },
   messages: [{ type: mongoose.Types.ObjectId, ref: "message", required: true }],
   hasOpened: { type: Boolean, default: false },
+  updatedAt: { type: Date, default: Date.now() },
+});
+
+roomSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+roomSchema.pre("updateOne", function (next) {
+  this.set({ updatedAt: Date.now() });
+  next();
+});
+
+roomSchema.pre("findOneAndUpdate", function (next) {
+  this.set({ updatedAt: Date.now() });
+  next();
 });
 
 const Message = mongoose.model("message", messageSchema);

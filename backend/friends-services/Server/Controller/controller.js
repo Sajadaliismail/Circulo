@@ -53,8 +53,11 @@ const suggestions = async (req, res) => {
 
   try {
     const result = await getSuggestions(userId, postalCode);
+
     res.status(200).json({ suggestions: result });
   } catch (error) {
+    console.log(error);
+
     res.status(500).send("Server error");
   }
 };

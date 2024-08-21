@@ -3,7 +3,10 @@ const userRepository = require("../Repositories/userRepository");
 
 const generateOTP = require("../Utilities/generateOtp");
 const sendMail = require("../Services/emailService");
-const generateToken = require("../Utilities/generateToken");
+const {
+  generateToken,
+  generateRefreshToken,
+} = require("../Utilities/generateToken");
 
 const sendOtpInteractor = async (email) => {
   const otp = generateOTP();
@@ -37,8 +40,10 @@ const verifyOtpInteractor = async (otp, email) => {
     { new: true }
   );
   const token = generateToken(user._id);
+  const refreshToken = generateRefreshToken(userData._id);
 
   return {
+    refreshToken,
     token,
     email,
     isEmailVerified: user.isEmailVerified,

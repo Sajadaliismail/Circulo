@@ -148,7 +148,7 @@ function Suggestions({ fetchUserData }) {
                 scrollbarWidth: "none",
               }}
             >
-              {suggestions.map((people) => (
+              {suggestions?.map((people) => (
                 <Box
                   key={people.id}
                   display={"flex"}

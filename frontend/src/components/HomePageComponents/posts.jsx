@@ -24,7 +24,10 @@ function Posts({ fetchUserData }) {
 
   const fetchMorePosts = () => {
     setLoading(true);
-    dispatch(fetchPosts()).finally(() => setLoading(false));
+    dispatch(fetchPosts()).finally(() => {
+      console.log("Finished fetching posts");
+      setLoading(false);
+    });
   };
 
   useEffect(() => {
@@ -58,13 +61,9 @@ function Posts({ fetchUserData }) {
   );
 
   useEffect(() => {
-    document
-      .getElementById("postsContainer")
-      .addEventListener("scroll", handleScroll);
-    return () =>
-      document
-        .getElementById("postsContainer")
-        .removeEventListener("scroll", handleScroll);
+    const div = document.getElementById("postsContainer");
+    div.addEventListener("scroll", handleScroll);
+    return () => div.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
   const handLike = async (postId) => {

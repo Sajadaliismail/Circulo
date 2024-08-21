@@ -1,4 +1,3 @@
-// "use strict";
 import { AttachFile, Send } from "@mui/icons-material";
 import {
   Grid,
@@ -12,6 +11,9 @@ import {
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { RecieverMessageList, SenderMessageList } from "./message";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+import { ThemeProvider } from "@emotion/react";
 
 const MessageArea = ({
   handleSubmitImage,
@@ -22,34 +24,41 @@ const MessageArea = ({
   friend,
   messages,
   handleEmoji,
+  roomId,
+  theme,
 }) => {
   const messageEl = useRef(null);
+  const dispatch = useDispatch();
+  const { userData } = useSelector((state) => state.friends);
+  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      if (messageEl.current) {
-        messageEl.current.scroll({
-          top: messageEl.current.scrollHeight,
-          behavior: "smooth",
-        });
-      }
-    });
-
-    if (messageEl.current) {
-      observer.observe(messageEl.current, { childList: true });
-    }
-
-    return () => {
-      observer.disconnect();
+    const fetchData = async () => {
+      await dispatch(fetchUserDetails(friend));
     };
-  }, []);
+
+    if (userData[friend]) {
+      setUserDetails(userData[friend]);
+    } else {
+      fetchData().then(() => setUserDetails(userData[friend]));
+    }
+  }, [friend, userData, dispatch]);
+
+  useEffect(() => {
+    if (messageEl.current) {
+      messageEl.current.scrollTo({
+        top: messageEl.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
 
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
     handleSubmitImage();
   };
 
-  if (!friend || !friend._id) {
+  if (!userDetails) {
     return (
       <Grid
         container
@@ -60,7 +69,7 @@ const MessageArea = ({
         }}
       >
         <Typography variant="h4" sx={{ marginX: "auto" }}>
-          Click on any of the chataf
+          Click on any of the chats
         </Typography>
       </Grid>
     );
@@ -68,84 +77,113 @@ const MessageArea = ({
 
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: "5px",
-          paddingLeft: "10px",
-        }}
-      >
-        <Avatar src={friend.profilePicture}>{friend.firstName[0]}</Avatar>
-        <Typography>
-          {friend.firstName} {friend.lastName}
-        </Typography>
-      </Box>
-
-      <List
-        ref={messageEl}
-        sx={{
-          paddingX: "20px",
-          height: "60vh",
-          overflowY: "auto",
-          flexGrow: 1,
-          overflowX: "hidden",
-          scrollbarWidth: "none",
-        }}
-      >
-        {messages?.messages?.length ? (
-          messages.messages.map((mess) =>
-            mess?.senderId == friend._id ? (
-              <SenderMessageList
-                mess={mess}
-                friend={friend._id}
-                handleEmoji={handleEmoji}
-              ></SenderMessageList>
-            ) : (
-              <RecieverMessageList mess={mess}></RecieverMessageList>
-            )
-          )
-        ) : (
-          <Typography variant="h4" sx={{ marginX: "auto" }}>
-            No messages
+      <ThemeProvider theme={theme}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            paddingLeft: "15px",
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            padding: "10px",
+            borderBottom: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Avatar src={userDetails.profilePicture}>
+            {userDetails.firstName[0]}
+          </Avatar>
+          <Typography variant="h6">
+            {userDetails.firstName} {userDetails.lastName}
           </Typography>
-        )}
-      </List>
-      <Divider />
-      <Grid container sx={{ padding: "20px" }}>
-        <Grid item xs={10}>
-          <TextField
-            id="outlined-basic-email"
-            label="Type your message"
-            fullWidth
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-        </Grid>
-        <Grid item xs={1} align="right">
-          <input
-            accept="image/*"
-            style={{ display: "none" }}
-            id="contained-button-file"
-            type="file"
-            onChange={handleImageChange}
-          />
-          <label htmlFor="contained-button-file">
-            <Fab component="span">
-              <AttachFile></AttachFile>
+        </Box>
+
+        <List
+          ref={messageEl}
+          sx={{
+            paddingX: "20px",
+            height: "60vh",
+            overflowY: "auto",
+            flexGrow: 1,
+            overflowX: "hidden",
+            scrollbarWidth: "none",
+            backgroundColor: theme.palette.background.default,
+            color: theme.palette.text.primary,
+          }}
+        >
+          {messages?.messages?.length ? (
+            messages.messages.map((mess) =>
+              mess.senderId === friend ? (
+                <SenderMessageList
+                  key={mess._id}
+                  mess={mess}
+                  friend={friend}
+                  handleEmoji={handleEmoji}
+                  roomId={roomId}
+                />
+              ) : (
+                <RecieverMessageList key={mess._id} mess={mess} />
+              )
+            )
+          ) : (
+            <Typography
+              variant="h4"
+              sx={{ textAlign: "center", color: theme.palette.text.secondary }}
+            >
+              No messages
+            </Typography>
+          )}
+        </List>
+
+        <Divider />
+
+        <Grid
+          container
+          sx={{
+            padding: "20px",
+            backgroundColor: theme.palette.background.paper,
+          }}
+        >
+          <Grid item xs={10}>
+            <TextField
+              id="outlined-basic-email"
+              label="Type your message"
+              fullWidth
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                color: theme.palette.text.primary,
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={1} align="right">
+            <input
+              accept="image/*"
+              style={{ display: "none" }}
+              id="contained-button-file"
+              type="file"
+              onChange={handleImageChange}
+            />
+            <label htmlFor="contained-button-file">
+              <Fab component="span" color="secondary">
+                <AttachFile />
+              </Fab>
+            </label>
+          </Grid>
+
+          <Grid item xs={1} align="right">
+            <Fab
+              onClick={() => handleSubmit(friend, roomId)}
+              color="primary"
+              aria-label="send"
+            >
+              <Send />
             </Fab>
-          </label>
+          </Grid>
         </Grid>
-        <Grid item xs={1} align="right">
-          <Fab
-            onClick={(e) => handleSubmit(friend._id, e)}
-            color="primary"
-            aria-label="send"
-          >
-            <Send />
-          </Fab>
-        </Grid>
-      </Grid>
+      </ThemeProvider>
     </>
   );
 };

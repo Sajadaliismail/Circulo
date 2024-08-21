@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import chatSocket from "../../features/utilities/Socket-io";
 
-import { sampleData } from "./sample";
 import OnlinePeopleAccordion from "./online";
 import ChatBoxHeader from "./chatboxheade";
 import { useDispatch, useSelector } from "react-redux";
@@ -20,15 +19,17 @@ import {
   setMinimize,
   setOpen,
   setReadMessages,
+  setReceivedChats,
+  setSentMessages,
   setUnreadMessages,
 } from "../../features/chats/chatsSlice";
 import { fetchchats } from "../../features/chats/chatsAsycnThunks";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+import useChatSocket from "../../hooks/chatSocketHook";
 
 const ChatBox = lazy(() => import("./chatboxinterface"));
-const AvatarWithUsername = lazy(() => import("./withusername"));
 
-function ChatApp() {
+function ChatApp({ fetchUserData }) {
   const dispatch = useDispatch();
   const { chats, roomId } = useSelector((state) => state.chats);
   const { user } = useSelector((state) => state.user);
@@ -42,34 +43,13 @@ function ChatApp() {
   useEffect(() => {
     dispatch(setChatBox());
   }, []);
+
+  const chatSocketHook = useChatSocket();
+
   useEffect(() => {
-    const id = user._id;
-    chatSocket.emit("authenticate", id);
+    if (!chatSocketHook) return;
 
-    chatSocket.on(
-      "newMessageNotification",
-      ({ senderId, roomId, hasOpened, message, timestamp, type, _id }) => {
-        dispatch(
-          setChats({
-            senderId,
-            roomId,
-            hasOpened,
-            message,
-            timestamp,
-            type,
-            _id,
-          })
-        );
-        // dispatch(setReceivedChats(data));
-        // const { senderId } = data;
-        dispatch(setUnreadMessages({ senderId }));
-      }
-    );
-
-    chatSocket.on("emoji_recieved", ({ id, emoji }) => {
-      dispatch(setEmoji({ id, emoji }));
-    });
-    const receiveMessageHandler = ({
+    const handleNewMessage = ({
       senderId,
       roomId,
       hasOpened,
@@ -78,31 +58,100 @@ function ChatApp() {
       type,
       _id,
     }) => {
-      // console.log(senderId, roomId, hasOpened, message, timestamp, type, _id);
-      dispatch(setReadMessages(senderId));
-
-      // dispatch(
-      //   setChats({ senderId, roomId, hasOpened, message, timestamp, type })
-      // );
+      dispatch(
+        setChats({ senderId, roomId, hasOpened, message, timestamp, type, _id })
+      );
     };
 
-    if (friendRef.current._id) {
-      chatSocket.on("emoji_recieved", (arg) => {
-        console.log(arg);
-      });
-    }
-    chatSocket.on("receiveMessage", receiveMessageHandler);
+    const handleEmojiReceived = ({ id, emoji }) => {
+      dispatch(setEmoji({ id, emoji }));
+    };
+
+    chatSocketHook.on("newMessageNotification", handleNewMessage);
+    chatSocketHook.on("emoji_recieved", handleEmojiReceived);
 
     return () => {
-      chatSocket.off("newMessageNotification");
-      chatSocket.off("emoji_recieved");
-      chatSocket.off("receiveMessage", receiveMessageHandler);
+      chatSocketHook.off("newMessageNotification", handleNewMessage);
+      chatSocketHook.off("emoji_recieved", handleEmojiReceived);
     };
-  }, [user._id, dispatch]);
+  }, [chatSocketHook, dispatch]);
+  // useEffect(() => {
+  //   const id = user._id;
+  //   chatSocket.emit("authenticate", id);
+
+  //   chatSocket.on(
+  //     "newMessageNotification",
+  //     ({ senderId, roomId, hasOpened, message, timestamp, type, _id }) => {
+  //       dispatch(
+  //         setChats({
+  //           senderId,
+  //           roomId,
+  //           hasOpened,
+  //           message,
+  //           timestamp,
+  //           type,
+  //           _id,
+  //         })
+  //       );
+  //       // dispatch(
+  //       //   setReceivedChats({
+  //       //     senderId,
+  //       //     roomId,
+  //       //     hasOpened,
+  //       //     message,
+  //       //     timestamp,
+  //       //     type,
+  //       //     _id,
+  //       //   })
+  //       // );
+  //       // dispatch(setUnreadMessages({ senderId }));
+  //     }
+  //   );
+
+  //   chatSocket.on("emoji_recieved", ({ id, emoji }) => {
+  //     dispatch(setEmoji({ id, emoji }));
+  //   });
+  //   const receiveMessageHandler = ({
+  //     senderId,
+  //     roomId,
+  //     hasOpened,
+  //     message,
+  //     timestamp,
+  //     type,
+  //     _id,
+  //   }) => {
+  //     console.log({
+  //       senderId,
+  //       roomId,
+  //       hasOpened,
+  //       message,
+  //       timestamp,
+  //       type,
+  //       _id,
+  //     });
+  //     dispatch(setReadMessages(senderId));
+
+  //     dispatch(
+  //       setChats({ senderId, roomId, hasOpened, message, timestamp, type })
+  //     );
+  //   };
+
+  //   if (friendRef.current._id) {
+  //     chatSocket.on("emoji_recieved", (arg) => {
+  //       console.log(arg);
+  //     });
+  //   }
+  //   chatSocket.on("receiveMessage", receiveMessageHandler);
+
+  //   return () => {
+  //     chatSocket.off("newMessageNotification");
+  //     chatSocket.off("emoji_recieved");
+  //     chatSocket.off("receiveMessage", receiveMessageHandler);
+  //   };
+  // }, [user._id, dispatch]);
 
   const conversation = useMemo(() => {
     const chatArray = Object.values(chats);
-
     return chatArray;
   }, [chats]);
 
@@ -120,11 +169,11 @@ function ChatApp() {
     chatSocket.emit("join_room", { userId: id });
   };
 
-  const onClose = (id) => {
+  const handleClose = (id) => {
     dispatch(setClosed(id));
   };
 
-  const onMinimize = (id) => {
+  const handleMinimize = (id) => {
     dispatch(setMinimize(id));
   };
 
@@ -132,21 +181,18 @@ function ChatApp() {
     const userId = user._id;
     const roomId = [userId, id].sort().join("");
     await dispatch(fetchchats(id));
-
     await dispatch(setOpen(roomId));
-    let totalOpened = 0;
-
-    if (totalOpened === 2) {
-    }
-    // if (conversation.opened) {
-    //   totalOpened += 1;
-    // }
-    // if (conversation.converSationId === id) {
-    // }
-    // return conversation;
   };
 
-  const onSubmit = (conversationId, message) => {};
+  const onSubmit = (id, message) => {
+    if (message.trim()) {
+      chatSocket.emit("message", { userId: id, message, type: "text" });
+      dispatch(
+        setSentMessages({ message, timestamp: Date.now(), type: "text" })
+      );
+      setMessage("");
+    }
+  };
 
   const onRemove = (conversationId, messageId) => {};
 
@@ -157,39 +203,45 @@ function ChatApp() {
       <Suspense fallback={<div>Loading...</div>}>
         <div
           className=" gap-3"
-          style={{ height: "max-content", display: "flex", alignItems: "end" }}
+          style={{
+            height: "max-content",
+            display: "flex",
+            alignItems: "end",
+          }}
         >
-          {conversation &&
-            conversation?.map((conversation, index) =>
-              conversation?.chatBoxOpen && !conversation.minimized ? (
+          {Object.keys(chats).map((roomId) => {
+            const chat = chats[roomId];
+            return chat.chatBoxOpen ? (
+              chat.minimized ? (
+                <ChatBoxHeader
+                  key={roomId}
+                  data={chat}
+                  onClose={() => handleClose(roomId)}
+                  onMinimize={() => handleMinimize(roomId)}
+                />
+              ) : (
                 <ChatBox
-                  conversationId={conversation?.roomId}
-                  key={conversation?.roomId}
-                  title={conversation?.name}
-                  data={conversation}
-                  avatar={conversation?.avatar}
-                  conversations={conversation?.messages}
-                  chatBoxOpen={conversation?.chatBoxOpen}
-                  onClose={() => onClose(conversation?.roomId)}
-                  onMinimize={() => onMinimize(conversation?.roomId)}
+                  key={roomId}
+                  conversationId={roomId}
+                  title={chat.name}
+                  data={chat}
+                  avatar={chat.avatar}
+                  conversations={chat.messages}
+                  chatBoxOpen={chat.chatBoxOpen}
+                  onClose={() => handleClose(roomId)}
+                  onMinimize={() => handleMinimize(roomId)}
                   onSubmit={onSubmit}
                   onLoadPrevious={onLoadPrevious}
                   onRemove={onRemove}
                 />
-              ) : conversation?.minimized ? (
-                <ChatBoxHeader
-                  title={conversation?.name}
-                  key={conversation?.roomId}
-                  onClose={() => onClose(conversation?.roomId)}
-                  onMinimize={() => onMinimize(conversation?.roomId)}
-                />
-              ) : null
-            )}
+              )
+            ) : null;
+          })}
         </div>
 
         <OnlinePeopleAccordion
+          fetchUserData={fetchUserData}
           conversationsOpened={conversation}
-          // openConversation={openConversation}
           handleChat={handleChat}
         />
       </Suspense>

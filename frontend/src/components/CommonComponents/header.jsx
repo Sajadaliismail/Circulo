@@ -196,6 +196,7 @@ export default function Header({ toggleTheme }) {
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton
+              onClick={() => navigate("/chats")}
               size="large"
               aria-label="show 4 new mails"
               color="inherit"

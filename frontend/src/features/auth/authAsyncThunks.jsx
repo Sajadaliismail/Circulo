@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { setAccessToken } from "./authSlice";
 const BACKEND = process.env.REACT_APP_BACKEND;
 
 export const signup = createAsyncThunk(
@@ -7,6 +8,7 @@ export const signup = createAsyncThunk(
     try {
       const response = await fetch(`${BACKEND}/signup`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -31,13 +33,14 @@ export const signin = createAsyncThunk(
     try {
       const response = await fetch(`${BACKEND}/signin`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
       const data = await response.json();
-      console.log(data);
+
       if (!response.ok) {
         return rejectWithValue(data);
       }
@@ -45,7 +48,8 @@ export const signin = createAsyncThunk(
         await dispatch(sendOtp({ email: data.email }));
         return { email: data.email, isEmailVerified: false };
       }
-      localStorage.setItem("jwt", data.token);
+      dispatch(setAccessToken(data.token));
+      // localStorage.setItem("jwt", data.token);
       return data;
     } catch (error) {
       console.log(error);
@@ -57,10 +61,10 @@ export const signin = createAsyncThunk(
 export const sendOtp = createAsyncThunk(
   "auth/sendotp",
   async (email, { rejectWithValue }) => {
-    console.log(email);
     try {
       const response = await fetch(`${BACKEND}/sendotp`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -90,12 +94,13 @@ export const verifyOtp = createAsyncThunk(
         body: JSON.stringify(formData),
       });
       const data = await response.json();
-      console.log(data);
 
       if (!response.ok) {
         return rejectWithValue(data);
       }
-      localStorage.setItem("jwt", data.token);
+      dispatch(setAccessToken(data.token));
+
+      // localStorage.setItem("jwt", data.token);
       return data;
     } catch (error) {
       console.log(error);
@@ -126,11 +131,14 @@ export const updatePassword = createAsyncThunk(
 
 export const addressSetup = createAsyncThunk(
   "auth/addressSetup",
-  async (formData, { rejectWithValue, dispatch }) => {
+  async (formData, { rejectWithValue, getState }) => {
     try {
-      const token = localStorage.getItem("jwt");
+      const state = getState();
+      const token = state.auth.accessToken;
+
       const response = await fetch(`${BACKEND}/updateaddress`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

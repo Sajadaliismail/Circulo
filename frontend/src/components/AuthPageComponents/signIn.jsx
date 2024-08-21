@@ -65,7 +65,6 @@ export default function SignInSide({ signup, resetpassword, VerifyOtp }) {
 
       const resultAction = await dispatch(signin(formData));
       if (signin.fulfilled.match(resultAction)) {
-        console.log(resultAction);
         const { isEmailVerified } = resultAction.payload;
         if (!isEmailVerified) {
           enqueueSnackbar("Please verify your email", { variant: "info" });

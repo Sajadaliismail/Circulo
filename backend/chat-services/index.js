@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const { httpServer } = require("./Server/Services/socket_io");
 const connectDb = require("./Server/Database/mongodb");
@@ -11,6 +12,7 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN;
 
 const app = express();
 
+app.use(cookieParser());
 const corsOption = {
   origin: CORS_ORIGIN,
   optionsSuccessStatus: 200,

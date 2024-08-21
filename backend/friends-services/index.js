@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const router = require("./Server/Routes/router");
 const { subscribeMessage } = require("./Server/Services/rabbitmq");
@@ -13,6 +14,7 @@ const PORT = process.env.PORT;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
 const app = express();
 
+app.use(cookieParser());
 const corsOption = {
   origin: CORS_ORIGIN,
   optionsSuccessStatus: 200,

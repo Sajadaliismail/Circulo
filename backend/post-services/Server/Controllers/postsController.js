@@ -28,13 +28,11 @@ const addPosts = async (req, res) => {
 const fetchPosts = async (req, res) => {
   try {
     const userId = req.userId;
-    const token = req.headers.authorization;
     const response = await fetch(
       `http://localhost:3006/friends/api/friendsListUser/${userId}`,
       {
-        headers: {
-          Authorization: token,
-        },
+        method: "GET",
+        credentials: "include",
       }
     );
 
@@ -47,8 +45,10 @@ const fetchPosts = async (req, res) => {
         parseInt(limits),
         friends.friends
       );
+
       return res.status(200).json({ posts: data.posts, count: data.count });
     }
+    console.log(friends);
   } catch (error) {
     console.log(error);
   }

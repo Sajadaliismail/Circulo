@@ -58,3 +58,49 @@ export const convertUTCToIST = (utcDateString) => {
     return utcDate.toLocaleString("en-IN", options);
   }
 };
+
+export const handleNewMessage = (
+  { roomId, senderId, message, type, _id },
+  setmsg
+) => {
+  setmsg((chats) => {
+    const prevChats = { ...chats };
+    const chatRoom = prevChats[roomId] || { messages: [] };
+    const chatMessages = chatRoom.messages;
+
+    const isDuplicate = chatMessages.some((msg) => msg._id === _id);
+
+    if (isDuplicate) {
+      return prevChats;
+    }
+
+    if (type === "image") {
+      prevChats[roomId] = {
+        ...chatRoom,
+        messages: [
+          ...chatMessages,
+          {
+            imageUrl: message,
+            timestamp: Date.now(),
+            senderId,
+            _id,
+          },
+        ],
+      };
+    } else if (type === "text") {
+      prevChats[roomId] = {
+        ...chatRoom,
+        messages: [
+          ...chatMessages,
+          {
+            message,
+            timestamp: Date.now(),
+            senderId,
+            _id,
+          },
+        ],
+      };
+    }
+    return prevChats;
+  });
+};

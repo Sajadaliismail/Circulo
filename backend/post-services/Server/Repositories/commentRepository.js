@@ -5,7 +5,9 @@ const Post = require("../Models/PostSchema");
 const createcomment = async (data) => {
   const comment = new Comment(data);
   await comment.save();
-  return true;
+  console.log(comment);
+
+  return comment;
 };
 
 const fetchComments = async (userId, postId) => {
@@ -22,20 +24,6 @@ const fetchComments = async (userId, postId) => {
       },
     },
     {
-      $lookup: {
-        from: "users",
-        localField: "user",
-        foreignField: "_id",
-        as: "userDetails",
-      },
-    },
-    {
-      $unwind: {
-        path: "$userDetails",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
       $project: {
         _id: 1,
         post: 1,
@@ -43,35 +31,37 @@ const fetchComments = async (userId, postId) => {
         likes: 1,
         likesCount: 1,
         hasLiked: 1,
-        "userDetails.firstName": 1,
-        "userDetails.profilePicture": 1,
+        user: 1,
+        createdAt: 1,
       },
+    },
+    {
+      $sort: { createdAt: -1 },
     },
   ]);
 
-  console.log(posts);
   return posts;
 };
 
-const handleLikes = async (postId, userId) => {
+const handleLikes = async (commentId, userId) => {
   console.log(userId);
   try {
-    const post = await Comment.findById(postId);
-    if (!post) {
-      throw new Error("Post not found");
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      throw new Error("comment not found");
     }
 
-    const isLiked = post.likes.includes(userId);
+    const hasLiked = comment.likes.includes(userId);
 
-    if (isLiked) {
-      post.likes = post.likes.filter((id) => id !== userId);
+    if (hasLiked) {
+      comment.likes = comment.likes.filter((id) => id !== userId);
     } else {
-      post.likes.push(userId);
+      comment.likes.push(userId);
     }
 
-    await post.save();
-
-    return post;
+    await comment.save();
+    const data = comment.toObject();
+    return { ...data, hasLiked: !hasLiked };
   } catch (error) {
     console.error(error);
     throw new Error("Failed to update like status");

@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const connectDb = require("./Server/DBConnection/mongodbConnection");
 const route = require("./Server/Routes/userRoutes");
@@ -11,6 +12,8 @@ const PORT = process.env.PORT;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
 
 const app = express();
+app.use(cookieParser());
+
 const corsOption = {
   origin: CORS_ORIGIN,
   optionsSuccessStatus: 200,

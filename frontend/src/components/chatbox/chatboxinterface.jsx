@@ -6,7 +6,6 @@ import ChatBoxMessage from "./chatboxmessage";
 import { useSelector } from "react-redux";
 
 const ChatBox = ({
-  avatar,
   conversations,
   conversationId,
   onClose,
@@ -14,23 +13,19 @@ const ChatBox = ({
   onSubmit,
   onLoadPrevious,
   onRemove,
-  title,
-  chatBoxOpen,
   data,
 }) => {
   const messagesEndRef = useRef(null);
   const { user } = useSelector((state) => state.user);
   const { userData } = useSelector((state) => state.friends);
-
   const [friendId, setFriendId] = useState("");
+
   useEffect(() => {
     if (data.user1 == user._id) setFriendId(data.user2);
     else setFriendId(data.user1);
   }, []);
 
   useEffect(() => {
-    console.log(conversations);
-
     scrollToBottom();
 
     const conversation = document.getElementById(
@@ -63,7 +58,7 @@ const ChatBox = ({
   };
 
   const onSubmitMessage = (message) => {
-    onSubmit(conversationId, message);
+    onSubmit(friendId, message);
     scrollToBottom();
   };
 
@@ -72,13 +67,12 @@ const ChatBox = ({
       variant="outlined"
       className="w-80 md:w-96"
       sx={{
-        borderRadius: 5,
+        borderRadius: 2,
         width: 350,
       }}
     >
       <ChatBoxHeader
-        title={`${userData[friendId]?.firstName} ${userData[friendId]?.lastName}`}
-        profilePicture={userData[friendId]?.profilePicture}
+        data={data}
         onClose={() => onClose(conversationId)}
         onMinimize={() => onMinimize(conversationId)}
       />
@@ -87,14 +81,14 @@ const ChatBox = ({
         id={`conversation-${conversationId}`}
       >
         {conversations &&
-          conversations.map((conversation) => (
+          conversations?.map((conversation) => (
             <ChatBoxMessage
-              key={conversation.messageId}
-              messageId={conversation.messageId}
-              message={conversation.message}
+              key={conversation?.messageId}
+              messageId={conversation?.messageId}
+              message={conversation?.message}
               data={conversation}
-              author={conversation.senderId}
-              avatar={conversation.avatar}
+              author={conversation?.senderId}
+              avatar={conversation?.avatar}
               onRemove={(messageId) => onRemove(conversationId, messageId)}
             />
           ))}

@@ -1,16 +1,18 @@
 import {
-  Avatar,
   Box,
   Fab,
   Paper,
   SpeedDial,
   SpeedDialAction,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { convertUTCToIST } from "../../pages/Utilitis";
 import { AddReaction } from "@mui/icons-material";
 
 export const RecieverMessageList = ({ mess }) => {
+  const theme = useTheme();
+
   return (
     <>
       <Box
@@ -29,7 +31,7 @@ export const RecieverMessageList = ({ mess }) => {
             maxWidth: "45%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
-            bgcolor: "#d7ffcc",
+            bgcolor: theme.palette.divider,
             paddingX: 2,
             paddingY: 1,
             borderRadius: 3,
@@ -56,6 +58,7 @@ export const RecieverMessageList = ({ mess }) => {
               variant="subtitle1"
               sx={{
                 textAlign: "right",
+                color: theme.palette.text.primary,
               }}
             >
               {mess?.message}
@@ -66,7 +69,10 @@ export const RecieverMessageList = ({ mess }) => {
           )}
         </Paper>
 
-        <Typography variant="caption">
+        <Typography
+          variant="caption"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           {convertUTCToIST(mess.timestamp)}
         </Typography>
       </Box>
@@ -74,7 +80,8 @@ export const RecieverMessageList = ({ mess }) => {
   );
 };
 
-export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
+export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
+  const theme = useTheme();
   const emojis = ["😀", "😂", "❤️", "👍", "👎"];
 
   return (
@@ -95,7 +102,7 @@ export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
             maxWidth: "45%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
-            bgcolor: "#3c94ecd1",
+            bgcolor: theme.palette.info.main,
             paddingX: 2,
             paddingY: 1,
             borderRadius: 3,
@@ -106,7 +113,6 @@ export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
           {mess?.emoji ? (
             <SpeedDial
               ariaLabel="Emoji"
-              color="black"
               sx={{
                 position: "absolute",
                 bottom: -5,
@@ -124,7 +130,7 @@ export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
                   key={action}
                   icon={action}
                   onClick={() => {
-                    handleEmoji(mess._id, action, friend);
+                    handleEmoji(mess._id, action, friend, roomId);
                   }}
                 />
               ))}
@@ -132,7 +138,6 @@ export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
           ) : (
             <SpeedDial
               ariaLabel="Emoji"
-              color="black"
               sx={{
                 position: "absolute",
                 bottom: -5,
@@ -149,7 +154,7 @@ export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
                   sx={{ fontSize: "20px", margin: "8px 0" }}
                   key={action}
                   icon={action}
-                  onClick={() => handleEmoji(mess._id, action, friend)}
+                  onClick={() => handleEmoji(mess._id, action, friend, roomId)}
                 />
               ))}
             </SpeedDial>
@@ -160,6 +165,7 @@ export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
               variant="subtitle1"
               sx={{
                 textAlign: "left",
+                color: theme.palette.grey[900],
               }}
             >
               {mess?.message}
@@ -170,7 +176,10 @@ export const SenderMessageList = ({ mess, friend, handleEmoji }) => {
           )}
         </Paper>
 
-        <Typography variant="caption">
+        <Typography
+          variant="caption"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           {convertUTCToIST(mess.timestamp)}
         </Typography>
       </Box>

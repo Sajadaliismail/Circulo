@@ -11,7 +11,9 @@ const AvatarWithUsername = ({ username, profilePicture }) => {
 
   return (
     <div className="flex">
-      <Avatar src={profilePicture && profilePicture}>{username[0]}</Avatar>
+      <Avatar src={profilePicture && profilePicture}>
+        {username && username[0]}
+      </Avatar>
 
       <div className="ml-2 grid items-center">
         {/* <span className="text-base font-bold">{title}</span> */}

@@ -183,18 +183,16 @@ const fetchPosts = async (id, page, limit, friends) => {
     author: { $in: friendsObjectIdArray },
   });
 
-  console.log(posts);
-
   return { posts, count };
 };
 
 const handleLikes = async (postId, userId) => {
-  console.log(userId, postId);
   try {
     const post = await Post.findById(postId._id);
     if (!post) {
       throw new Error("Post not found");
     }
+
     const isLiked = post.likes.includes(userId);
 
     if (isLiked) {
