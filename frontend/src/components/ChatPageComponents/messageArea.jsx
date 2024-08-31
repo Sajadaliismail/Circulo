@@ -13,7 +13,6 @@ import { useEffect, useRef, useState } from "react";
 import { RecieverMessageList, SenderMessageList } from "./message";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
-import { ThemeProvider } from "@emotion/react";
 
 const MessageArea = ({
   handleSubmitImage,
@@ -25,7 +24,6 @@ const MessageArea = ({
   messages,
   handleEmoji,
   roomId,
-  theme,
 }) => {
   const messageEl = useRef(null);
   const dispatch = useDispatch();
@@ -77,17 +75,15 @@ const MessageArea = ({
 
   return (
     <>
-      <ThemeProvider theme={theme}>
+      <>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             gap: "10px",
             paddingLeft: "15px",
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
+
             padding: "10px",
-            borderBottom: `1px solid ${theme.palette.divider}`,
           }}
         >
           <Avatar src={userDetails.profilePicture}>
@@ -107,8 +103,6 @@ const MessageArea = ({
             flexGrow: 1,
             overflowX: "hidden",
             scrollbarWidth: "none",
-            backgroundColor: theme.palette.background.default,
-            color: theme.palette.text.primary,
           }}
         >
           {messages?.messages?.length ? (
@@ -126,10 +120,7 @@ const MessageArea = ({
               )
             )
           ) : (
-            <Typography
-              variant="h4"
-              sx={{ textAlign: "center", color: theme.palette.text.secondary }}
-            >
+            <Typography variant="h4" sx={{ textAlign: "center" }}>
               No messages
             </Typography>
           )}
@@ -141,7 +132,6 @@ const MessageArea = ({
           container
           sx={{
             padding: "20px",
-            backgroundColor: theme.palette.background.paper,
           }}
         >
           <Grid item xs={10}>
@@ -151,10 +141,6 @@ const MessageArea = ({
               fullWidth
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              sx={{
-                backgroundColor: theme.palette.background.default,
-                color: theme.palette.text.primary,
-              }}
             />
           </Grid>
 
@@ -183,7 +169,7 @@ const MessageArea = ({
             </Fab>
           </Grid>
         </Grid>
-      </ThemeProvider>
+      </>
     </>
   );
 };

@@ -1,7 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+const FRIENDS_BACKEND = process.env.REACT_APP_FRIENDS_BACKEND;
+const BACKEND = process.env.REACT_APP_USER_BACKEND;
+
 export const addFriend = createAsyncThunk("friends/addFriend", async (id) => {
   try {
-    const response = await fetch(`http://localhost:3006/friends/addfriend`, {
+    const response = await fetch(`${FRIENDS_BACKEND}/friends/send-request`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -19,52 +22,60 @@ export const addFriend = createAsyncThunk("friends/addFriend", async (id) => {
 
 export const getSuggestions = createAsyncThunk(
   "friends/suggestions",
-  async (postalCode) => {
+  async (postalCode, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `http://localhost:3006/friends/suggestions?postalCode=${postalCode}`,
+        `${FRIENDS_BACKEND}/friends/suggestions?postalCode=${postalCode}`,
         {
           method: "GET",
           credentials: "include",
         }
       );
       const data = await response.json();
+      if (!response.ok) return rejectWithValue("Error fetching suggestions");
       return data;
     } catch (error) {
       console.log(error);
-      return;
+      return rejectWithValue("Error fetching suggestions");
     }
   }
 );
 
-export const getFriends = createAsyncThunk("friends/getFriends", async (_) => {
-  try {
-    const response = await fetch(`http://localhost:3006/friends/friends`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json();
-
-    return data;
-  } catch (error) {
-    console.log(error);
-    return;
-  }
-});
-
-export const getRequests = createAsyncThunk(
-  "friends/getRequests",
-  async (_) => {
+export const getFriends = createAsyncThunk(
+  "friends/getFriends",
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:3006/friends/requests`, {
+      const response = await fetch(`${FRIENDS_BACKEND}/friends/friends`, {
         method: "GET",
         credentials: "include",
       });
       const data = await response.json();
+      if (!response.ok)
+        return rejectWithValue("Error fetching friends details");
       return data;
     } catch (error) {
       console.log(error);
-      return;
+      return rejectWithValue("Error fetching friends details");
+    }
+  }
+);
+
+export const getRequests = createAsyncThunk(
+  "friends/getRequests",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${FRIENDS_BACKEND}/friends/requests`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok)
+        return rejectWithValue("Error fetching requests details");
+
+      return data;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue("Error fetching requests details");
     }
   }
 );
@@ -74,7 +85,7 @@ export const cancelRequest = createAsyncThunk(
   async (id) => {
     try {
       const response = await fetch(
-        `http://localhost:3006/friends/cancel-request`,
+        `${FRIENDS_BACKEND}/friends/cancel-request`,
         {
           method: "POST",
           credentials: "include",
@@ -98,7 +109,7 @@ export const acceptRequest = createAsyncThunk(
   async (id) => {
     try {
       const response = await fetch(
-        `http://localhost:3006/friends/accept-request`,
+        `${FRIENDS_BACKEND}/friends/accept-request`,
         {
           method: "POST",
           credentials: "include",
@@ -122,18 +133,15 @@ export const sentRequest = createAsyncThunk(
   "friends/sendRequest",
   async (id) => {
     try {
-      const response = await fetch(
-        `http://localhost:3006/friends/send-request`,
-        {
-          method: "POST",
-          credentials: "include",
+      const response = await fetch(`${FRIENDS_BACKEND}/friends/send-request`, {
+        method: "POST",
+        credentials: "include",
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(id),
-        }
-      );
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(id),
+      });
       const data = await response.json();
       return data;
     } catch (error) {
@@ -147,14 +155,36 @@ export const fetchUserDetails = createAsyncThunk(
   "friends/fetchUserDetails",
   async (id, { rejectWithValue, getState }) => {
     try {
-      const response = await fetch(
-        `http://localhost:3002/fetchUserData?userId=${id}`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {},
-        }
-      );
+      const response = await fetch(`${BACKEND}/fetchUserData?userId=${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        rejectWithValue("User Not found");
+      }
+      return data;
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+);
+
+export const removeFriend = createAsyncThunk(
+  "friends/removeFriend",
+  async (id, { rejectWithValue, getState }) => {
+    try {
+      console.log(id);
+
+      const response = await fetch(`${FRIENDS_BACKEND}/friends/removeFriend`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(id),
+      });
       const data = await response.json();
       if (!response.ok) {
         rejectWithValue("User Not found");

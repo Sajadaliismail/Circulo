@@ -6,11 +6,12 @@ const {
   cancelFriendRequest,
   getFriendsService,
   getFriendsServiceApi,
+  getUserRelation,
+  removeUserFriend,
 } = require("../Services/services");
 
 const sendFriendRequest = async (req, res) => {
   const { friendId } = req.body;
-  console.log(req.body);
   const userId = req.userId;
   try {
     await sendFriendRequestService(userId, friendId);
@@ -84,8 +85,7 @@ const getFriends = async (req, res) => {
 };
 
 const getFriendsApi = async (req, res) => {
-  const { userId } = req.params;
-  console.log(userId);
+  const userId = req.userId;
 
   try {
     const result = await getFriendsServiceApi(userId);
@@ -93,6 +93,31 @@ const getFriendsApi = async (req, res) => {
     res.status(200).json({ friends: result });
   } catch (error) {
     res.status(500).send("Server error");
+  }
+};
+
+const getRelation = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.userId;
+
+  try {
+    const result = await getUserRelation(id, userId);
+    return res.status(200).json({ relation: result });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+const removeFriend = async (req, res) => {
+  const userId = req.userId;
+  const { friendId } = req.body;
+
+  try {
+    const result = await removeUserFriend(friendId, userId);
+    return res.status(200).json({ friendId: friendId, result });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(404).json({ error: error.message });
   }
 };
 module.exports = {
@@ -103,4 +128,6 @@ module.exports = {
   cancelRequest,
   getFriends,
   getFriendsApi,
+  removeFriend,
+  getRelation,
 };

@@ -2,7 +2,13 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      screens: {
+        xs: "480px",
+      },
+    },
   },
-  plugins: [],
+  darkMode: "selector",
+  // darkMode: "class", // or 'media' for system preference-based dark mode
+  plugins: [require("tailwind-scrollbar")],
 };

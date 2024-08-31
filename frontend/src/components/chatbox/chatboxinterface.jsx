@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 
 const ChatBox = ({
   conversations,
-  conversationId,
+  roomId,
   onClose,
   onMinimize,
   onSubmit,
@@ -28,15 +28,13 @@ const ChatBox = ({
   useEffect(() => {
     scrollToBottom();
 
-    const conversation = document.getElementById(
-      `conversation-${conversationId}`
-    );
+    const conversation = document.getElementById(`conversation-${roomId}`);
 
     conversation?.addEventListener("scroll", (e) => {
       const el = e.target;
 
       if (el.scrollTop === 0) {
-        onLoadPrevious(conversationId);
+        onLoadPrevious(roomId);
       }
     });
 
@@ -45,7 +43,7 @@ const ChatBox = ({
         const el = e.target;
 
         if (el.scrollTop === 0) {
-          onLoadPrevious(conversationId);
+          onLoadPrevious(roomId);
         }
       });
     };
@@ -73,13 +71,10 @@ const ChatBox = ({
     >
       <ChatBoxHeader
         data={data}
-        onClose={() => onClose(conversationId)}
-        onMinimize={() => onMinimize(conversationId)}
+        onClose={() => onClose(roomId)}
+        onMinimize={() => onMinimize(roomId)}
       />
-      <div
-        className="p-2 h-96 overflow-auto "
-        id={`conversation-${conversationId}`}
-      >
+      <div className="p-2 h-96 overflow-auto " id={`conversation-${roomId}`}>
         {conversations &&
           conversations?.map((conversation) => (
             <ChatBoxMessage
@@ -89,7 +84,7 @@ const ChatBox = ({
               data={conversation}
               author={conversation?.senderId}
               avatar={conversation?.avatar}
-              onRemove={(messageId) => onRemove(conversationId, messageId)}
+              onRemove={(messageId) => onRemove(roomId, messageId)}
             />
           ))}
         <div ref={messagesEndRef} />

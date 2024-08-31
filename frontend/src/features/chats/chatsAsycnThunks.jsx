@@ -1,21 +1,19 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { setOpen } from "./chatsSlice";
+const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
 export const fetchchats = createAsyncThunk(
   "chats/fetchchats",
   async (id, { dispatch }) => {
     try {
-      const response = await fetch(
-        `http://localhost:3008/chats/fetchchat?id=${id}`,
-        {
-          method: "GET",
-          credentials: "include",
+      const response = await fetch(`${CHAT_BACKEND}/chats/fetchchat?id=${id}`, {
+        method: "GET",
+        credentials: "include",
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
@@ -28,7 +26,6 @@ export const fetchchats = createAsyncThunk(
       }
 
       const roomId = data.chat.roomId;
-      console.log(roomId);
       dispatch(setOpen(roomId));
 
       return data.chat;
@@ -44,25 +41,24 @@ export const fetchAllChats = createAsyncThunk(
   "chats/fetchAllChats",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(
-        `http://localhost:3008/chats/fetchAllChats`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${CHAT_BACKEND}/chats/fetchAllChats`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue("Error fetching chats");
       }
-      console.log(data);
+      // console.log(data);
 
       return data;
-    } catch (error) {}
+    } catch (error) {
+      return rejectWithValue("Error fetching chats");
+    }
   }
 );
 
@@ -70,35 +66,33 @@ export const fetchChatFriends = createAsyncThunk(
   "chats/fetchChatFriends",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(
-        `http://localhost:3008/chats/fetchChatFriends`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${CHAT_BACKEND}/chats/fetchChatFriends`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       if (!response.ok) {
         return rejectWithValue("Error fetching chats");
       }
       return data;
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+
+      return rejectWithValue("Error fetching chats");
+    }
   }
 );
 
 export const refreshAccessToken = async () => {
   try {
-    const response = await fetch(
-      "http://localhost:3008/chats/auth/refresh-token",
-      {
-        method: "POST",
-        credentials: "include",
-      }
-    );
+    const response = await fetch(`${CHAT_BACKEND}/chats/auth/refresh-token`, {
+      method: "POST",
+      credentials: "include",
+    });
     const data = await response.json();
 
     if (response.ok) {

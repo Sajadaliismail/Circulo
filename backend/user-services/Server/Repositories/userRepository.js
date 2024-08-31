@@ -56,6 +56,20 @@ const updatePost = async (data) => {
   } catch (error) {}
 };
 
+const deletePost = async (data) => {
+  try {
+    const { _id, postId } = data;
+    const user = await User.findByIdAndUpdate(
+      _id,
+      { $pull: { posts: postId } },
+      { new: true, useFindAndModify: false }
+    );
+    console.log("Db updated");
+  } catch (error) {
+    console.error("Error deleting post:", error.message);
+  }
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
@@ -63,4 +77,5 @@ module.exports = {
   findAndUpdate,
   findUser,
   updatePost,
+  deletePost,
 };

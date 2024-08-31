@@ -5,14 +5,36 @@ const Post = require("../Models/PostSchema");
 const createcomment = async (data) => {
   const comment = new Comment(data);
   await comment.save();
-  console.log(comment);
-
+  const post = await Post.findById({ _id: data.post });
+  post.comments.push(comment._id);
+  await post.save();
   return comment;
 };
 
+const deleteComments = async (id, userId) => {
+  const comment = await Comment.findOneAndDelete({
+    _id: id,
+  });
+  if (comment == null) throw new Error("Unauthorized access");
+  return comment;
+};
+
+const deleteReplies = async (commentId, replyId) => {
+  const comment = await Comment.findByIdAndUpdate(
+    { _id: commentId },
+    { $pull: { replies: replyId } }
+  );
+  if (comment == null) throw new Error("Error deleting the comment");
+  return comment;
+};
+
+const deletePostComments = async (postId, userId) => {
+  const comment = await Comment.deleteMany({ post: postId });
+  if (comment == null) throw new Error("Unauthorized access");
+  return comment;
+};
 const fetchComments = async (userId, postId) => {
   const postObjectId = new mongoose.Types.ObjectId(postId);
-  console.log(postObjectId);
   const posts = await Comment.aggregate([
     {
       $match: { post: postObjectId },
@@ -21,6 +43,7 @@ const fetchComments = async (userId, postId) => {
       $addFields: {
         hasLiked: { $in: [userId, "$likes"] },
         likesCount: { $size: "$likes" },
+        replyCount: { $size: "$replies" },
       },
     },
     {
@@ -33,18 +56,17 @@ const fetchComments = async (userId, postId) => {
         hasLiked: 1,
         user: 1,
         createdAt: 1,
+        replyCount: 1,
       },
     },
     {
       $sort: { createdAt: -1 },
     },
   ]);
-
   return posts;
 };
 
 const handleLikes = async (commentId, userId) => {
-  console.log(userId);
   try {
     const comment = await Comment.findById(commentId);
     if (!comment) {
@@ -61,11 +83,18 @@ const handleLikes = async (commentId, userId) => {
 
     await comment.save();
     const data = comment.toObject();
-    return { ...data, hasLiked: !hasLiked };
+    return { ...data, hasLiked: !hasLiked, replyCount: comment.replies.length };
   } catch (error) {
     console.error(error);
     throw new Error("Failed to update like status");
   }
 };
 
-module.exports = { createcomment, fetchComments, handleLikes };
+module.exports = {
+  createcomment,
+  fetchComments,
+  handleLikes,
+  deleteComments,
+  deletePostComments,
+  deleteReplies,
+};

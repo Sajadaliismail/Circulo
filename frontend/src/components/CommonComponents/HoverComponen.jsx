@@ -1,9 +1,12 @@
-import { Avatar, Box, Modal, Paper, Typography } from "@mui/material";
+import { Avatar, Box, Button, Modal, Paper, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { AnimatedTooltip } from "./AnimatedHoverComponent";
 
 const HoverComponent = ({ id, component }) => {
   const { userData } = useSelector((state) => state.friends);
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
 
@@ -11,9 +14,10 @@ const HoverComponent = ({ id, component }) => {
   const handleClose = () => setOpen(false);
   return (
     <>
-      {userData && (
+      {userData[id] && (
         <>
-          <Box
+          {/* <AnimatedTooltip item={userData[id]} /> */}
+          {/* <Box
             component={Paper}
             elevation={5}
             className={`${component}-${id}`}
@@ -25,6 +29,7 @@ const HoverComponent = ({ id, component }) => {
               flexDirection: "row",
               alignItems: "center",
               alignContent: "center",
+              top: -50,
               left: 0,
               gap: 2,
               borderStyle: "solid",
@@ -32,7 +37,8 @@ const HoverComponent = ({ id, component }) => {
               borderRadius: 3,
               paddingX: 2,
               justifyContent: "space-around",
-              zIndex: 10,
+              zIndex: 100,
+              p: 1,
             }}
           >
             <Box>
@@ -41,7 +47,8 @@ const HoverComponent = ({ id, component }) => {
                 src={userData[id]?.profilePicture}
                 onClick={handleOpen}
               >
-                {userData[id]?.firstName[0]?.toUpperCase()}
+                {userData[id]?.firstName &&
+                  userData[id]?.firstName[0]?.toUpperCase()}
               </Avatar>
             </Box>
             <Box>
@@ -53,8 +60,11 @@ const HoverComponent = ({ id, component }) => {
                 {userData[id]?.country}
               </Typography>
               <Typography variant="subtitle2">{userData[id]?.email}</Typography>
+              <Button size="small" onClick={() => navigate(`profile/${id}`)}>
+                View Profile
+              </Button>
             </Box>
-          </Box>
+          </Box> */}
 
           <Modal
             open={open}
@@ -83,7 +93,8 @@ const HoverComponent = ({ id, component }) => {
                 sx={{ width: 400, height: 400, fontSize: 200 }}
                 src={userData[id]?.profilePicture}
               >
-                {userData[id]?.firstName[0]?.toUpperCase()}
+                {userData[id]?.firstName &&
+                  userData[id]?.firstName[0]?.toUpperCase()}
               </Avatar>
               {userData[id]?.firstName} {userData[id]?.lastName}
             </Box>

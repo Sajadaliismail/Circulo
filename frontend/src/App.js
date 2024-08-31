@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import Homepage from "./pages/homePage";
@@ -9,8 +9,11 @@ import ResetPassword from "./components/AuthPageComponents/resetPassword";
 import { AuthRoutes, ProtectedRoute } from "./ProtectedRoutes";
 import ChatPage from "./pages/chatPage";
 import VideoCall from "./pages/VideoCall";
+import UserPage from "./pages/UserPage";
 
 function App() {
+  const [msg, setmsg] = useState({});
+
   return (
     <SnackbarProvider maxSnack={5}>
       <Router>
@@ -19,10 +22,29 @@ function App() {
             path="/login"
             element={<AuthRoutes element={<LandingPage></LandingPage>} />}
           />
-          <Route path="/" element={<ProtectedRoute element={<Homepage />} />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute
+                element={<Homepage msg={msg} setmsg={setmsg} />}
+              />
+            }
+          />
           <Route
             path="/chats"
-            element={<ProtectedRoute element={<ChatPage />} />}
+            element={
+              <ProtectedRoute
+                element={<ChatPage msg={msg} setmsg={setmsg} />}
+              />
+            }
+          />
+          <Route
+            path="/profile/:userId"
+            element={
+              <ProtectedRoute
+                element={<UserPage msg={msg} setmsg={setmsg} />}
+              />
+            }
           />
           <Route
             path="/video"

@@ -1,226 +1,463 @@
-import { ForumOutlined, ThumbUpAlt, ThumbUpOffAlt } from "@mui/icons-material";
 import {
-  Avatar,
-  Badge,
+  AvatarGroup,
   Box,
   Button,
   ButtonGroup,
-  Chip,
   Divider,
   IconButton,
-  Paper,
+  Skeleton,
   TextareaAutosize,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import CommentComponent from "./comments";
-import { useDispatch } from "react-redux";
-import { addComment } from "../../features/posts/postsAsyncThunks";
-import { convertUTCToIST } from "../../pages/Utilitis";
-import HoverComponent from "../CommonComponents/HoverComponen";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addComment,
+  deletePost,
+  handleLike,
+} from "../../features/posts/postsAsyncThunks";
 
-function Post({ postData, handLike, fetchUserData }) {
-  const [open, setOpen] = useState(true);
+import { useRecoilState } from "recoil";
+import { postDetailFamily, postsAtom } from "../../atoms/postAtoms";
+import { fetchPostData } from "../../fetchRequests/posts";
+import { Comment, Favorite, FavoriteOutlined } from "@mui/icons-material";
+import { CardComponent } from "./CardComponent";
+import { AnimatedTooltip } from "../CommonComponents/AnimatedHoverComponent";
+import {
+  deleteCommentApi,
+  fetchComment,
+  handleLikeApi,
+} from "../../api/commentsApi";
+import { enqueueSnackbar } from "notistack";
+
+const Post = React.memo(({ postId, fetchUserData }) => {
+  const [postDetails, setPostDetails] = useRecoilState(
+    postDetailFamily(postId)
+  );
+  const [post, setPostId] = useRecoilState(postsAtom);
+  const [commentOpen, setCommentOpen] = useState(false);
   const dispatch = useDispatch();
   const [commentContent, setCommentContent] = useState("");
+  const { userData } = useSelector((state) => state.friends);
+  const { user } = useSelector((state) => state.user);
   const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleRemovePost = async (id) => {
+    const result = await dispatch(deletePost(id));
+    if (deletePost.fulfilled.match(result)) {
+      setPostId((prev) => {
+        const updatedPosts = prev.filter((postId) => postId._id !== id);
+        return updatedPosts;
+      });
+      setPostDetails(null);
+    } else {
+      enqueueSnackbar("Failed deleting post.", { variant: "error" });
+      console.error("Error deleting post:");
+    }
+  };
 
   const submitComment = async () => {
-    dispatch(
-      addComment({ comment: commentContent, postId: postData._id })
-    ).then((action) => {
-      if (action.payload) {
-        setComments((comment) => {
-          return [action.payload, ...comment];
-        });
-      }
-    });
+    const result = await dispatch(
+      addComment({ comment: commentContent, postId: postDetails._id })
+    );
+    if (addComment.fulfilled.match(result)) {
+      setPostDetails((prev) => {
+        const newState = { ...prev };
+        newState.commentsCount++;
+        return newState;
+      });
+      setCommentContent("");
+      setComments((comment) => {
+        return [result.data, ...comment];
+      });
+    } else {
+      enqueueSnackbar("Failed adding comment.", { variant: "error" });
+    }
   };
+
+  const toggleLike = (post) => {
+    const alreadyLiked = post.hasLiked;
+    let count = post.likesCount;
+    const updatedLikes = alreadyLiked
+      ? post.likes.filter((id) => id !== user._id)
+      : [...post.likes, user._id];
+
+    if (alreadyLiked) {
+      count--;
+    } else {
+      count++;
+    }
+
+    return {
+      ...post,
+      hasLiked: !alreadyLiked,
+      likesCount: count,
+      likes: updatedLikes,
+    };
+  };
+
+  const handLike = async (postId) => {
+    try {
+      const result = await dispatch(handleLike({ _id: postId }));
+      if (handleLike.fulfilled.match(result)) {
+        setPostDetails((prevPost) => toggleLike(prevPost));
+      } else enqueueSnackbar("Failed liking post.", { variant: "error" });
+    } catch (error) {
+      console.error("Failed to handle like:", error);
+      enqueueSnackbar("Failed liking post.", { variant: "error" });
+
+      // setPostDetails((prevPost) => toggleLike(prevPost));
+    }
+  };
+
+  useEffect(() => {
+    const updatePostData = async (id) => {
+      try {
+        setLoading(true);
+        const response = await fetchPostData(id);
+        const result = await response.json();
+
+        if (response.ok) {
+          setPostDetails(result.data);
+          const author = result?.data?.author;
+
+          if (author) {
+            fetchUserData(author);
+          }
+        } else {
+          enqueueSnackbar("Failed to fetch post.", { variant: "error" });
+        }
+      } catch (error) {
+        enqueueSnackbar("Failed to fetch post.", { variant: "error" });
+
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (postId && !postDetails?._id) {
+      updatePostData(postId);
+    }
+  }, [postId, postDetails]);
 
   const handleOpen = async () => {
-    setOpen((prev) => !prev);
+    setCommentOpen((prev) => !prev);
     try {
-      const response = await fetch(
-        `http://localhost:3004/posts/fetchComments?postId=${postData._id}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const response = await fetchComment(postDetails._id);
+
       const data = await response.json();
-      setComments(data.posts);
+      if (response.ok) setComments(data.posts);
+      else {
+        enqueueSnackbar("Failed fetching comments.", { variant: "error" });
+      }
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar("Failed fetching comments.", { variant: "error" });
+    }
+  };
+
+  const handleLikeComment = async (_id) => {
+    try {
+      const response = await handleLikeApi(_id);
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setComments((comments) => {
+          return comments.map((comment) =>
+            comment._id === data._id ? data : comment
+          );
+        });
+      } else {
+        enqueueSnackbar("Failed liking comments.", { variant: "error" });
+      }
     } catch (error) {
       console.log(error);
+      enqueueSnackbar("Failed liking comments.", { variant: "error" });
     }
   };
 
-  const handleLike = async (_id) => {
-    const response = await fetch(`http://localhost:3004/posts/likeComments`, {
-      method: "POST",
-      credentials: "include",
+  const handleRemoveComment = async (id) => {
+    try {
+      const response = await deleteCommentApi(id);
+      const data = await response.json();
 
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ _id }),
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      setComments((comments) => {
-        return comments.map((comment) =>
-          comment._id === data._id ? data : comment
-        );
-      });
+      if (response.ok) {
+        setComments((prev) => {
+          const updated = [...prev];
+          return updated.filter((comments) => comments._id !== id);
+        });
+        setPostDetails((state) => {
+          return { ...state, commentsCount: state.commentsCount - 1 };
+        });
+      } else {
+        enqueueSnackbar("Failed deleting comments.", { variant: "error" });
+      }
+    } catch (error) {
+      console.log(error);
+      enqueueSnackbar("Failed deleting comments.", { variant: "error" });
     }
   };
+
+  const memoizedComments = useMemo(
+    () =>
+      comments.map((comment) => (
+        <React.Fragment key={comment._id}>
+          <CommentComponent
+            author={postDetails?.author}
+            comment={comment}
+            handleLike={handleLikeComment}
+            handleRemoveComment={handleRemoveComment}
+          />
+        </React.Fragment>
+      )),
+    [comments, handleLikeComment]
+  );
+
+  if (loading) {
+    return (
+      <Box elevation={5} sx={{ borderRadius: 2, padding: 2, my: 2, mx: 1 }}>
+        <Skeleton variant="circular" width={40} height={40} />
+        <Skeleton variant="text" width="60%" height={30} />
+        <Skeleton variant="rectangular" width="100%" height={200} />
+      </Box>
+    );
+  }
+
   return (
     <>
-      <Paper
-        elevation={5}
-        sx={{ borderRadius: "10px", padding: "10px", my: "10px", mx: "5px" }}
-      >
+      {userData[postDetails?.author] && (
         <Box
-          onMouseOver={() => {
-            fetchUserData(postData?.authorDetails._id);
-          }}
+          className="shadow-xl  bg-gray-200 rounded-lg dark:bg-slate-700"
+          elevation={5}
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: "5px",
-            cursor: "pointer",
-
-            [`&:hover .posts-${postData._id}-${postData?.authorDetails._id}`]: {
-              visibility: "visible",
-            },
-            position: "relative",
-          }}
-        >
-          <Avatar
-            sx={{ width: 30, height: 30, my: 1 }}
-            src={postData?.authorDetails?.profilePicture}
-          >
-            {postData?.authorDetails?.firstName?.[0]?.toUpperCase()}
-          </Avatar>
-          {postData?.authorDetails?.firstName}
-          <Typography variant="caption" sx={{ marginLeft: "auto" }}>
-            {convertUTCToIST(postData?.createdAt)}
-          </Typography>
-          <HoverComponent
-            component={`posts-${postData._id}`}
-            id={postData?.authorDetails._id}
-          />
-        </Box>
-        <Divider variant="fullWidth"></Divider>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "start",
-            gap: "5px",
-            textAlign: "start",
-            width: "100%",
-            backgroundColor: "#f5f5f5 ",
-            padding: 1,
             borderRadius: 2,
+            padding: 1,
+            my: 2,
+            mx: 1,
           }}
         >
-          <Typography variant="body2">{postData.content}</Typography>
-          {postData.image && (
-            <Box
-              component="img"
-              src={postData.image}
-              alt="postImage"
+          <CardComponent
+            handleRemovePost={handleRemovePost}
+            userId={user._id}
+            postDetails={postDetails}
+            author={userData[postDetails?.author]}
+          />
+          {/* <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              cursor: "pointer",
+
+              [`&:hover .posts-${postDetails?._id}-${postDetails?.author}`]: {
+                visibility: "visible",
+              },
+              position: "relative",
+            }}
+          >
+            <Avatar
+              sx={{ width: 30, height: 30, my: 1 }}
+              src={userData[postDetails?.author]?.profilePicture}
+            >
+              {userData[postDetails?.author]?.firstName?.[0]?.toUpperCase()}
+            </Avatar>
+            <Typography sx={{ color: theme.palette.text.primary }}>
+              {`${userData[postDetails?.author]?.firstName} ${
+                userData[postDetails?.author]?.lastName
+              }`}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ marginLeft: "auto", color: theme.palette.text.secondary }}
+            >
+              {convertUTCToIST(postDetails?.createdAt)}
+            </Typography>
+            <Button
+              size="small"
+              className="m-0 p-0"
               sx={{
-                width: "100%",
-                height: "auto",
-                objectFit: "cover",
-                borderRadius: "10px",
+                p: 0,
+                minWidth: "auto",
+                minHeight: "auto",
               }}
+              id="basic-button"
+              aria-controls={openmenu ? "basic-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={openmenu ? "true" : undefined}
+              onClick={handleClick}
+            >
+              <MoreVert sx={{ fontSize: "24px", p: 0 }} />{" "}
+            </Button>
+            <Menu
+              id="basic-menu"
+              anchorEl={anchorEl}
+              open={openmenu}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "left",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "left",
+              }}
+              MenuListProps={{
+                "aria-labelledby": "basic-button",
+              }}
+            >
+              {postDetails?.author == user._id && (
+                <MenuItem onClick={() => handleRemovePost(postDetails?._id)}>
+                  Remove post
+                </MenuItem>
+              )}
+              <MenuItem onClick={handleClose}>Report post</MenuItem>
+            </Menu>
+            <HoverComponent
+              component={`posts-${postDetails?._id}`}
+              id={postDetails?.author}
             />
+          </Box> */}
+          {/* <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "start",
+              gap: 1,
+              textAlign: "start",
+              width: "100%",
+              color: theme.palette.text.primary,
+            }}
+          >
+            <Typography variant="body2">{postDetails?.content}</Typography>
+            {postDetails?.image && (
+              <Box
+                component="img"
+                src={postDetails?.image}
+                alt="postImage"
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  objectFit: "cover",
+                  borderRadius: 2,
+                }}
+              />
+            )}
+          </Box> */}
+          <Box>
+            <ButtonGroup
+              variant="text"
+              sx={{
+                alignItems: "center",
+                justifyItems: "center",
+                borderRadius: "50px",
+              }}
+              aria-label="Loading button group"
+            >
+              <IconButton onClick={() => handLike(postDetails?._id)}>
+                {postDetails?.hasLiked ? (
+                  <Favorite color="error" />
+                ) : (
+                  <FavoriteOutlined className="dark:text-white" />
+                )}
+              </IconButton>
+              {postDetails?.likes?.length > 0 && (
+                <AvatarGroup
+                  spacing={"small"}
+                  componentsProps={{
+                    additionalAvatar: {
+                      sx: {
+                        height: 24,
+                        width: 24,
+                        fontSize: 12,
+                        left: 10,
+                      },
+                    },
+                  }}
+                  total={postDetails?.likes.length}
+                  sx={{ mr: 2 }}
+                  max={4}
+                >
+                  {postDetails?.likes.slice(0, 3).map((id) => (
+                    <AnimatedTooltip
+                      userId={id}
+                      size={24}
+                      fontS={12}
+                      // key={id}
+                      // sx={{ width: 24, height: 24, fontSize: 12 }}
+                      // src={userData[id]?.profilePicture}
+                    >
+                      {/* {userData[id]?.firstName[0]} */}
+                    </AnimatedTooltip>
+                  ))}
+                </AvatarGroup>
+              )}
+
+              <Button sx={{ gap: 1 }} onClick={handleOpen}>
+                <Comment className="text-cyan-600 dark:text-white" />
+                {postDetails?.commentsCount}
+              </Button>
+            </ButtonGroup>
+          </Box>
+          {commentOpen && (
+            <Box sx={{ marginTop: 2 }} key={postDetails?._id}>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: "200",
+                }}
+              >
+                Comments
+              </Typography>
+              <Box display="flex" alignItems="end" gap={1} className="mb-2">
+                <TextareaAutosize
+                  className="dark:placeholder:text-slate-300 font-thin dark:bg-slate-600 rounded-lg"
+                  placeholder="Share your opinion..."
+                  minRows={2}
+                  maxLength={300}
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  style={{
+                    flex: 1,
+                    resize: "none",
+                    border: "none",
+                    outline: "none",
+                    width: "100%",
+                    borderRadius: 5,
+                    padding: "8px",
+                  }}
+                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <Button
+                    size="small"
+                    onClick={submitComment}
+                    variant="contained"
+                    sx={{
+                      borderRadius: "50px",
+                    }}
+                  >
+                    Comment
+                  </Button>
+                </Box>
+              </Box>
+              <Box className="shadow-2xl  p-1 rounded-lg">
+                {memoizedComments}
+              </Box>
+            </Box>
           )}
         </Box>
-        <Box>
-          <ButtonGroup
-            variant="text"
-            sx={{
-              alignItems: "center",
-              justifyItems: "center",
-              borderRadius: "50px",
-            }}
-            aria-label="Loading button group"
-          >
-            <IconButton onClick={() => handLike(postData._id)}>
-              {postData.hasLiked ? (
-                <ThumbUpAlt color="primary" />
-              ) : (
-                <ThumbUpOffAlt color="primary" />
-              )}
-            </IconButton>
-            {postData.likesCount > 0 && (
-              <Chip
-                size="small"
-                color="primary"
-                variant="filled"
-                label={`${postData.likesCount}`}
-              ></Chip>
-            )}
-            <Button onClick={handleOpen}>
-              <ForumOutlined />
-            </Button>
-          </ButtonGroup>
-        </Box>
-        {!open && (
-          <Box
-            sx={{
-              marginTop: "10px",
-            }}
-          >
-            <Typography variant="body1" sx={{ fontWeight: "200" }}>
-              Comments
-            </Typography>
-            <TextareaAutosize
-              placeholder="Share your opinion..."
-              minRows={2}
-              maxLength={300}
-              value={commentContent}
-              onChange={(e) => setCommentContent(e.target.value)}
-              style={{
-                flex: 1,
-                resize: "none",
-                border: "none",
-                outline: "none",
-                width: "100%",
-                backgroundColor: "#f5f5f5",
-                borderRadius: "10px",
-                padding: "5px",
-              }}
-            />
-            <Box className="flex justify-end py-2">
-              <Button
-                onClick={submitComment}
-                variant="contained"
-                className="ms-auto"
-                sx={{ borderRadius: "50px" }}
-              >
-                Comment
-              </Button>
-            </Box>
-            <Box>
-              {comments &&
-                comments.map((comment) => (
-                  <CommentComponent
-                    key={comment._id}
-                    comment={comment}
-                    handleLike={handleLike}
-                  />
-                ))}
-            </Box>
-          </Box>
-        )}
-      </Paper>
+      )}
+      <Divider variant="fullWidth" />
     </>
   );
-}
+});
 
 export default Post;

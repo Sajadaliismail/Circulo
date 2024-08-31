@@ -148,20 +148,69 @@ const getFriendsService = async (userId) => {
     );
     const result = friends.records.map((record) => {
       const res = record.get("friends").properties;
-      return res;
+      return res.id;
     });
-
     return result;
   } catch (error) {
     console.log(error);
   }
 };
 
+const getUserRelation = async (id, userId) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(
+      `MATCH (u1:User {id: $id}), (u2:User {id: $userId})
+OPTIONAL MATCH (u1)-[relation]-(u2)
+OPTIONAL MATCH (u1)-[:FRIEND]-(friend) 
+RETURN 
+  CASE
+    WHEN u1.id = u2.id THEN 'SELF'
+    WHEN relation IS NULL THEN 'NOT_FRIENDS'
+    WHEN type(relation) = 'FRIEND' THEN 'FRIENDS'
+    WHEN type(relation) = 'FRIEND_REQUEST' AND startNode(relation).id = $id THEN 'REQUESTRECEIVED'
+    WHEN type(relation) = 'FRIEND_REQUEST' AND endNode(relation).id = $id THEN 'REQUESTSENT'
+    ELSE 'not friends'
+  END AS relationshipStatus,
+  COUNT(DISTINCT friend) AS friendsCount
+`,
+      { id, userId }
+    );
+
+    const relation = result.records.map((record) => {
+      const res = record.get("relationshipStatus");
+      const res1 = record.get("friendsCount").toNumber();
+      return {
+        relation: res,
+        friendsCount: res1,
+      };
+    });
+
+    return relation[0];
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const removeUserFriend = async (friendId, userId) => {
+  const session = driver.session();
+
+  try {
+    const remove = await session.run(
+      `MATCH (u:User {id: $userId})-[r:FRIEND]-(f:User {id: $friendId})
+   DELETE r`,
+      { userId, friendId }
+    );
+    return { relation: "NOTFRIENDS" };
+  } catch (error) {
+    console.log(error);
+  }
+};
 const getFriendsServiceApi = async (userId) => {
   const session = driver.session();
   try {
     const friends = await session.run(
-      `MATCH (u:User {id : $userId})<-[r:FRIEND]-(friends) RETURN friends`,
+      `MATCH (u:User {id : $userId})-[r:FRIEND]-(friends) RETURN friends`,
       { userId }
     );
     const result = friends.records.map((record) => {
@@ -313,4 +362,6 @@ module.exports = {
   getRequestsService,
   getFriendsService,
   getFriendsServiceApi,
+  getUserRelation,
+  removeUserFriend,
 };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { ThemeProvider } from "@mui/material/styles";
 import {
   Paper,
   Grid,
@@ -24,10 +23,9 @@ import { setUnreadMessages } from "../features/chats/chatsSlice";
 import chatSocket from "../features/utilities/Socket-io";
 import useChatSocket from "../hooks/chatSocketHook";
 import { UploadImage } from "../Utilities/UploadImage";
-import { darkTheme, lightTheme } from "./Style";
 import { handleNewMessage } from "./Utilitis";
 
-export default function ChatPage() {
+export default function ChatPage({ msg, setmsg }) {
   const dispatch = useDispatch();
   const { chatFriends } = useSelector((state) => state.chats);
   const { friends, userData } = useSelector((state) => state.friends);
@@ -38,22 +36,15 @@ export default function ChatPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [friend, setFriend] = useState(null);
   const [roomId, setRoomId] = useState(null);
-  const [currentTheme, setCurrentTheme] = useState("light");
-  const [msg, setmsg] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [friendsData, setFriendsData] = useState([]);
 
-  const toggleTheme = () =>
-    setCurrentTheme(currentTheme === "light" ? "dark" : "light");
-
-  const theme = currentTheme === "light" ? lightTheme : darkTheme;
   useEffect(() => {
     const fetchData = async () => {
-      const friendsId = friends.map((friend) => friend.id);
-      const roomIds = friendsId.map((id) => [user._id, id].sort().join(""));
+      const roomIds = friends?.map((id) => [user._id, id].sort().join(""));
 
-      const userPromises = friendsId.map((id, index) => {
+      const userPromises = friends?.map((id, index) => {
         const roomId = roomIds[index];
         return userData[id]
           ? { ...userData[id], roomId }
@@ -71,12 +62,11 @@ export default function ChatPage() {
   }, [friends, userData, dispatch]);
 
   useEffect(() => {
-    dispatch(getFriends()).then((action) => {
-      if (action.payload) {
-        const senderIds = action.payload.friends.map((friend) => friend.id);
-        dispatch(setUnreadMessages({ senderIds }));
-      }
-    });
+    const result = dispatch(getFriends());
+    if (getFriends.fulfilled.match(result)) {
+      const senderIds = result.friends.map((friend) => friend.id);
+      dispatch(setUnreadMessages({ senderIds }));
+    }
   }, [dispatch]);
 
   const handleSubmitImage = async () => {
@@ -162,6 +152,8 @@ export default function ChatPage() {
             user2: chat.user2,
             roomId: chat.roomId,
             unreadCount: chat.unreadCount,
+            chatBoxOpen: false,
+            minimize: false,
           },
         }));
       }
@@ -199,13 +191,13 @@ export default function ChatPage() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Header toggleTheme={toggleTheme} />
+    <>
+      <Header setmsg={setmsg} />
       <Grid container spacing={2}>
         <Grid item xs={12}>
           {/* <VideoCall></VideoCall> */}
         </Grid>
-        <Grid item xs={12} container component={Paper}>
+        <Grid item xs={12} container>
           <Grid
             item
             xs={3}
@@ -328,7 +320,6 @@ export default function ChatPage() {
                 friend={friend}
                 messages={msg[roomId]}
                 roomId={roomId}
-                theme={theme}
               />
             ) : (
               <Typography
@@ -347,6 +338,6 @@ export default function ChatPage() {
           </Grid>
         </Grid>
       </Grid>
-    </ThemeProvider>
+    </>
   );
 }

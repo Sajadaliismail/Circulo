@@ -31,7 +31,7 @@ const fetchComment = async (req, res) => {
   try {
     const userId = req.userId;
     const { postId } = req.query;
-    console.log(req.query);
+
     const posts = await commentsInteractors.fetchCommentInteractor(
       userId,
       postId
@@ -40,6 +40,7 @@ const fetchComment = async (req, res) => {
     return res.status(200).json({ posts: posts });
   } catch (error) {
     console.log(error);
+    return res.status(400).json({ error: error.message });
   }
 };
 
@@ -53,10 +54,28 @@ const handleLike = async (req, res) => {
     return res.status(200).json(comment);
   } catch (error) {
     console.log(error);
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+const deleteComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const result = await commentsInteractors.commentDeleteInteractor(
+      id,
+      userId
+    );
+
+    return res.status(200).json({ commentId: id });
+  } catch (error) {
+    console.log(error);
+    return res.status(404).json({ error: error.message });
   }
 };
 module.exports = {
   addComment,
   fetchComment,
   handleLike,
+  deleteComment,
 };

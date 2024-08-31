@@ -38,11 +38,11 @@ const fetchUser = async (req, res) => {
 const fetchUserDetails = async (req, res) => {
   try {
     const { userId } = req.query;
-    console.log(userId);
 
     const result = await userInteractor.fetchUserInteractor(userId);
     return res.status(200).json(result);
   } catch (error) {
+    console.log(error.message);
     return res.status(404).json({ error: error.message });
   }
 };
@@ -60,6 +60,8 @@ const uploadImage = async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (error) {
+    console.log(error);
+
     return res.status(404).json({ error: error.message });
   }
 };

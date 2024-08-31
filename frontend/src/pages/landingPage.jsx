@@ -1,14 +1,10 @@
 import {
   Backdrop,
   CircularProgress,
-  createTheme,
   CssBaseline,
   Grid,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
-import { ThemeProvider } from "@emotion/react";
 import { landingPageStyles } from "./Style";
 import { useSelector } from "react-redux";
 import SignInSide from "../components/AuthPageComponents/signIn";
@@ -18,14 +14,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { verifyOtp } from "../features/auth/authAsyncThunks";
 import VerifyOtp from "../components/AuthPageComponents/verifyOTp";
-const theme = createTheme();
+import { FlipWords } from "../components/CommonComponents/FlipComponent";
 
 function LandingPage() {
   const { status } = useSelector((state) => state.auth);
   const [component, setComponent] = useState("signin");
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const isMediumScreen = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
   const components = {
     signup: <SignUp signin={() => setComponent("signin")} />,
@@ -41,23 +34,18 @@ function LandingPage() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
+    <>
       {status === "loading" && (
-        <Backdrop
-          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 10 }}
-          open={true}
-        >
+        <Backdrop sx={{ color: "#fff", zIndex: 100 }} open={true}>
           <CircularProgress color="inherit" variant="indeterminate" />
         </Backdrop>
       )}
       <Grid container component="main" sx={landingPageStyles.gridContainer}>
         <CssBaseline />
         <Grid item xs={12} sx={landingPageStyles.backgroundGrid}>
-          <Typography
-            sx={landingPageStyles.typography}
-            variant={isSmallScreen ? "h6" : isMediumScreen ? "h4" : "h2"}
-          >
-            Your World, Your Circle, Your Voice.
+          <Typography variant="h2" sx={landingPageStyles.typography}>
+            Your{" "}
+            <FlipWords duration={2000} words={["World", "Circle", "Voice"]} />
           </Typography>
 
           <Grid
@@ -99,7 +87,7 @@ function LandingPage() {
           </Grid>
         </Grid>
       </Grid>
-    </ThemeProvider>
+    </>
   );
 }
 

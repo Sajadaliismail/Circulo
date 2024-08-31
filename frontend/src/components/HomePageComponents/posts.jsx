@@ -1,10 +1,10 @@
 import {
   Container,
   CssBaseline,
-  Paper,
-  CircularProgress,
   Box,
   Button,
+  Skeleton,
+  Typography,
 } from "@mui/material";
 import Post from "./post";
 import { useEffect, useState, useCallback } from "react";
@@ -13,51 +13,92 @@ import { fetchPosts, handleLike } from "../../features/posts/postsAsyncThunks";
 import debounce from "lodash/debounce";
 import { SyncLoader } from "react-spinners";
 import { setPages } from "../../features/posts/postsSlice";
+import { fetchPostData } from "../../fetchRequests/posts";
+import { useSnackbar } from "notistack";
+import { postDetailFamily, postsAtom } from "../../atoms/postAtoms";
+import { useRecoilState } from "recoil";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 function Posts({ fetchUserData }) {
-  const { posts, count, pages } = useSelector((state) => state.posts);
   const dispatch = useDispatch();
-  const limits = 10;
+
+  const { posts, count } = useSelector((state) => state.posts);
+
   const [isBottom, setIsBottom] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [initialPosts, setInitialPosts] = useState([]);
+  const [postGenerator, setPostGenerator] = useState(null);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
+
+  const [chunkSize] = useState(10);
+  const [postId, setPostId] = useRecoilState(postsAtom);
+  const { enqueueSnackbar } = useSnackbar();
 
   const fetchMorePosts = () => {
-    setLoading(true);
-    dispatch(fetchPosts()).finally(() => {
-      console.log("Finished fetching posts");
-      setLoading(false);
+    return new Promise((resolve) => {
+      dispatch(fetchPosts()).finally(() => {
+        if (count === postId.length) {
+          enqueueSnackbar("Refreshed successfully", {
+            variant: "success",
+          });
+        }
+        setLoading(false);
+        resolve();
+      });
     });
   };
 
-  useEffect(() => {
-    fetchMorePosts();
-  }, []);
+  function* chunkPosts(posts, chunkSize) {
+    for (let i = 0; i < posts.length; i += chunkSize) {
+      yield posts.slice(i, i + chunkSize);
+    }
+  }
 
   useEffect(() => {
-    setInitialPosts(posts);
-  }, [posts]);
+    if (count > 0 && postId.length !== count) {
+      const generator = chunkPosts(posts, chunkSize);
+      setPostGenerator(generator);
+
+      const initialPosts = generator.next().value;
+      setPostId(initialPosts);
+    }
+  }, [count, fetchPosts, posts]);
+
+  useEffect(() => {
+    dispatch(fetchPosts());
+  }, [dispatch]);
+
+  const loadMore = () => {
+    if (postGenerator && postId.length < count) {
+      const nextPosts = postGenerator.next().value;
+      if (nextPosts) {
+        setPostId((prev) => {
+          const id = new Set([...prev, ...nextPosts]);
+          return [...id];
+        });
+      }
+    }
+  };
 
   const handleScroll = useCallback(
     debounce(() => {
       const div = document.getElementById("postsContainer");
       const scrollTop = div.scrollTop;
-      const windowHeight = window.innerHeight;
+      const divHeight = div.clientHeight;
       const documentHeight = div.scrollHeight;
 
-      if (scrollTop + windowHeight >= documentHeight - 10) {
+      if (scrollTop + divHeight >= documentHeight - 10) {
         if (!loading) {
           setIsBottom(true);
-          if (pages * limits < count) {
+          if (postId.length < count) {
             dispatch(setPages());
-            fetchMorePosts();
+            loadMore();
           }
         }
       } else {
         setIsBottom(false);
       }
     }, 300),
-    [loading]
+    [loading, postId, count, dispatch]
   );
 
   useEffect(() => {
@@ -66,62 +107,84 @@ function Posts({ fetchUserData }) {
     return () => div.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const handLike = async (postId) => {
-    try {
-      dispatch(handleLike({ _id: postId }));
-    } catch (error) {}
-  };
-
   return (
     <>
-      <CssBaseline />
-      <Container
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          height: "100vh",
-        }}
-      >
+      <PullToRefresh onRefresh={fetchMorePosts} className="max-h-lvh">
         <Box
-          id="postsContainer"
-          elevation={1}
           sx={{
-            flex: "1 1 auto",
-            borderRadius: "10px",
-            position: "relative",
-            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            height: "100vh",
             scrollbarWidth: "none",
+            overflowY: "scroll",
           }}
         >
-          {posts &&
-            posts.map((post) => (
-              <Post
-                fetchUserData={fetchUserData}
-                handLike={handLike}
-                key={post._id}
-                postData={post}
-              />
-            ))}
           <Box
+            id="postsContainer"
+            elevation={1}
             sx={{
-              padding: "15px",
-              width: "100%",
-              alignItems: "center",
-              display: "flex",
-              justifyContent: "center",
+              flex: "1 1 auto",
+              borderRadius: "10px",
+              position: "relative",
+              overflowY: "scroll",
+              scrollbarWidth: "none",
             }}
           >
-            {pages * limits < count ? (
-              <SyncLoader size={8} color="#1976d2" />
+            {posts.length > 0 ? (
+              isLoadingInitial ? (
+                Array.from(new Array(chunkSize)).map((_, index) => (
+                  <Skeleton
+                    key={index}
+                    variant="rectangular"
+                    width="100%"
+                    height={118}
+                    sx={{ borderRadius: "10px", marginBottom: "10px" }}
+                  />
+                ))
+              ) : (
+                postId &&
+                postId?.map((post) => (
+                  <Post
+                    fetchUserData={fetchUserData}
+                    key={`post-${post?._id}`}
+                    postId={post._id}
+                  />
+                ))
+              )
             ) : (
-              <Button onClick={() => dispatch(fetchMorePosts)}>
-                Load More
-              </Button>
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{
+                  color: "#757575",
+                  padding: "30px",
+                  // fontStyle: "italic",
+                  // fontSize: "1rem",
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: "8px",
+                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                {`There's nothing to display. Connect with others to see updates`}
+              </Typography>
             )}
+            <Box
+              sx={{
+                padding: "15px",
+                width: "100%",
+                alignItems: "center",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              {postId?.length < count && (
+                <SyncLoader size={8} color="#1976d2" />
+              )}
+            </Box>
           </Box>
         </Box>
-      </Container>
+      </PullToRefresh>
     </>
   );
 }

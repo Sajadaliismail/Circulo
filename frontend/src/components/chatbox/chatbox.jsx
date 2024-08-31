@@ -1,3 +1,77 @@
+// useEffect(() => {
+//   const id = user._id;
+//   chatSocket.emit("authenticate", id);
+
+//   chatSocket.on(
+//     "newMessageNotification",
+//     ({ senderId, roomId, hasOpened, message, timestamp, type, _id }) => {
+//       dispatch(
+//         setChats({
+//           senderId,
+//           roomId,
+//           hasOpened,
+//           message,
+//           timestamp,
+//           type,
+//           _id,
+//         })
+//       );
+//       // dispatch(
+//       //   setReceivedChats({
+//       //     senderId,
+//       //     roomId,
+//       //     hasOpened,
+//       //     message,
+//       //     timestamp,
+//       //     type,
+//       //     _id,
+//       //   })
+//       // );
+//       // dispatch(setUnreadMessages({ senderId }));
+//     }
+//   );
+
+//   chatSocket.on("emoji_recieved", ({ id, emoji }) => {
+//     dispatch(setEmoji({ id, emoji }));
+//   });
+//   const receiveMessageHandler = ({
+//     senderId,
+//     roomId,
+//     hasOpened,
+//     message,
+//     timestamp,
+//     type,
+//     _id,
+//   }) => {
+//     console.log({
+//       senderId,
+//       roomId,
+//       hasOpened,
+//       message,
+//       timestamp,
+//       type,
+//       _id,
+//     });
+//     dispatch(setReadMessages(senderId));
+
+//     dispatch(
+//       setChats({ senderId, roomId, hasOpened, message, timestamp, type })
+//     );
+//   };
+
+//   if (friendRef.current._id) {
+//     chatSocket.on("emoji_recieved", (arg) => {
+//       console.log(arg);
+//     });
+//   }
+//   chatSocket.on("receiveMessage", receiveMessageHandler);
+
+//   return () => {
+//     chatSocket.off("newMessageNotification");
+//     chatSocket.off("emoji_recieved");
+//     chatSocket.off("receiveMessage", receiveMessageHandler);
+//   };
+// }, [user._id, dispatch]);
 import React, {
   lazy,
   useEffect,
@@ -29,7 +103,7 @@ import useChatSocket from "../../hooks/chatSocketHook";
 
 const ChatBox = lazy(() => import("./chatboxinterface"));
 
-function ChatApp({ fetchUserData }) {
+function ChatApp({ fetchUserData, msg, setmsg }) {
   const dispatch = useDispatch();
   const { chats, roomId } = useSelector((state) => state.chats);
   const { user } = useSelector((state) => state.user);
@@ -75,94 +149,47 @@ function ChatApp({ fetchUserData }) {
       chatSocketHook.off("emoji_recieved", handleEmojiReceived);
     };
   }, [chatSocketHook, dispatch]);
-  // useEffect(() => {
-  //   const id = user._id;
-  //   chatSocket.emit("authenticate", id);
-
-  //   chatSocket.on(
-  //     "newMessageNotification",
-  //     ({ senderId, roomId, hasOpened, message, timestamp, type, _id }) => {
-  //       dispatch(
-  //         setChats({
-  //           senderId,
-  //           roomId,
-  //           hasOpened,
-  //           message,
-  //           timestamp,
-  //           type,
-  //           _id,
-  //         })
-  //       );
-  //       // dispatch(
-  //       //   setReceivedChats({
-  //       //     senderId,
-  //       //     roomId,
-  //       //     hasOpened,
-  //       //     message,
-  //       //     timestamp,
-  //       //     type,
-  //       //     _id,
-  //       //   })
-  //       // );
-  //       // dispatch(setUnreadMessages({ senderId }));
-  //     }
-  //   );
-
-  //   chatSocket.on("emoji_recieved", ({ id, emoji }) => {
-  //     dispatch(setEmoji({ id, emoji }));
-  //   });
-  //   const receiveMessageHandler = ({
-  //     senderId,
-  //     roomId,
-  //     hasOpened,
-  //     message,
-  //     timestamp,
-  //     type,
-  //     _id,
-  //   }) => {
-  //     console.log({
-  //       senderId,
-  //       roomId,
-  //       hasOpened,
-  //       message,
-  //       timestamp,
-  //       type,
-  //       _id,
-  //     });
-  //     dispatch(setReadMessages(senderId));
-
-  //     dispatch(
-  //       setChats({ senderId, roomId, hasOpened, message, timestamp, type })
-  //     );
-  //   };
-
-  //   if (friendRef.current._id) {
-  //     chatSocket.on("emoji_recieved", (arg) => {
-  //       console.log(arg);
-  //     });
-  //   }
-  //   chatSocket.on("receiveMessage", receiveMessageHandler);
-
-  //   return () => {
-  //     chatSocket.off("newMessageNotification");
-  //     chatSocket.off("emoji_recieved");
-  //     chatSocket.off("receiveMessage", receiveMessageHandler);
-  //   };
-  // }, [user._id, dispatch]);
 
   const conversation = useMemo(() => {
     const chatArray = Object.values(chats);
     return chatArray;
   }, [chats]);
 
-  const handleChat = async (friend) => {
-    const id = friend.id;
-    if (!userData[id]) {
-      dispatch(fetchUserDetails(id));
-    }
-    await dispatch(fetchchats(id));
-    await dispatch(setReadMessages(id));
-    openConversation(id);
+  const handleChat = async (id, roomId) => {
+    console.log(id);
+    const fetchChatmsg = async (id) => {
+      const response = await fetch(
+        `http://localhost:3008/chats/fetchchat?id=${id}`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (response.ok) {
+        const { chat } = await response.json();
+        setmsg((prevChats) => ({
+          ...prevChats,
+          [chat.roomId]: {
+            messages: chat.messages,
+            user1: chat.user1,
+            user2: chat.user2,
+            roomId: chat.roomId,
+            unreadCount: chat.unreadCount,
+            chatBoxOpen: true,
+            minimize: false,
+          },
+        }));
+      }
+    };
+
+    fetchChatmsg(id);
+    console.log(msg);
+
+    // await dispatch(fetchchats(id));
+    // await dispatch(setReadMessages(id));
+    // openConversation(id);
     setFriend(friend);
     friendRef.current = friend;
     setMessage("");
@@ -177,12 +204,12 @@ function ChatApp({ fetchUserData }) {
     dispatch(setMinimize(id));
   };
 
-  const openConversation = async (id) => {
-    const userId = user._id;
-    const roomId = [userId, id].sort().join("");
-    await dispatch(fetchchats(id));
-    await dispatch(setOpen(roomId));
-  };
+  // const openConversation = async (id) => {
+  //   const userId = user._id;
+  //   const roomId = [userId, id].sort().join("");
+  //   await dispatch(fetchchats(id));
+  //   await dispatch(setOpen(roomId));
+  // };
 
   const onSubmit = (id, message) => {
     if (message.trim()) {
@@ -209,10 +236,10 @@ function ChatApp({ fetchUserData }) {
             alignItems: "end",
           }}
         >
-          {Object.keys(chats).map((roomId) => {
-            const chat = chats[roomId];
-            return chat.chatBoxOpen ? (
-              chat.minimized ? (
+          {Object.keys(msg).map((roomId) => {
+            const chat = msg[roomId];
+            return chat?.chatBoxOpen ? (
+              chat.minimize ? (
                 <ChatBoxHeader
                   key={roomId}
                   data={chat}
@@ -222,10 +249,9 @@ function ChatApp({ fetchUserData }) {
               ) : (
                 <ChatBox
                   key={roomId}
-                  conversationId={roomId}
+                  roomId={roomId}
                   title={chat.name}
                   data={chat}
-                  avatar={chat.avatar}
                   conversations={chat.messages}
                   chatBoxOpen={chat.chatBoxOpen}
                   onClose={() => handleClose(roomId)}

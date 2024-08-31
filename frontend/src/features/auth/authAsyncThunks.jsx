@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { setAccessToken } from "./authSlice";
-const BACKEND = process.env.REACT_APP_BACKEND;
+const BACKEND = process.env.REACT_APP_USER_BACKEND;
 
 export const signup = createAsyncThunk(
   "auth/signup",

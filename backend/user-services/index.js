@@ -6,7 +6,10 @@ const cookieParser = require("cookie-parser");
 const connectDb = require("./Server/DBConnection/mongodbConnection");
 const route = require("./Server/Routes/userRoutes");
 const { subscribeMessage } = require("./Server/Services/rabbitmq");
-const { updatePost } = require("./Server/Repositories/userRepository");
+const {
+  updatePost,
+  deletePost,
+} = require("./Server/Repositories/userRepository");
 
 const PORT = process.env.PORT;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
@@ -24,7 +27,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOption));
 
-subscribeMessage("post_created", updatePost);
+// subscribeMessage("post_created", updatePost);
+// subscribeMessage("post_deleted", deletePost);
 app.use("/", route);
 
 connectDb();

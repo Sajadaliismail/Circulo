@@ -9,7 +9,8 @@ import {
   styled,
 } from "@mui/material";
 import { ExpandLess } from "@mui/icons-material";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import Skeleton from "@mui/material/Skeleton";
 
 const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -23,12 +24,23 @@ const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
 }));
 
 const OnlinePeopleAccordion = ({ fetchUserData, handleChat }) => {
-  const { friends } = useSelector((state) => state.friends);
-  const [onlinePeople, setOnlinePeople] = useState([]);
+  const { friends, userData, status } = useSelector((state) => state.friends);
+  const { user } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const [roomId, setRoomId] = useState({});
 
   useEffect(() => {
-    setOnlinePeople(friends);
-  }, [friends]);
+    const newRoomIds = {};
+
+    friends?.forEach((id) => {
+      const roomId = [user._id, id].sort().join("");
+      newRoomIds[id] = roomId;
+    });
+    setRoomId((prevState) => ({
+      ...prevState,
+      ...newRoomIds,
+    }));
+  }, [friends, user, userData, dispatch]);
 
   return (
     <Box id="accordion-panel">
@@ -68,21 +80,49 @@ const OnlinePeopleAccordion = ({ fetchUserData, handleChat }) => {
                 "&::-webkit-scrollbar": { display: "none" },
               }}
             >
-              {onlinePeople.map((person) => (
-                <Box
-                  className="flex items-center p-1 rounded-lg hover:bg-slate-400 cursor-pointer"
-                  onClick={() => handleChat(person)}
-                  key={person.id}
-                  onMouseOver={() => fetchUserData(person.id)}
-                >
-                  <Avatar sx={{ marginRight: 1 }} src={person?.profilePicture}>
-                    {person?.firstName[0]}
-                  </Avatar>
-                  <Typography>
-                    {person.firstName} {person.lastName}
-                  </Typography>
-                </Box>
-              ))}
+              {status === "loading" ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <Box
+                    key={index}
+                    className="flex items-center p-1 rounded-lg"
+                    sx={{ marginBottom: 1 }}
+                  >
+                    <Skeleton variant="circular" width={40} height={40}>
+                      <Avatar />
+                    </Skeleton>
+                    <Skeleton width="60%" height={24} sx={{ marginLeft: 2 }} />
+                  </Box>
+                ))
+              ) : friends?.length === 0 ? (
+                <Typography variant="body2">No friends.</Typography>
+              ) : (
+                friends?.map(
+                  (person) =>
+                    userData[person] && (
+                      <Box
+                        className="flex items-center p-1 rounded-lg hover:bg-slate-400 cursor-pointer"
+                        onClick={() =>
+                          handleChat(
+                            userData[person]._id,
+                            roomId[userData[person]._id]
+                          )
+                        }
+                        key={userData[person]?._id + "chatFriends"}
+                      >
+                        <Avatar
+                          sx={{ marginRight: 1 }}
+                          src={userData[person]?.profilePicture}
+                        >
+                          {userData[person]?.firstName[0]}
+                        </Avatar>
+                        <Typography>
+                          {userData[person]?.firstName}{" "}
+                          {userData[person]?.lastName}
+                        </Typography>
+                      </Box>
+                    )
+                )
+              )}
             </Box>
           </Box>
         </AccordionDetails>

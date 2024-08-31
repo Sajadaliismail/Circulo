@@ -1,18 +1,14 @@
 import {
   Box,
   Fab,
-  Paper,
   SpeedDial,
   SpeedDialAction,
   Typography,
-  useTheme,
 } from "@mui/material";
 import { convertUTCToIST } from "../../pages/Utilitis";
 import { AddReaction } from "@mui/icons-material";
 
 export const RecieverMessageList = ({ mess }) => {
-  const theme = useTheme();
-
   return (
     <>
       <Box
@@ -24,14 +20,13 @@ export const RecieverMessageList = ({ mess }) => {
           textWrap: "wrap",
         }}
       >
-        <Paper
+        <Box
           key={mess._id}
           elevation={2}
           sx={{
             maxWidth: "45%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
-            bgcolor: theme.palette.divider,
             paddingX: 2,
             paddingY: 1,
             borderRadius: 3,
@@ -58,7 +53,6 @@ export const RecieverMessageList = ({ mess }) => {
               variant="subtitle1"
               sx={{
                 textAlign: "right",
-                color: theme.palette.text.primary,
               }}
             >
               {mess?.message}
@@ -67,12 +61,9 @@ export const RecieverMessageList = ({ mess }) => {
           {mess.imageUrl && (
             <img style={{ maxWidth: "100%" }} src={mess.imageUrl} />
           )}
-        </Paper>
+        </Box>
 
-        <Typography
-          variant="caption"
-          sx={{ color: theme.palette.text.secondary }}
-        >
+        <Typography variant="caption">
           {convertUTCToIST(mess.timestamp)}
         </Typography>
       </Box>
@@ -81,7 +72,6 @@ export const RecieverMessageList = ({ mess }) => {
 };
 
 export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
-  const theme = useTheme();
   const emojis = ["😀", "😂", "❤️", "👍", "👎"];
 
   return (
@@ -95,14 +85,13 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
           textWrap: "wrap",
         }}
       >
-        <Paper
+        <Box
           key={mess._id}
           elevation={2}
           sx={{
             maxWidth: "45%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
-            bgcolor: theme.palette.info.main,
             paddingX: 2,
             paddingY: 1,
             borderRadius: 3,
@@ -165,7 +154,6 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
               variant="subtitle1"
               sx={{
                 textAlign: "left",
-                color: theme.palette.grey[900],
               }}
             >
               {mess?.message}
@@ -174,12 +162,9 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
           {mess.imageUrl && (
             <img style={{ maxWidth: "100%" }} src={mess.imageUrl} />
           )}
-        </Paper>
+        </Box>
 
-        <Typography
-          variant="caption"
-          sx={{ color: theme.palette.text.secondary }}
-        >
+        <Typography variant="caption">
           {convertUTCToIST(mess.timestamp)}
         </Typography>
       </Box>

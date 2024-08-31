@@ -60,7 +60,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function Header({ toggleTheme }) {
+export default function Header({ setmsg }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -68,6 +68,9 @@ export default function Header({ toggleTheme }) {
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+  const toggleDarkMode = () => {
+    document.documentElement.classList.toggle("dark");
+  };
 
   const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -157,7 +160,7 @@ export default function Header({ toggleTheme }) {
         </IconButton>
         <p>Profile</p>
       </MenuItem>
-      <IconButton color="inherit" onClick={toggleTheme}>
+      <IconButton color="inherit" onClick={toggleDarkMode}>
         <Brightness2Rounded />
       </IconButton>
     </Menu>
@@ -166,7 +169,7 @@ export default function Header({ toggleTheme }) {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
-        <Toolbar>
+        <Toolbar className="bg-cyan-700 ">
           <IconButton
             size="large"
             edge="start"
@@ -225,10 +228,16 @@ export default function Header({ toggleTheme }) {
             >
               <AccountCircle />
             </IconButton>
-            <IconButton color="inherit" onClick={toggleTheme}>
+            <IconButton color="inherit" onClick={toggleDarkMode}>
               <Brightness2Rounded />
             </IconButton>
-            <Button variant="contained" onClick={() => dispatch(setLogout())}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                // setmsg({});
+                dispatch(setLogout());
+              }}
+            >
               Logout
             </Button>
           </Box>

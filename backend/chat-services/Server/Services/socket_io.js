@@ -43,8 +43,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", async ({ userId, message, type, roomId }) => {
-    console.log(userId, message, type, roomId);
-
     await handleMessage(userId, message, type, io, socket, roomId);
   });
 
