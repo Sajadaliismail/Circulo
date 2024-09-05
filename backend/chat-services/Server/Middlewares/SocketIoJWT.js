@@ -6,6 +6,7 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
 const authenticate = (socket, next) => {
   const cookieHeader = socket.request.headers.cookie;
+
   if (!cookieHeader) {
     return next(new Error("No cookies found"));
   }
@@ -20,6 +21,7 @@ const authenticate = (socket, next) => {
 
   try {
     const decoded = jwt.verify(accessToken, ACCESS_TOKEN_SECRET);
+
     socket.user = decoded.userId;
     return next();
   } catch (err) {
@@ -30,11 +32,12 @@ const authenticate = (socket, next) => {
 
       try {
         const decodedRefresh = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
-        socket.user = decodedRefresh.userId;
 
         if (!decodedRefresh) {
           return next(new Error("Invalid refresh token"));
         }
+
+        socket.user = decodedRefresh.userId;
 
         // Generate a new access token
         const newAccessToken = jwt.sign(
@@ -43,17 +46,14 @@ const authenticate = (socket, next) => {
           { expiresIn: "60m" }
         );
 
-        socket.request.headers.cookie = cookie.serialize(
-          "accessToken",
-          newAccessToken,
-          { httpOnly: true }
-        );
+        socket.emit("newAccessToken", newAccessToken);
 
         return next();
       } catch (refreshErr) {
         return next(new Error("Refresh token error"));
       }
     }
+
     return next(new Error("Authentication error"));
   }
 };

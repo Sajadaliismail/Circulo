@@ -1,10 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchUserDetails,
+  fetchUserStatus,
   getFriends,
   getRequests,
   getSuggestions,
 } from "./friendsAsyncThunks";
+import { useTheme } from "@emotion/react";
 
 const initialState = {
   friends: [],
@@ -20,7 +22,12 @@ const initialState = {
 const friendsSlice = createSlice({
   name: "friends",
   initialState,
-  reducers: {},
+  reducers: {
+    setStatus: (state, action) => {
+      const id = action.payload;
+      if (state.userData[id]) state.userData[id].onlineStatus = true;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getSuggestions.fulfilled, (state, action) => {
@@ -35,8 +42,18 @@ const friendsSlice = createSlice({
       .addCase(fetchUserDetails.fulfilled, (state, action) => {
         const { _id } = action?.payload;
         state.userData[_id] = action.payload;
+      })
+      .addCase(fetchUserStatus.fulfilled, (state, action) => {
+        const { onlineStatus, onlineTime, id } = action.payload;
+        if (state.userData && state.userData[id]) {
+          state.userData[id] = {
+            ...state.userData[id],
+            onlineStatus,
+            onlineTime,
+          };
+        }
       });
   },
 });
-
+export const { setStatus } = friendsSlice.actions;
 export default friendsSlice.reducer;

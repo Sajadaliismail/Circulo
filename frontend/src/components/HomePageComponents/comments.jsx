@@ -1,16 +1,11 @@
 import {
   Favorite,
   FavoriteOutlined,
-  Forum,
   MoreVert,
   Reply,
-  ThumbUp,
-  ThumbUpAlt,
-  ThumbUpOffAlt,
 } from "@mui/icons-material";
 import {
   Avatar,
-  AvatarGroup,
   Box,
   Button,
   Chip,
@@ -24,10 +19,10 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
 import { convertUTCToIST } from "../../pages/Utilitis";
-import ReplyComponent from "./replies";
 import { addReply } from "../../features/posts/postsAsyncThunks";
 import { AnimatedTooltip } from "../CommonComponents/AnimatedHoverComponent";
 import { useTimeAgo } from "../../hooks/useTimeAgo";
+const POST_BACKEND = process.env.REACT_APP_POST_BACKEND;
 
 const CommentComponent = React.memo(
   ({ comment, handleLike, author, handleRemoveComment }) => {
@@ -57,11 +52,11 @@ const CommentComponent = React.memo(
       const fetchDetails = async () => {
         setLoading(true);
         try {
-          if (userData[comment.user]) {
-            setUserDetails(userData[comment.user]);
+          if (userData[comment?.user]) {
+            setUserDetails(userData[comment?.user]);
           } else {
-            await dispatch(fetchUserDetails(comment.user));
-            setUserDetails(userData[comment.user]);
+            await dispatch(fetchUserDetails(comment?.user));
+            setUserDetails(userData[comment?.user]);
           }
         } catch (error) {
           console.error(error);
@@ -71,7 +66,7 @@ const CommentComponent = React.memo(
       };
 
       fetchDetails();
-    }, [dispatch, comment.user, userData]);
+    }, [dispatch, comment?.user, userData]);
 
     const handleOpen = async (id) => {
       setOpen((prev) => !prev);
@@ -79,7 +74,7 @@ const CommentComponent = React.memo(
         setIsLoading(true);
         try {
           const response = await fetch(
-            `http://localhost:3004/posts/fetchReplies?commentId=${id}`,
+            `${POST_BACKEND}/fetchReplies?commentId=${id}`,
             {
               method: "GET",
               credentials: "include",
@@ -110,7 +105,7 @@ const CommentComponent = React.memo(
     };
 
     const handleLikeReply = async (_id) => {
-      const response = await fetch(`http://localhost:3004/posts/likeReply`, {
+      const response = await fetch(`${POST_BACKEND}/likeReply`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -159,7 +154,12 @@ const CommentComponent = React.memo(
               >
                 {userDetails?.firstName[0]}
               </Avatar> */}
-              <AnimatedTooltip userId={comment.user} size={28} fontS={12} />
+              <AnimatedTooltip
+                key={`comments-${comment?.user}`}
+                userId={comment?.user}
+                size={28}
+                fontS={12}
+              />
 
               <Box sx={{ ml: 2.5, flexGrow: 1 }}>
                 <Box
@@ -172,8 +172,8 @@ const CommentComponent = React.memo(
                 >
                   <Box className="dark:text-white">
                     <Typography variant="body2">
-                      {`${userDetails.firstName} ${userDetails.lastName}`}{" "}
-                      {author === userDetails._id && (
+                      {`${userDetails?.firstName} ${userDetails?.lastName}`}{" "}
+                      {author === userDetails?._id && (
                         <Chip
                           size="small"
                           variant="filled"
@@ -193,24 +193,24 @@ const CommentComponent = React.memo(
 
                   <Box sx={{ display: "flex", alignItems: "center" }}>
                     <Button
-                      onClick={() => handleLike(comment._id)}
+                      onClick={() => handleLike(comment?._id)}
                       sx={{
                         minWidth: "auto",
                         p: 0,
                         "&:hover": { backgroundColor: "transparent" },
                       }}
                     >
-                      {comment.hasLiked ? (
+                      {comment?.hasLiked ? (
                         <Favorite color="error" />
                       ) : (
                         <FavoriteOutlined className="dark:text-white" />
                       )}
                     </Button>
                     <Typography variant="body2" sx={{ ml: 0.5 }}>
-                      {comment.likes.length}
+                      {comment?.likes.length}
                     </Typography>
                     <Typography
-                      onClick={() => handleOpen(comment._id)}
+                      onClick={() => handleOpen(comment?._id)}
                       className="dark:text-white"
                       sx={{ ml: 2, cursor: "pointer" }}
                     >
@@ -254,7 +254,7 @@ const CommentComponent = React.memo(
                       }}
                     >
                       {(userDetails._id === user._id ||
-                        author === user._id) && (
+                        author === user?._id) && (
                         <MenuItem
                           onClick={() => handleRemoveComment(comment?._id)}
                         >
@@ -277,7 +277,7 @@ const CommentComponent = React.memo(
                     wordBreak: "break-word",
                   }}
                 >
-                  {comment.content}
+                  {comment?.content}
                 </Typography>
 
                 {open &&
@@ -422,7 +422,9 @@ const CommentComponent = React.memo(
                         <Button
                           variant="contained"
                           color="primary"
-                          onClick={() => submitreply(comment._id, comment.post)}
+                          onClick={() =>
+                            submitreply(comment?._id, comment?.post)
+                          }
                           sx={{ mt: 1 }}
                         >
                           Reply

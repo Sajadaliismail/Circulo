@@ -3,11 +3,13 @@ import SetupPage from "./pages/setupPage";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import LandingPage from "./pages/landingPage";
+import useChatSocket from "./hooks/chatSocketHook";
 
 export const ProtectedRoute = ({ element }) => {
   const { isEmailVerified, isLoggedIn, isSetupComplete } = useSelector(
     (state) => state.auth
   );
+  useChatSocket();
 
   if (!isLoggedIn) {
     return <Navigate to={"/login"} />;

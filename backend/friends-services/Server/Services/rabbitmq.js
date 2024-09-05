@@ -3,7 +3,9 @@ const MESSAGE_BROKER_URL = process.env.MESSAGE_BROKER_URL;
 
 async function connect() {
   try {
-    const connection = await amqp.connect(MESSAGE_BROKER_URL);
+    const connection = await amqp.connect(MESSAGE_BROKER_URL, {
+      heartbeat: 60,
+    });
     return connection;
   } catch (error) {
     console.error("Error connecting to RabbitMQ:", error);

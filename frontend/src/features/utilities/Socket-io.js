@@ -6,4 +6,10 @@ const chatSocket = io(CHAT_SERVER_URL, {
   withCredentials: true,
 });
 
+chatSocket.on("newAccessToken", (newAccessToken) => {
+  document.cookie = `accessToken=${newAccessToken}; Path=/; Secure; HttpOnly; SameSite=Strict`;
+
+  chatSocket.disconnect();
+  chatSocket.connect();
+});
 export default chatSocket;

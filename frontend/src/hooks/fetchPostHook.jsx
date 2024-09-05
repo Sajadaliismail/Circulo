@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+const POST_BACKEND = process.env.REACT_APP_POST_BACKEND;
 
 const useFetchPosts = (id) => {
   const [postsId, setPostsId] = useState([]);
@@ -13,7 +14,7 @@ const useFetchPosts = (id) => {
     const fetchPosts = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3004/posts/fetchuserposts/${id}`,
+          `${POST_BACKEND}/posts/fetchuserposts/${id}`,
           {
             method: "GET",
             credentials: "include",

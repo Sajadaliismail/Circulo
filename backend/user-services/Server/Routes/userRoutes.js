@@ -31,4 +31,10 @@ route.get(
   userProfileController.fetchUserDetails
 );
 
+route.get(
+  "/fetchUserStatus",
+  verifyToken,
+  userProfileController.fetchUserStatus
+);
+
 module.exports = route;

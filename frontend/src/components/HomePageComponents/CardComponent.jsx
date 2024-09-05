@@ -90,7 +90,10 @@ export function CardComponent({
       </div>
       <div className="text-content mt-2">
         <div className="flex flex-row items-center space-x-4 z-10">
-          <AnimatedTooltip userId={author._id} />
+          <AnimatedTooltip
+            key={`postcomponent-${author._id}`}
+            userId={author._id}
+          />
           <div className="flex flex-col ml-3">
             <p className="font-normal text-base text-black    dark:text-white relative z-10 ">
               {`${author.firstName} ${author.lastName}`}

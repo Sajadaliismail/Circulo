@@ -6,9 +6,12 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { Avatar } from "@mui/material";
+import { Avatar, Badge, debounce } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+import {
+  fetchUserDetails,
+  fetchUserStatus,
+} from "../../features/friends/friendsAsyncThunks";
 import { useNavigate } from "react-router-dom";
 
 export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
@@ -17,6 +20,13 @@ export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
   const { userData } = useSelector((state) => state.friends);
   const dispatch = useDispatch();
 
+  const debouncedFetchUserStatus = debounce((userId) => {
+    dispatch(fetchUserStatus(userId));
+  }, 5000);
+
+  const fetchStatus = () => {
+    // debouncedFetchUserStatus(userId);
+  };
   const fetchUserData = useCallback(
     (id) => {
       if (!userData[id]) {
@@ -50,7 +60,10 @@ export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
   return (
     <div
       className="-mr-4 relative group"
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        fetchStatus();
+      }}
       onMouseLeave={() => setIsHovered(false)}
     >
       <AnimatePresence mode="popLayout">
@@ -88,14 +101,29 @@ export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
           </motion.div>
         )}
       </AnimatePresence>
-      <Avatar
-        onMouseMove={handleMouseMove}
-        sx={{ width: size, height: size, fontSize: fontS }}
-        src={userData[userId]?.profilePicture}
-        className="object-cover !m-0 !p-0 object-top rounded-full h-14 w-14 border-2 group-hover:scale-105 group-hover:z-100 border-white relative transition duration-500"
+      <Badge
+        overlap="circular"
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        variant="dot"
+        sx={{
+          zIndex: 0,
+          "& .MuiBadge-dot": {
+            backgroundColor: userData[userId]?.onlineStatus
+              ? "#44b700"
+              : "#808080",
+            boxShadow: `0 0 0 2px #fff`,
+          },
+        }}
       >
-        {userData[userId]?.firstName && userData[userId]?.firstName[0]}
-      </Avatar>
+        <Avatar
+          onMouseMove={handleMouseMove}
+          sx={{ width: size, height: size, fontSize: fontS }}
+          src={userData[userId]?.profilePicture}
+          className="object-cover !m-0 !p-0 object-top rounded-full h-14 w-14 border-2 group-hover:scale-105 group-hover:z-100 border-white relative transition duration-500"
+        >
+          {userData[userId]?.firstName && userData[userId]?.firstName[0]}
+        </Avatar>
+      </Badge>
     </div>
   );
 };

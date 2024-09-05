@@ -47,7 +47,7 @@ const ChatBox = ({
         }
       });
     };
-  }, []);
+  }, [conversations]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -74,16 +74,21 @@ const ChatBox = ({
         onClose={() => onClose(roomId)}
         onMinimize={() => onMinimize(roomId)}
       />
-      <div className="p-2 h-96 overflow-auto " id={`conversation-${roomId}`}>
+      <div
+        className="p-2 h-96 overflow-auto scrollbar-none"
+        id={`conversation-${roomId}`}
+      >
         {conversations &&
           conversations?.map((conversation) => (
             <ChatBoxMessage
-              key={conversation?.messageId}
-              messageId={conversation?.messageId}
+              key={`conver-${conversation?._id}`}
+              messageId={conversation?._id}
               message={conversation?.message}
               data={conversation}
+              emoji={conversation?.emoji}
               author={conversation?.senderId}
               avatar={conversation?.avatar}
+              roomId={roomId}
               onRemove={(messageId) => onRemove(roomId, messageId)}
             />
           ))}

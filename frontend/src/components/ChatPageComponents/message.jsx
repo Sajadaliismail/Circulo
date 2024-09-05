@@ -21,14 +21,15 @@ export const RecieverMessageList = ({ mess }) => {
         }}
       >
         <Box
+          className="bg-blue-600 text-white"
           key={mess._id}
           elevation={2}
           sx={{
             maxWidth: "45%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
-            paddingX: 2,
-            paddingY: 1,
+            paddingX: mess?.imageUrl ? 0 : 2,
+            paddingY: mess?.imageUrl ? 0 : 0.5,
             borderRadius: 3,
             marginBottom: 1,
             position: "relative",
@@ -86,14 +87,16 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
         }}
       >
         <Box
+          className="bg-gray-700 text-white"
           key={mess._id}
           elevation={2}
           sx={{
             maxWidth: "45%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
-            paddingX: 2,
-            paddingY: 1,
+
+            paddingX: mess?.imageUrl ? 0 : 2,
+            paddingY: mess?.imageUrl ? 0 : 0.5,
             borderRadius: 3,
             marginBottom: 1,
             position: "relative",
@@ -135,7 +138,9 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
                 height: 30,
                 minHeight: 30,
               }}
-              icon={<AddReaction color="primary" />}
+              icon={
+                <AddReaction className="text-cyan-700 bg-white rounded-full" />
+              }
               direction="right"
             >
               {emojis.map((action) => (

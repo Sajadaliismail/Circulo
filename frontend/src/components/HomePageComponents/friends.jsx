@@ -113,7 +113,7 @@ function Friends() {
                   }}
                   onClick={() => navigate(`profile/${friend}`)}
                 >
-                  <AnimatedTooltip userId={friend} />
+                  <AnimatedTooltip key={`friends-${friend}`} userId={friend} />
                   {userData[friend]?.firstName} {userData[friend]?.lastName}
                 </Box>
               )

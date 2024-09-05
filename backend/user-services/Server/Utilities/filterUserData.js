@@ -1,4 +1,5 @@
-const filterUserData = (user) => {
+const filterUserData = (user, userId) => {
+  const roomId = [user._id, userId].sort().join("");
   return {
     _id: user._id,
     firstName: user.firstName,
@@ -12,6 +13,9 @@ const filterUserData = (user) => {
     postalCode: user.postalCode,
     profilePicture: user.profilePicture,
     bio: user.bio,
+    onlineStatus: user.onlineStatus,
+    onlineTime: user.onlineTime,
+    roomId: roomId,
   };
 };
 

@@ -9,6 +9,8 @@ const {
   joinRoom,
   SendEmoji,
   handleMessage,
+  handleLogout,
+  handleCallStart,
 } = require("./socket_Io_Services");
 require("dotenv").config();
 
@@ -46,8 +48,12 @@ io.on("connection", (socket) => {
     await handleMessage(userId, message, type, io, socket, roomId);
   });
 
-  socket.on("disconnect", () => {
-    console.log(`Socket ${socket.id} disconnected`);
+  socket.on("start-call", async ({ recipientId, offer }) => {
+    await handleCallStart(recipientId, offer);
+  });
+
+  socket.on("logout", async () => {
+    await handleLogout(socket);
   });
 });
 

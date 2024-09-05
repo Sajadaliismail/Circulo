@@ -6,6 +6,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Badge,
   styled,
 } from "@mui/material";
 import { ExpandLess } from "@mui/icons-material";
@@ -41,6 +42,16 @@ const OnlinePeopleAccordion = ({ fetchUserData, handleChat }) => {
       ...newRoomIds,
     }));
   }, [friends, user, userData, dispatch]);
+
+  const sortedFriends = friends?.slice().sort((a, b) => {
+    const userA = userData[a];
+    const userB = userData[b];
+
+    const statusA = userA?.onlineStatus ? 1 : 0;
+    const statusB = userB?.onlineStatus ? 1 : 0;
+
+    return statusB - statusA || (userA?._id > userB?._id ? 1 : -1);
+  });
 
   return (
     <Box id="accordion-panel">
@@ -96,7 +107,7 @@ const OnlinePeopleAccordion = ({ fetchUserData, handleChat }) => {
               ) : friends?.length === 0 ? (
                 <Typography variant="body2">No friends.</Typography>
               ) : (
-                friends?.map(
+                sortedFriends?.map(
                   (person) =>
                     userData[person] && (
                       <Box
@@ -109,12 +120,30 @@ const OnlinePeopleAccordion = ({ fetchUserData, handleChat }) => {
                         }
                         key={userData[person]?._id + "chatFriends"}
                       >
-                        <Avatar
-                          sx={{ marginRight: 1 }}
-                          src={userData[person]?.profilePicture}
+                        <Badge
+                          overlap="circular"
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "right",
+                          }}
+                          variant="dot"
+                          sx={{
+                            zIndex: 0,
+                            "& .MuiBadge-dot": {
+                              backgroundColor: userData[person]?.onlineStatus
+                                ? "#44b700"
+                                : "#808080",
+                              boxShadow: `0 0 0 2px #fff`,
+                            },
+                          }}
                         >
-                          {userData[person]?.firstName[0]}
-                        </Avatar>
+                          <Avatar
+                            sx={{ marginRight: 1 }}
+                            src={userData[person]?.profilePicture}
+                          >
+                            {userData[person]?.firstName[0]}
+                          </Avatar>
+                        </Badge>
                         <Typography>
                           {userData[person]?.firstName}{" "}
                           {userData[person]?.lastName}

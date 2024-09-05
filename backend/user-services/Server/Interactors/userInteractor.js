@@ -9,12 +9,20 @@ const userUpdateInteractor = async (id, userData) => {
   return await userRepository.findAndUpdate(id, userData);
 };
 
-const fetchUserInteractor = async (id) => {
+const fetchUserInteractor = async (id, userId) => {
   const result = await userRepository.findUser(id);
-  const filteredUserData = filterUserData(result);
+  const filteredUserData = filterUserData(result, userId);
   return filteredUserData;
 };
 
+const fetchUserStatusInteractor = async (id) => {
+  const result = await userRepository.findUser(id);
+  return {
+    onlineStatus: result.onlineStatus,
+    onlineTime: result.onlineTime,
+    id: result._id,
+  };
+};
 const uploadInteractor = async (userId, fileName) => {
   const filePath = path.join(__dirname, "../../assets/imgs/uploads/", fileName);
   const result = await cloudinary.uploader.upload(filePath);
@@ -28,4 +36,5 @@ module.exports = {
   userUpdateInteractor,
   fetchUserInteractor,
   uploadInteractor,
+  fetchUserStatusInteractor,
 };

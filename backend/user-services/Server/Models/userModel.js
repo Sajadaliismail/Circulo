@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema({
   isSetupComplete: { type: Boolean, default: false },
   isEmailVerified: { type: Boolean, default: false },
   posts: [{ type: mongoose.Schema.Types.ObjectId, ref: "posts" }],
+  onlineStatus: { type: Boolean },
+  onlineTime: { type: Date },
 });
 
 userSchema.pre("save", async function (next) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Paper,
@@ -13,19 +13,19 @@ import Header from "../components/CommonComponents/header";
 import MessageArea from "../components/ChatPageComponents/messageArea";
 import UserList from "../components/ChatPageComponents/UserList";
 
-import { fetchChatFriends } from "../features/chats/chatsAsycnThunks";
 import {
   fetchUserDetails,
   getFriends,
 } from "../features/friends/friendsAsyncThunks";
-import { setUnreadMessages } from "../features/chats/chatsSlice";
-
+import { fetchChatFriends } from "../features/chats/chatsAsycnThunks";
 import chatSocket from "../features/utilities/Socket-io";
 import useChatSocket from "../hooks/chatSocketHook";
 import { UploadImage } from "../Utilities/UploadImage";
-import { handleNewMessage } from "./Utilitis";
+import { useRecoilState } from "recoil";
+import { ChatFriendsData, ChatRoomMessages } from "../atoms/chatAtoms";
+const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
-export default function ChatPage({ msg, setmsg }) {
+export default function ChatPage() {
   const dispatch = useDispatch();
   const { chatFriends } = useSelector((state) => state.chats);
   const { friends, userData } = useSelector((state) => state.friends);
@@ -38,103 +38,75 @@ export default function ChatPage({ msg, setmsg }) {
   const [roomId, setRoomId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState([]);
-  const [friendsData, setFriendsData] = useState([]);
+  const [friendsData, setFriendsData] = useRecoilState(ChatFriendsData);
+  const [chatMessages, setChatMessages] = useRecoilState(ChatRoomMessages);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      const roomIds = friends?.map((id) => [user._id, id].sort().join(""));
+      setLoading(true);
+      await dispatch(getFriends()).unwrap();
 
-      const userPromises = friends?.map((id, index) => {
-        const roomId = roomIds[index];
-        return userData[id]
-          ? { ...userData[id], roomId }
-          : dispatch(fetchUserDetails(id)).then(() => ({
-              ...userData[id],
-              roomId,
-            }));
-      });
-
-      const resolvedUserData = await Promise.all(userPromises);
+      const resolvedUserData = await Promise.all(
+        friends.map((id, index) => {
+          return userData[id]
+            ? userData[id]
+            : dispatch(fetchUserDetails(id))
+                .unwrap()
+                .then((data) => ({
+                  data,
+                }));
+        })
+      );
       setFriendsData(resolvedUserData);
     };
 
     fetchData();
-  }, [friends, userData, dispatch]);
+  }, []);
 
   useEffect(() => {
-    const result = dispatch(getFriends());
-    if (getFriends.fulfilled.match(result)) {
-      const senderIds = result.friends.map((friend) => friend.id);
-      dispatch(setUnreadMessages({ senderIds }));
-    }
-  }, [dispatch]);
+    const fetchChatData = async () => {
+      setLoading(true);
+      await dispatch(fetchChatFriends());
+      console.log(chatFriends);
+
+      setLoading(false);
+    };
+
+    fetchChatData();
+  }, []);
+
+  useEffect(() => {
+    setSearchResult(
+      searchQuery.trim()
+        ? friendsData.filter(
+            (friend) =>
+              friend.firstName
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              friend.lastName.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        : []
+    );
+  }, [searchQuery, friendsData]);
+
+  const handleChat = useCallback((friend, roomId) => {
+    setRoomId(roomId);
+    setFriend(friend);
+    setMessage("");
+    chatSocket.emit("join_room", { userId: friend });
+  }, []);
 
   const handleSubmitImage = async () => {
     await UploadImage(friend, setImageUrl, chatSocket, image);
   };
 
   useEffect(() => {
-    dispatch(fetchChatFriends());
-  }, [dispatch]);
-
-  const chatSocketHook = useChatSocket();
-
-  useEffect(() => {
-    if (!chatSocketHook) return;
-
-    const handleEmojiReceived = ({ id, emoji, roomId }) => {
-      setmsg((prevChats) => ({
-        ...prevChats,
-        [roomId]: {
-          ...prevChats[roomId],
-          messages: prevChats[roomId].messages.map((mess) =>
-            mess._id === id ? { ...mess, emoji } : mess
-          ),
-        },
-      }));
-    };
-
-    chatSocketHook.on("newMessageNotification", (arg) =>
-      handleNewMessage(arg, setmsg)
-    );
-    chatSocketHook.on("emoji_recieved", handleEmojiReceived);
-    chatSocketHook.on("sentMessageNotification", (arg) => {
-      handleNewMessage(arg, setmsg);
-    });
-
-    return () => {
-      chatSocketHook.off("newMessageNotification", handleNewMessage);
-      chatSocketHook.off("sentMessageNotification", handleNewMessage);
-      chatSocketHook.off("emoji_recieved", handleEmojiReceived);
-    };
-  }, [chatSocketHook]);
-
-  const handleChat = (friend, roomId) => {
-    setRoomId(roomId);
-    setFriend(friend);
-    setMessage("");
-    chatSocket.emit("join_room", { userId: friend });
-  };
-
-  const handleEmoji = (id, emoji, friendId, room) => {
-    chatSocket.emit("emoji_send", { id, emoji, friendId, roomId: room });
-    setmsg((prevChats) => ({
-      ...prevChats,
-      [room]: {
-        ...prevChats[room],
-        messages: prevChats[room].messages.map((mess) =>
-          mess._id === id ? { ...mess, emoji } : mess
-        ),
-      },
-    }));
-  };
-
-  useEffect(() => {
     if (!friend) return;
 
-    const fetchChatmsg = async (id) => {
+    const fetchChatMessages = async () => {
       const response = await fetch(
-        `http://localhost:3008/chats/fetchchat?id=${id}`,
+        `${CHAT_BACKEND}/chats/fetchchat?id=${friend}`,
         {
           method: "GET",
           credentials: "include",
@@ -144,42 +116,20 @@ export default function ChatPage({ msg, setmsg }) {
 
       if (response.ok) {
         const { chat } = await response.json();
-        setmsg((prevChats) => ({
+        setChatMessages((prevChats) => ({
           ...prevChats,
-          [chat.roomId]: {
-            messages: chat.messages,
-            user1: chat.user1,
-            user2: chat.user2,
-            roomId: chat.roomId,
-            unreadCount: chat.unreadCount,
-            chatBoxOpen: false,
-            minimize: false,
-          },
+          [chat.roomId]: chat,
         }));
       }
     };
 
-    fetchChatmsg(friend);
+    fetchChatMessages();
   }, [friend]);
-
-  useEffect(() => {
-    setSearchResult(
-      searchQuery.trim()
-        ? friendsData.filter(
-            (friend) =>
-              new RegExp(searchQuery, "i").test(friend.firstName) ||
-              new RegExp(searchQuery, "i").test(friend.lastName)
-          )
-        : []
-    );
-  }, [searchQuery, friendsData]);
 
   const handleSearch = (e) => setSearchQuery(e.target.value);
 
   const handleSubmit = (id, room) => {
     if (message.trim()) {
-      console.log(message, id, room);
-
       chatSocket.emit("message", {
         userId: id,
         message,
@@ -189,14 +139,19 @@ export default function ChatPage({ msg, setmsg }) {
       setMessage("");
     }
   };
+  const handleEmoji = (id, emoji, friendId, room) => {
+    chatSocket.emit("emoji_send", { id, emoji, friendId, roomId: room });
+  };
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <>
-      <Header setmsg={setmsg} />
+      <Header setChatMessages={setChatMessages} />
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          {/* <VideoCall></VideoCall> */}
-        </Grid>
+        <Grid item xs={12}></Grid>
         <Grid item xs={12} container>
           <Grid
             item
@@ -259,15 +214,18 @@ export default function ChatPage({ msg, setmsg }) {
                       friend={friend._id}
                       roomId={friend.roomId}
                       handleChat={handleChat}
+                      setFriendsData={setFriendsData}
                     />
                   ))
                 ) : chatFriends.length ? (
                   chatFriends.map((friend) => (
                     <UserList
                       key={friend._id}
-                      friend={friend.chatFriends}
-                      roomId={friend._id}
+                      friend={friend._id}
+                      roomId={friend.roomId}
+                      unreadCount={friend?.unreadCount}
                       handleChat={handleChat}
+                      setFriendsData={setFriendsData}
                     />
                   ))
                 ) : friendsData.length ? (
@@ -275,8 +233,9 @@ export default function ChatPage({ msg, setmsg }) {
                     <UserList
                       key={friend._id}
                       friend={friend._id}
-                      roomId={friend._id}
+                      roomId={friend.roomId}
                       handleChat={handleChat}
+                      setFriendsData={setFriendsData}
                     />
                   ))
                 ) : (
@@ -318,18 +277,18 @@ export default function ChatPage({ msg, setmsg }) {
                 message={message}
                 setMessage={setMessage}
                 friend={friend}
-                messages={msg[roomId]}
+                messages={chatMessages[roomId]}
                 roomId={roomId}
               />
             ) : (
               <Typography
                 variant="h6"
                 sx={{
-                  marginX: "auto",
-                  textAlign: "center",
+                  margin: "auto",
                   padding: "20px",
+                  textAlign: "center",
+                  color: "#999",
                   fontStyle: "italic",
-                  color: "#9e9e9e",
                 }}
               >
                 Click on any user to start chatting!

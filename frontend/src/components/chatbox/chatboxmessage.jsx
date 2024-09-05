@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import MoreVert from "@mui/icons-material/MoreVert";
 import {
   ClickAwayListener,
+  Fab,
   IconButton,
   Menu,
   MenuItem,
+  SpeedDial,
+  SpeedDialAction,
   Typography,
 } from "@mui/material";
 import AvatarWithUsername from "./withusername";
 import { useSelector } from "react-redux";
+import { AddReaction } from "@mui/icons-material";
+import chatSocket from "../../features/utilities/Socket-io";
 
 const ChatBoxMessage = ({
   messageId,
@@ -18,6 +23,8 @@ const ChatBoxMessage = ({
   onEdit,
   data,
   onRemove,
+  emoji,
+  roomId,
 }) => {
   const [actionMessageId, setActionMessageId] = useState();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -48,11 +55,16 @@ const ChatBoxMessage = ({
       onRemove(messageId);
     }
   };
+  const handleEmoji = (id, emoji, friendId, room) => {
+    chatSocket.emit("emoji_send", { id, emoji, friendId, roomId: room });
+  };
+
+  const emojis = ["😀", "😂", "❤️", "👍", "👎"];
 
   if (author) {
     return (
       <div
-        className={`flex my-2 ${
+        className={`flex my-2  ${
           author === user._id ? "justify-end" : "justify-start"
         }`}
       >
@@ -63,10 +75,76 @@ const ChatBoxMessage = ({
             hiddenName={true}
           />
         )}
-        <div className="grid">
-          <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl">
+        <div className="grid relative">
+          <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl relative">
             {message}
           </div>
+          {author == user._id ? (
+            emoji && (
+              <Fab
+                sx={{
+                  position: "absolute",
+                  bottom: -5,
+                  left: -20,
+                  width: 30,
+                  height: 30,
+                  minHeight: 30,
+                }}
+              >
+                {emoji}
+              </Fab>
+            )
+          ) : emoji ? (
+            <SpeedDial
+              ariaLabel="Emoji"
+              sx={{
+                position: "absolute",
+                bottom: -5,
+                right: -30,
+                width: 30,
+                height: 30,
+                minHeight: 30,
+              }}
+              icon={emoji}
+              direction="right"
+            >
+              {emojis.map((action) => (
+                <SpeedDialAction
+                  sx={{ fontSize: "20px", margin: "8px 0" }}
+                  key={action}
+                  icon={action}
+                  onClick={() => {
+                    handleEmoji(messageId, action, author, roomId);
+                  }}
+                />
+              ))}
+            </SpeedDial>
+          ) : (
+            <SpeedDial
+              ariaLabel="Emoji"
+              sx={{
+                position: "absolute",
+                bottom: -5,
+                right: -30,
+                width: 30,
+                height: 30,
+                minHeight: 30,
+              }}
+              icon={
+                <AddReaction className="text-cyan-700 bg-white rounded-full" />
+              }
+              direction="right"
+            >
+              {emojis.map((action) => (
+                <SpeedDialAction
+                  sx={{ fontSize: "20px", margin: "8px 0" }}
+                  key={action}
+                  icon={action}
+                  onClick={() => handleEmoji(messageId, action, author, roomId)}
+                />
+              ))}
+            </SpeedDial>
+          )}
         </div>
         {author === user._id && (
           <AvatarWithUsername

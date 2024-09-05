@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { RecieverMessageList, SenderMessageList } from "./message";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+import VideoCall from "../../pages/VideoCall";
 
 const MessageArea = ({
   handleSubmitImage,
@@ -92,6 +93,7 @@ const MessageArea = ({
           <Typography variant="h6">
             {userDetails.firstName} {userDetails.lastName}
           </Typography>
+          <VideoCall friend={friend} />
         </Box>
 
         <List

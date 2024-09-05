@@ -70,7 +70,7 @@ const Post = React.memo(({ postId, fetchUserData }) => {
       });
       setCommentContent("");
       setComments((comment) => {
-        return [result.data, ...comment];
+        return [result.payload.data, ...comment];
       });
     } else {
       enqueueSnackbar("Failed adding comment.", { variant: "error" });
@@ -107,8 +107,6 @@ const Post = React.memo(({ postId, fetchUserData }) => {
     } catch (error) {
       console.error("Failed to handle like:", error);
       enqueueSnackbar("Failed liking post.", { variant: "error" });
-
-      // setPostDetails((prevPost) => toggleLike(prevPost));
     }
   };
 
@@ -183,7 +181,6 @@ const Post = React.memo(({ postId, fetchUserData }) => {
   const handleRemoveComment = async (id) => {
     try {
       const response = await deleteCommentApi(id);
-      const data = await response.json();
 
       if (response.ok) {
         setComments((prev) => {
@@ -205,7 +202,7 @@ const Post = React.memo(({ postId, fetchUserData }) => {
   const memoizedComments = useMemo(
     () =>
       comments.map((comment) => (
-        <React.Fragment key={comment._id}>
+        <React.Fragment key={comment?._id}>
           <CommentComponent
             author={postDetails?.author}
             comment={comment}
@@ -383,6 +380,7 @@ const Post = React.memo(({ postId, fetchUserData }) => {
                 >
                   {postDetails?.likes.slice(0, 3).map((id) => (
                     <AnimatedTooltip
+                      key={`postDetails-${id}`}
                       userId={id}
                       size={24}
                       fontS={12}

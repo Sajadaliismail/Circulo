@@ -70,6 +70,20 @@ const deletePost = async (data) => {
   }
 };
 
+const updateStatus = async (data) => {
+  try {
+    console.log(data);
+    const { _id, onlineStatus } = data;
+    if (!_id) throw new Error("Id undefined");
+    await User.findByIdAndUpdate(
+      { _id },
+      { onlineStatus: onlineStatus, onlineTime: Date.now() }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
@@ -78,4 +92,5 @@ module.exports = {
   findUser,
   updatePost,
   deletePost,
+  updateStatus,
 };

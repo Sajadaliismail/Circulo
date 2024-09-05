@@ -79,7 +79,17 @@ const chatsSlice = createSlice({
     },
     setReadMessages: (state, action) => {
       const friendId = action.payload;
-      state.unReadMessages[friendId] = 0;
+      const curr = state.chatFriends.map((user) => {
+        if (user._id === friendId) {
+          console.log(user, friendId);
+          return {
+            ...user,
+            unreadCount: 0,
+          };
+        }
+        return user;
+      });
+      state.chatFriends = curr;
     },
     setSentMessages: (state, action) => {
       const { message, timestamp, type } = action.payload;
@@ -105,34 +115,6 @@ const chatsSlice = createSlice({
         }
         return mess;
       });
-    },
-    setChatBox: (state) => {
-      const currState = state.chats;
-      state.chats = Object.fromEntries(
-        Object.entries(currState).map(([key, chat]) => [
-          key,
-          {
-            ...chat,
-            chatBoxOpen: false,
-            minimized: false,
-          },
-        ])
-      );
-    },
-    setMinimize: (state, action) => {
-      const id = action.payload;
-      const curr = state.chats[id];
-      state.chats[id] = { ...curr, minimized: !curr.minimized };
-    },
-    setClosed: (state, action) => {
-      const id = action.payload;
-      const curr = state.chats[id];
-      state.chats[id] = { ...curr, chatBoxOpen: false };
-    },
-    setOpen: (state, action) => {
-      const id = action.payload;
-      const curr = state.chats[id];
-      state.chats[id] = { ...curr, chatBoxOpen: true, minimized: false };
     },
   },
   extraReducers: (builder) => {
@@ -179,9 +161,5 @@ export const {
   setReceivedChats,
   setSentMessages,
   setEmoji,
-  setChatBox,
-  setOpen,
-  setClosed,
-  setMinimize,
 } = chatsSlice.actions;
 export default chatsSlice.reducer;

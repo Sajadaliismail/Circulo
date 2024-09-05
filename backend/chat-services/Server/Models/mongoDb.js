@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema({
+  roomId: { type: String, required: true },
   senderId: { type: mongoose.Schema.Types.ObjectId, required: true },
   receiverId: { type: mongoose.Schema.Types.ObjectId, required: true },
   message: { type: String },
@@ -12,6 +13,8 @@ const messageSchema = new mongoose.Schema({
   imageUrl: { type: String },
 });
 
+messageSchema.index({ roomId: 1 });
+
 const roomSchema = new mongoose.Schema({
   roomId: { type: String, required: true, unique: true },
   user1: { type: mongoose.Types.ObjectId, ref: "user" },
@@ -20,6 +23,8 @@ const roomSchema = new mongoose.Schema({
   hasOpened: { type: Boolean, default: false },
   updatedAt: { type: Date, default: Date.now() },
 });
+
+roomSchema.index({ roomId: 1 });
 
 roomSchema.pre("save", function (next) {
   this.updatedAt = Date.now();

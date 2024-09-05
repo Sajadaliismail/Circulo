@@ -210,12 +210,8 @@ route.get("/fetchChatFriends", authenticateToken, async (req, res) => {
       {
         $match: {
           $or: [
-            {
-              user1: new mongoose.Types.ObjectId(userId),
-            },
-            {
-              user2: new mongoose.Types.ObjectId(userId),
-            },
+            { user1: new mongoose.Types.ObjectId(userId) },
+            { user2: new mongoose.Types.ObjectId(userId) },
           ],
         },
       },
@@ -230,38 +226,43 @@ route.get("/fetchChatFriends", authenticateToken, async (req, res) => {
           },
           roomId: 1,
           updatedAt: 1,
+          messages: 1,
         },
       },
       {
-        $group: {
-          _id: "$roomId",
-          chatFriends: { $addToSet: "$otherUserId" },
-          updatedAt: { $first: "$updatedAt" },
+        $lookup: {
+          from: "messages",
+          localField: "messages",
+          foreignField: "_id",
+          as: "messageDetails",
         },
       },
       {
-        $unwind: "$chatFriends",
+        $addFields: {
+          unreadCount: {
+            $size: {
+              $filter: {
+                input: "$messageDetails",
+                as: "message",
+                cond: {
+                  $and: [
+                    { $eq: ["$$message.senderId", "$otherUserId"] },
+                    { $eq: ["$$message.hasRead", false] },
+                  ],
+                },
+              },
+            },
+          },
+        },
       },
-      // {
-      //   $lookup: {
-      //     from: "users",
-      //     foreignField: "_id",
-      //     localField: "chatFriends",
-      //     as: "userDetails",
-      //   },
-      // },
-      // { $unwind: "$userDetails" },
-      // {
-      //   $project: {
-      //     _id: 1,
-      //     chatFriends: 1,
-      //     "userDetails.firstName": 1,
-      //     "userDetails.lastName": 1,
-      //     "userDetails.profilePicture": 1,
-      //     "userDetails._id": 1,
-      //     updatedAt: 1,
-      //   },
-      // },
+      {
+        $project: {
+          _id: "$otherUserId",
+          roomId: 1,
+          unreadCount: 1,
+          updatedAt: 1,
+        },
+      },
       {
         $sort: { updatedAt: -1 },
       },
@@ -273,35 +274,5 @@ route.get("/fetchChatFriends", authenticateToken, async (req, res) => {
     return res.status(400).json({ error });
   }
 });
-
-// route.post("/auth/refresh-token", (req, res) => {
-//   try {
-//     const refreshToken = req.cookies.refreshToken;
-
-//     if (!refreshToken)
-//       return res.status(403).json({ message: "No refresh token provided" });
-
-//     jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, user) => {
-//       if (err)
-//         return res.status(403).json({ message: "Invalid refresh token" });
-
-//       const newAccessToken = jwt.sign(
-//         { userId: user.userId },
-//         ACCESS_TOKEN_SECRET,
-//         { expiresIn: "15m" }
-//       );
-
-//       res.cookie("accessToken", newAccessToken, {
-//         httpOnly: true,
-//         sameSite: "None",
-//         secure: true,
-//         maxAge: 7 * 24 * 60 * 60 * 1000,
-//       });
-//       res.status(200).json({ accessToken: newAccessToken });
-//     });
-//   } catch (error) {
-//     console.log(error.message);
-//   }
-// });
 
 module.exports = route;

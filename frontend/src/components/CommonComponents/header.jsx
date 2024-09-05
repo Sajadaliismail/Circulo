@@ -19,6 +19,10 @@ import { Button } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { setLogout } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
+import chatSocket from "../../features/utilities/Socket-io";
+import { useResetRecoilState } from "recoil";
+import { postDetailFamily, postsAtom } from "../../atoms/postAtoms";
+import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -66,6 +70,16 @@ export default function Header({ setmsg }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
 
+  const postReset = useResetRecoilState(postsAtom);
+  const chatfriendsReset = useResetRecoilState(ChatFriendsData);
+  const chatmessageReset = useResetRecoilState(ChatRoomMessages);
+  const handleLogout = async () => {
+    chatSocket.emit("logout");
+    postReset();
+    chatfriendsReset();
+    chatmessageReset();
+    dispatch(setLogout());
+  };
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const toggleDarkMode = () => {
@@ -231,13 +245,7 @@ export default function Header({ setmsg }) {
             <IconButton color="inherit" onClick={toggleDarkMode}>
               <Brightness2Rounded />
             </IconButton>
-            <Button
-              variant="contained"
-              onClick={() => {
-                // setmsg({});
-                dispatch(setLogout());
-              }}
-            >
+            <Button variant="contained" onClick={handleLogout}>
               Logout
             </Button>
           </Box>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import Homepage from "./pages/homePage";
@@ -10,9 +10,17 @@ import { AuthRoutes, ProtectedRoute } from "./ProtectedRoutes";
 import ChatPage from "./pages/chatPage";
 import VideoCall from "./pages/VideoCall";
 import UserPage from "./pages/UserPage";
+import useChatSocket from "./hooks/chatSocketHook";
+import chatSocket from "./features/utilities/Socket-io";
+import { fetchUser } from "./features/user/userAsyncThunks";
+import { useDispatch, useSelector } from "react-redux";
 
 function App() {
   const [msg, setmsg] = useState({});
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.user);
+
+  useChatSocket();
 
   return (
     <SnackbarProvider maxSnack={5}>

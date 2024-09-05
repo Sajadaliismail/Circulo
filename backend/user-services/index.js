@@ -9,6 +9,7 @@ const { subscribeMessage } = require("./Server/Services/rabbitmq");
 const {
   updatePost,
   deletePost,
+  updateStatus,
 } = require("./Server/Repositories/userRepository");
 
 const PORT = process.env.PORT;
@@ -26,6 +27,8 @@ const corsOption = {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOption));
+
+subscribeMessage("userStatus", updateStatus);
 
 // subscribeMessage("post_created", updatePost);
 // subscribeMessage("post_deleted", deletePost);

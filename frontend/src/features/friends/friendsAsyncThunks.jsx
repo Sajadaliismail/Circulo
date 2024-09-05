@@ -166,6 +166,31 @@ export const fetchUserDetails = createAsyncThunk(
       return data;
     } catch (error) {
       console.log(error);
+      rejectWithValue("User Not found");
+
+      return;
+    }
+  }
+);
+
+export const fetchUserStatus = createAsyncThunk(
+  "friends/fetchUserStatus",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${BACKEND}/fetchUserStatus?userId=${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return rejectWithValue("User Not found");
+      }
+      console.log("vannu");
+
+      return data;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue("User Not found");
       return;
     }
   }

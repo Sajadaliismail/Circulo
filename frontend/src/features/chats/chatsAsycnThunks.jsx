@@ -26,7 +26,7 @@ export const fetchchats = createAsyncThunk(
       }
 
       const roomId = data.chat.roomId;
-      dispatch(setOpen(roomId));
+      // dispatch(setOpen(roomId));
 
       return data.chat;
     } catch (error) {
@@ -74,7 +74,7 @@ export const fetchChatFriends = createAsyncThunk(
         },
       });
       const data = await response.json();
-      // console.log(data);
+      console.log(data);
       if (!response.ok) {
         return rejectWithValue("Error fetching chats");
       }

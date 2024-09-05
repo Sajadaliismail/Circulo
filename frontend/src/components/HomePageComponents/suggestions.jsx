@@ -87,7 +87,6 @@ function Suggestions({ fetchUserData }) {
             overflowY: "scroll",
             display: "flex",
             flexDirection: "column",
-            gap: 2,
             scrollbarWidth: "none",
             maxHeight: "50vh",
             minHeight: "30vh",
@@ -97,7 +96,7 @@ function Suggestions({ fetchUserData }) {
             requestsPending.map((people) => (
               <Box
                 key={people.id}
-                display={"flex"}
+                className="flex flex-row flex-nowrap"
                 alignItems={"center"}
                 gap={2}
                 position="relative"
@@ -105,28 +104,45 @@ function Suggestions({ fetchUserData }) {
                   fetchUserData(people.id);
                 }}
                 sx={{
-                  cursor: "pointer",
-                  [`&:hover .requests-${people.id}`]: {
-                    visibility: "visible",
+                  padding: 1,
+                  borderRadius: "12px",
+                  letterSpacing: "0.5px",
+                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  "&:hover": {
+                    transform: "scale(1.05)",
+                    boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.3)",
+                    backgroundColor: "#c4c9d4",
+                    color: "black",
                   },
+                  cursor: "pointer",
+                  mx: 2,
                 }}
               >
-                <AnimatedTooltip userId={people.id} />
+                <AnimatedTooltip
+                  key={`requests-${people.id}`}
+                  userId={people.id}
+                />
                 {people.firstName} {people.lastName}
-                <ButtonGroup sx={{ marginLeft: "auto" }}>
+                <Box className="flex flex-row" sx={{ marginLeft: "auto" }}>
                   <Button
                     size="small"
+                    color="error"
+                    variant="contained"
+                    sx={{ borderRadius: 50, mr: 1 }}
                     onClick={() => handleCancelRequest(people.id)}
                   >
                     <Close />
                   </Button>
                   <Button
                     size="small"
+                    color="success"
+                    variant="contained"
+                    sx={{ borderRadius: 50 }}
                     onClick={() => handleAcceptRequest(people.id)}
                   >
                     <Done />
                   </Button>
-                </ButtonGroup>
+                </Box>
                 <HoverComponent component={"requests"} id={people.id} />
               </Box>
             ))
@@ -175,7 +191,10 @@ function Suggestions({ fetchUserData }) {
                   cursor: "pointer",
                 }}
               >
-                <AnimatedTooltip userId={people.id} />
+                <AnimatedTooltip
+                  key={`suggstions-${people.id}`}
+                  userId={people.id}
+                />
                 <Typography
                   onClick={() => navigate(`profile/${people.id}`)}
                   sx={{
@@ -188,49 +207,45 @@ function Suggestions({ fetchUserData }) {
                 >
                   {people.firstName} {people.lastName}
                 </Typography>
-                <Button
-                  disabled={people.hasRequested}
-                  onClick={() => handleRequest(people.id)}
-                  sx={{ marginLeft: "auto" }}
-                >
-                  {people.hasRequested ? (
-                    <>
-                      {" "}
-                      <div className="btn-group flex">
-                        <button
-                          onClick={() => handleCancelRequest()}
-                          className="relative inline-flex h-9 w-14 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 "
-                        >
-                          {/* <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" /> */}
-                          <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-red-600 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
-                            <Close />
-                          </span>
-                        </button>
-                        <button
-                          disabled={true}
-                          className="relative inline-flex h-9 w-14 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 "
-                        >
-                          {/* <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" /> */}
-                          <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-green-700 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
-                            Sent
-                          </span>
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        // onClick={() => handleAddFriend()}
-                        className="relative inline-flex h-9 w-14 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-5 focus:ring-offset-slate-50 "
+
+                {people.hasRequested ? (
+                  <>
+                    {" "}
+                    <div className="btn-group flex">
+                      <Button
+                        size="small"
+                        color="error"
+                        variant="contained"
+                        sx={{ borderRadius: 50, mr: 1 }}
+                        onClick={() => handleCancelRequest(people.id)}
                       >
-                        {/* <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" /> */}
-                        <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-green-700  px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
-                          <PersonAdd></PersonAdd>
-                        </span>
-                      </button>
-                    </>
-                  )}
-                </Button>
+                        <Close />
+                      </Button>
+                      <Button
+                        size="small"
+                        color="success"
+                        variant="contained"
+                        disabled
+                        sx={{ borderRadius: 50 }}
+                        onClick={() => handleAcceptRequest(people.id)}
+                      >
+                        <PersonAdd />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="small"
+                      color="success"
+                      variant="contained"
+                      sx={{ borderRadius: 50 }}
+                      onClick={() => handleRequest(people.id)}
+                    >
+                      <PersonAdd />
+                    </Button>
+                  </>
+                )}
                 <HoverComponent component={"suggestions"} id={people.id} />
               </Box>
             ))}

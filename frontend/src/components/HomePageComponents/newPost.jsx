@@ -40,7 +40,6 @@ function NewPost({ setPostsData }) {
   const [fontWeight, setFontWeight] = useState("normal");
   const [textDecoration, setTextDecoration] = useState("none");
   const [loading, setLoading] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -183,7 +182,6 @@ function NewPost({ setPostsData }) {
 
   return (
     <>
-      <Box>Write a post</Box>
       <Box
         className="shadow-lg  bg-gray-100 dark:bg-gray-800 p-2"
         elevation={5}
@@ -206,7 +204,7 @@ function NewPost({ setPostsData }) {
           </Avatar>
           <TextareaAutosize
             className="bg-slate-200 dark:bg-slate-600 text-black dark:text-white placeholder:text-slate-500 placeholder:font-thin dark:placeholder:text-white"
-            minRows={3}
+            minRows={postContent ? 3 : 1}
             maxLength={300}
             placeholder="Write something..."
             value={postContent}

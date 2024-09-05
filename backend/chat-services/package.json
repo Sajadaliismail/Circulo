@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
+    "amqplib": "^0.10.4",
     "cloudinary": "^2.4.0",
     "cookie": "^0.6.0",
     "cookie-parser": "^1.4.6",

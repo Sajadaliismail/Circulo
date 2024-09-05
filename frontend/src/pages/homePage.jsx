@@ -1,7 +1,6 @@
-import React, { useEffect, useCallback, useState } from "react";
+import React from "react";
 import { Box, Grid } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUser } from "../features/user/userAsyncThunks";
 import { fetchUserDetails } from "../features/friends/friendsAsyncThunks";
 import Header from "../components/CommonComponents/header";
 import Profile from "../components/HomePageComponents/profile";
@@ -9,7 +8,6 @@ import Suggestions from "../components/HomePageComponents/suggestions";
 import NewPost from "../components/HomePageComponents/newPost";
 import Posts from "../components/HomePageComponents/posts";
 import ChatApp from "../components/chatbox/chatbox";
-// import { Sidebar } from "../components/CommonComponents/SideBar";
 import "cropperjs/dist/cropper.css";
 
 export default function Homepage({ msg, setmsg }) {
@@ -17,18 +15,11 @@ export default function Homepage({ msg, setmsg }) {
   const { user } = useSelector((state) => state.user);
   const { userData } = useSelector((state) => state.friends);
 
-  useEffect(() => {
-    dispatch(fetchUser());
-  }, [dispatch]);
-
-  const fetchUserData = useCallback(
-    (id) => {
-      if (!userData[id]) {
-        dispatch(fetchUserDetails(id));
-      }
-    },
-    [userData, dispatch]
-  );
+  const fetchUserData = (id) => {
+    if (!userData[id]) {
+      dispatch(fetchUserDetails(id));
+    }
+  };
 
   if (!user?.firstName) return null;
 

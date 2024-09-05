@@ -1,14 +1,22 @@
 const { Message, Rooms } = require("../Models/mongoDb");
+const { publishMessage } = require("./rabbitmq");
 const { pubClient, subClient, userClient } = require("./redis");
 const USER_TTL = 3600;
 
 const authorize = async (user, socket) => {
   socket.userId = user;
-  await userClient.setEx(user, USER_TTL, socket.id);
-  console.log("User autherized", user);
+  try {
+    await userClient.setEx(user, USER_TTL, socket.id);
+    console.log("User autherized", user);
+    const message = { _id: user, onlineStatus: true };
+
+    await publishMessage("userStatus", message);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
-const joinRoom = (userId, socket) => {
+const joinRoom = async (userId, socket) => {
   try {
     if (!socket.user || !userId) {
       console.error("Invalid user data:", { socketUser: socket.user, userId });
@@ -16,6 +24,10 @@ const joinRoom = (userId, socket) => {
     }
 
     const roomId = [socket.user, userId].sort().join("");
+    await Message.updateMany(
+      { roomId: roomId, senderId: userId, hasRead: false },
+      { $set: { hasRead: true } }
+    );
     if (!Object.values(socket.rooms).includes(roomId)) {
       socket.join(roomId);
       console.log(`joined room ${roomId}`);
@@ -29,12 +41,12 @@ const SendEmoji = async (id, emoji, friendId, io, socket, roomId) => {
     const message = await Message.findById(id);
     message.emoji = emoji;
     await message.save();
-
     const receiverSocketId = await userClient.get(friendId);
-    // const roomId = [socket.user, friendId].sort().join("");
+    const roomId = [socket.user, friendId].sort().join("");
 
+    io.to(roomId).emit("emoji_recieved", { id, emoji, roomId });
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("emoji_recieved", { id, emoji, roomId });
+      io.to(receiverSocketId).emit("emoji_notification", { message: message });
     }
   } catch (error) {
     console.log(error);
@@ -56,6 +68,7 @@ const handleMessage = async (userId, message, type, io, socket) => {
     let room = await Rooms.findOne({ roomId: roomId });
 
     let newMessage = new Message({
+      roomId: roomId,
       senderId: socket.user,
       receiverId: userId,
     });
@@ -70,30 +83,48 @@ const handleMessage = async (userId, message, type, io, socket) => {
     room.hasOpened = false;
     const senderSocketId = await userClient.get(socket.user);
     const receiverSocketId = await userClient.get(userId);
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("sentMessageNotification", {
-        senderId: socket.user,
-        message: message,
-        type: type,
-        timestamp: Date.now(),
-        roomId: roomId,
-        _id: newMessage._id,
-      });
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", { message: message });
     }
 
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessageNotification", {
-        senderId: socket.user,
-        message: message,
-        type: type,
-        timestamp: Date.now(),
-        roomId: roomId,
-        _id: newMessage._id,
-      });
-    }
+    io.to(roomId).emit("newMessageNotification", {
+      senderId: socket.user,
+      message: message,
+      type: type,
+      timestamp: Date.now(),
+      roomId: roomId,
+      _id: newMessage._id,
+    });
+    // }
     await room.save();
   } catch (error) {
     console.error("Error emitting message:", error);
   }
 };
-module.exports = { authorize, joinRoom, SendEmoji, handleMessage };
+const handleCallStart = async (userId, offer) => {
+  try {
+    const receiverSocketId = await userClient.get(userId);
+    if (receiverSocketId) {
+      console.log("offer emitted");
+
+      io.to(receiverSocketId).emit("offer", offer);
+    }
+  } catch (error) {}
+};
+const handleLogout = async (socket) => {
+  const userId = socket.userId;
+  if (userId) {
+    await userClient.del(userId);
+  }
+  console.log(`Socket ${socket.id} disconnected`);
+  const message = { _id: userId, onlineStatus: false };
+  await publishMessage("userStatus", message);
+};
+module.exports = {
+  authorize,
+  joinRoom,
+  SendEmoji,
+  handleMessage,
+  handleLogout,
+  handleCallStart,
+};

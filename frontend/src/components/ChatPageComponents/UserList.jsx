@@ -8,10 +8,20 @@ import {
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+import { ChatRoomMessages } from "../../atoms/chatAtoms";
+import { useRecoilState } from "recoil";
+import { setReadMessages } from "../../features/chats/chatsSlice";
 
-const UserList = ({ friend, handleChat, roomId }) => {
-  const { unReadMessages, chats } = useSelector((state) => state.chats);
+const UserList = ({
+  friend,
+  handleChat,
+  roomId,
+  unreadCount = 0,
+  setFriendsData,
+}) => {
   const { userData } = useSelector((state) => state.friends);
+  const [chatMessages, setChatMessages] = useRecoilState(ChatRoomMessages);
+
   const dispatch = useDispatch();
 
   const [userDetails, setUserDetails] = useState(null);
@@ -20,23 +30,43 @@ const UserList = ({ friend, handleChat, roomId }) => {
     const fetchData = async () => {
       await dispatch(fetchUserDetails(friend));
     };
-    if (userData[friend]) setUserDetails(userData[friend]);
-    else {
+
+    if (userData[friend]) {
+      setUserDetails(userData[friend]);
+    } else {
       fetchData().then(() => setUserDetails(userData[friend]));
     }
-  });
+  }, [userData, friend, dispatch]);
+  const handleClick = async (e) => {
+    dispatch(setReadMessages(friend));
+    setFriendsData((prev) => {
+      return prev.map((user) => {
+        if (user._id === friend) {
+          console.log(user, friend);
+          return {
+            ...user,
+            unreadCount: 0,
+          };
+        }
+        return user;
+      });
+    });
+    handleChat(friend, roomId, e);
+  };
 
   return (
     <>
       {userDetails && (
         <ListItemButton
-          onClick={(e) => handleChat(friend, roomId, e)}
-          // sx={{ width: "100%" }}
+          onClick={handleClick}
           sx={{
             fontWeight: 700,
             padding: "10px 20px",
             borderRadius: "12px",
             letterSpacing: "0.5px",
+            mb: "2px",
+            backgroundColor:
+              unreadCount && unreadCount > 0 ? "#6178b54f" : null,
             transition: "transform 0.3s ease, box-shadow 0.3s ease",
             "&:hover": {
               transform: "scale(1.05)",
@@ -45,11 +75,11 @@ const UserList = ({ friend, handleChat, roomId }) => {
               color: "black",
             },
           }}
-          key={friend.id}
+          key={friend?.id}
         >
           <ListItemIcon>
             <Badge
-              badgeContent={chats[friend]}
+              badgeContent={unreadCount}
               color="error"
               variant="standard"
               overlap="circular"
