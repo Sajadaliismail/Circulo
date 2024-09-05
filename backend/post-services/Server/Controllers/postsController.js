@@ -1,5 +1,6 @@
 const postsInteractor = require("../Interactors/postsInteractor");
 const { publishMessage } = require("../Services/rabbitmq");
+const FRIENDS_BACKEND = process.env.FRIENDS_BACKEND;
 
 const addPosts = async (req, res) => {
   console.log("ethy");
