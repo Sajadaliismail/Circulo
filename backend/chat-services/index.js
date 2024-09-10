@@ -28,8 +28,9 @@ app.listen(PORT, () => {
   console.log(`Chat services connected to port : ${PORT}`);
 });
 app.use("/chats", route);
+
 httpServer.listen(SOCKET_PORT, () => {
-  console.log(`Socket.IO server listening on ${SOCKET_PORT}`);
+  console.log(`Socket.IO server listening on  ${SOCKET_PORT}`);
 });
 
 connectDb();
