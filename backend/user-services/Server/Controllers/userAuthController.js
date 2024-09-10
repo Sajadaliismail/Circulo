@@ -4,13 +4,14 @@ const signInInteractor = require("../Interactors/signInInteractor");
 
 const signupUser = async (req, res) => {
   try {
+    const userData = req.body;
     const user = await createUserInteractor(userData);
     return res.status(200).json({ email: user.email });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(401).json({ error: "Email already registered" });
     }
-    return res.status(404).json({ error: "Server error, Try after some time" });
+    return res.status(404).json({ error: error.message });
   }
 };
 

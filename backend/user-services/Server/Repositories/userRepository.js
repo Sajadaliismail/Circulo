@@ -7,7 +7,7 @@ const createUser = async (userData) => {
 };
 
 const findUserByEmail = async (email) => {
-  const user = await User.findOne({ email: email });
+  const user = await User.findOne({ email: email.toLowerCase() });
   return user;
 };
 

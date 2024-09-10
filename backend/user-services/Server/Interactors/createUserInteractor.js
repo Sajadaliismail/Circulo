@@ -7,7 +7,7 @@ const createUserInteractor = async (data) => {
   const user = {
     firstName,
     lastName,
-    email,
+    email: email.toLowerCase(),
     password: hashedPassword,
     birthMonth,
     birthYear,

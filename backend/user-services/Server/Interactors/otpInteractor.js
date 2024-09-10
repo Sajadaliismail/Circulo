@@ -40,7 +40,7 @@ const verifyOtpInteractor = async (otp, email) => {
     { new: true }
   );
   const token = generateToken(user._id);
-  const refreshToken = generateRefreshToken(userData._id);
+  const refreshToken = generateRefreshToken(user._id);
 
   return {
     refreshToken,
