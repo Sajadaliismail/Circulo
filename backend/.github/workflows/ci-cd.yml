@@ -1,0 +1,154 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - backend-branch
+  pull_request:
+    branches:
+      - backend-branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Log Checkout
+        run: echo "Code checkout completed"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+      - name: Log Node.js Setup
+        run: echo "Node.js version 22 setup completed"
+
+      - name: Install dependencies for post-service
+        working-directory: ./backend/post-services
+        run: npm install
+      - name: Log Post-Service Dependencies
+        run: echo "Dependencies installed for post-service"
+
+      #  - name: Run tests for post-service
+      #    working-directory: ./backend/post-services
+      #    run: npm test
+
+      - name: Build Docker image for post-service
+        working-directory: ./backend/post-services
+        run: |
+          echo "Building Docker image for post-service..."
+          docker build -t post-service:latest .
+      - name: Log Post-Service Docker Build
+        run: echo "Docker image built for post-service"
+
+      - name: Install dependencies for auth-service
+        working-directory: ./backend/user-services
+        run: npm install
+      - name: Log Auth-Service Dependencies
+        run: echo "Dependencies installed for auth-service"
+
+      #  - name: Run tests for auth-service
+      #    working-directory: ./backend/user-services
+      #    run: npm test
+
+      - name: Build Docker image for auth-service
+        working-directory: ./backend/user-services
+        run: |
+          echo "Building Docker image for auth-service..."
+          docker build -t auth-service:latest .
+      - name: Log Auth-Service Docker Build
+        run: echo "Docker image built for auth-service"
+
+      - name: Install dependencies for chat-service
+        working-directory: ./backend/chat-services
+        run: npm install
+      - name: Log Chat-Service Dependencies
+        run: echo "Dependencies installed for chat-service"
+
+      #  - name: Run tests for chat-service
+      #    working-directory: ./backend/chat-services
+      #    run: npm test
+
+      - name: Build Docker image for chat-service
+        working-directory: ./backend/chat-services
+        run: |
+          echo "Building Docker image for chat-service..."
+          docker build -t chat-service:latest .
+      - name: Log Chat-Service Docker Build
+        run: echo "Docker image built for chat-service"
+
+      - name: Install dependencies for friends-service
+        working-directory: ./backend/friends-services
+        run: npm install
+      - name: Log Friends-Service Dependencies
+        run: echo "Dependencies installed for friends-service"
+
+      #  - name: Run tests for friends-service
+      #    working-directory: ./backend/friends-services
+      #    run: npm test
+
+      - name: Build Docker image for friends-service
+        working-directory: ./backend/friends-services
+        run: |
+          echo "Building Docker image for friends-service..."
+          docker build -t friends-service:latest .
+      - name: Log Friends-Service Docker Build
+        run: echo "Docker image built for friends-service"
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log DockerHub Login
+        run: echo "Logged into DockerHub"
+
+      - name: Push Docker images to DockerHub
+        run: |
+          echo "Pushing Docker images to DockerHub..."
+          docker tag post-service:latest ${{ secrets.DOCKER_USERNAME }}/post-service:latest
+          docker tag auth-service:latest ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+          docker tag chat-service:latest ${{ secrets.DOCKER_USERNAME }}/chat-service:latest
+          docker tag friends-service:latest ${{ secrets.DOCKER_USERNAME }}/friends-service:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/post-service:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/chat-service:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/friends-service:latest
+      - name: Log Docker Push
+        run: echo "Docker images pushed to DockerHub"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Log Checkout for Deploy
+        run: echo "Code checkout completed for deploy"
+
+      - name: Deploy to Production
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "Starting deployment to production..."
+          ssh -i $SSH_PRIVATE_KEY ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
+
+          echo "Removing old Docker images..."
+          docker image prune -a -f
+
+          echo "Pulling new Docker images from DockerHub..."
+          docker pull ${{ secrets.DOCKER_USERNAME }}/post-service:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/chat-service:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/friends-service:latest
+
+          echo "Starting services with docker-compose..."
+          docker-compose -f /home/ec2-user/circulo//docker-compose.yml up -d
+
+          echo "Deployment complete!"
+          EOF
+      - name: Log Deployment
+        run: echo "Deployment to production complete"
