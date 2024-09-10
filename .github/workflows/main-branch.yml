@@ -1,0 +1,17 @@
+name: Log Main Branch
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Echo message
+        run: echo "This is the main branch."
