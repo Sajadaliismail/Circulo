@@ -1,0 +1,17 @@
+name: Log Backend Branch
+
+on:
+  push:
+    branches:
+      - backend-branch
+  pull_request:
+    branches:
+      - backend-branch
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Echo message
+        run: echo "This is the backend-branch."
