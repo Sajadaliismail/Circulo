@@ -23,14 +23,14 @@ const corsOption = {
 app.use(cors(corsOption));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/chats", route);
 
 app.listen(PORT, () => {
   console.log(`Chat services connected to port : ${PORT}`);
 });
-app.use("/chats", route);
 
 httpServer.listen(SOCKET_PORT, () => {
-  console.log(`Socket.IO server listening on  ${SOCKET_PORT}`);
+  console.log(`Socket.IO server listening on ${SOCKET_PORT}`);
 });
 
 connectDb();
