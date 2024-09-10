@@ -134,27 +134,27 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
 
-         # Write the RSA private key to a file
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > key.pem
-          # Set the correct permissions for the private key
-          chmod 600 key.pem
-          
-          echo "Starting deployment to production..."
-          ssh -i key.pem ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
+          # Write the RSA private key to a file
+           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > key.pem
+           # Set the correct permissions for the private key
+           chmod 600 key.pem
+           
+           echo "Starting deployment to production..."
+           ssh -i key.pem ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << EOF
 
-          echo "Removing old Docker images..."
-          docker image prune -a -f
+           echo "Removing old Docker images..."
+           docker image prune -a -f
 
-          echo "Pulling new Docker images from DockerHub..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/post-service:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/chat-service:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/friends-service:latest
+           echo "Pulling new Docker images from DockerHub..."
+           docker pull ${{ secrets.DOCKER_USERNAME }}/post-service:latest
+           docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
+           docker pull ${{ secrets.DOCKER_USERNAME }}/chat-service:latest
+           docker pull ${{ secrets.DOCKER_USERNAME }}/friends-service:latest
 
-          echo "Starting services with docker-compose..."
-          docker-compose -f /home/ec2-user/circulo//docker-compose.yml up -d
+           echo "Starting services with docker-compose..."
+           docker-compose -f /home/ec2-user/circulo//docker-compose.yml up -d
 
-          echo "Deployment complete!"
-          EOF
+           echo "Deployment complete!"
+           EOF
       - name: Log Deployment
         run: echo "Deployment to production complete"
