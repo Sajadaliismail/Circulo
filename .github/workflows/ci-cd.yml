@@ -133,6 +133,12 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
+
+         # Write the RSA private key to a file
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > key.pem
+          # Set the correct permissions for the private key
+          chmod 600 key.pem
+          
           echo "Starting deployment to production..."
           ssh -i $SSH_PRIVATE_KEY ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
 
