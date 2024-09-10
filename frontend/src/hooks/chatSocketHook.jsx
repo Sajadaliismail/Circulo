@@ -18,8 +18,9 @@ const useChatSocket = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchUser());
-
+    if (isLoggedIn) {
+      dispatch(fetchUser());
+    }
     if (isLoggedIn && user?._id && !socketConnected) {
       chatSocket.connect();
       const id = user._id;

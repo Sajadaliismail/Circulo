@@ -1,6 +1,6 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
+import storage from "redux-persist/lib/storage";
 import authSlice from "./features/auth/authSlice";
 import postsSlice from "./features/posts/postsSlice";
 import friendsSlice from "./features/friends/friendsSlice";
@@ -25,9 +25,7 @@ const appReducer = combineReducers({
 // Create the rootReducer to handle the LOGOUT action
 const rootReducer = (state, action) => {
   if (action.type === "auth/setLogout") {
-    // Clear the persisted state
     storage.removeItem("persist:root");
-    // Reset the state
     state = undefined;
   }
   return appReducer(state, action);

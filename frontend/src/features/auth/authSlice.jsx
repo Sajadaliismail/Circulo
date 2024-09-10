@@ -31,7 +31,6 @@ const authSlice = createSlice({
     },
     setLogout: (state) => {
       state.isLoggedIn = false;
-      // localStorage.removeItem("jwt");
     },
     resetErrors: (state) => {
       state.error = {};

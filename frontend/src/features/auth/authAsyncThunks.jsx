@@ -49,7 +49,6 @@ export const signin = createAsyncThunk(
         return { email: data.email, isEmailVerified: false };
       }
       dispatch(setAccessToken(data.token));
-      // localStorage.setItem("jwt", data.token);
       return data;
     } catch (error) {
       console.log(error);
@@ -100,7 +99,6 @@ export const verifyOtp = createAsyncThunk(
       }
       dispatch(setAccessToken(data.token));
 
-      // localStorage.setItem("jwt", data.token);
       return data;
     } catch (error) {
       console.log(error);
