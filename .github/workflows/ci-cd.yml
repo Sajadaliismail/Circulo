@@ -140,7 +140,7 @@ jobs:
           chmod 600 key.pem
           
           echo "Starting deployment to production..."
-          ssh -i $SSH_PRIVATE_KEY ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
+         -i key.pem ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
 
           echo "Removing old Docker images..."
           docker image prune -a -f
