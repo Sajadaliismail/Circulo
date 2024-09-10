@@ -1,6 +1,5 @@
 const { default: mongoose } = require("mongoose");
 const Post = require("../Models/PostSchema");
-const { post } = require("../Routes/routes");
 
 const createPost = async (data, id) => {
   const post = new Post(data);

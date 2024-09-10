@@ -3,8 +3,6 @@ const { publishMessage } = require("../Services/rabbitmq");
 const FRIENDS_BACKEND = process.env.FRIENDS_BACKEND;
 
 const addPosts = async (req, res) => {
-  console.log("ethy");
-
   try {
     const { post } = req.body;
     const fileName = req.file?.filename;
@@ -14,12 +12,6 @@ const addPosts = async (req, res) => {
       post,
       userId
     );
-
-    // const message = {
-    //   _id: userId,
-    //   postId: result._id,
-    // };
-    // publishMessage("post_created", message);
     return res.status(200).json({ result });
   } catch (error) {
     console.log(error);
@@ -33,7 +25,7 @@ const fetchPosts = async (req, res) => {
     const userId = req.userId;
     const cookies = req.headers.cookie;
     const response = await fetch(
-      `http://localhost:3006/friends/api/friendsListUser`,
+      `${FRIENDS_BACKEND}/friends/api/friendsListUser`,
       {
         method: "GET",
         credentials: "include",
@@ -43,22 +35,47 @@ const fetchPosts = async (req, res) => {
       }
     );
 
-    const friends = await response.json();
-
-    if (response.ok) {
-      const { page, limits } = req.query;
-
-      const data = await postsInteractor.fetchPostInteractor(
-        userId,
-        friends.friends
+    if (!response.ok) {
+      console.error(
+        `Error from friends service: ${response.status} ${response.statusText}`
       );
-
-      return res.status(200).json({ posts: data.posts, count: data.count });
+      return res.status(response.status).json({
+        error: `Failed to fetch friends: ${response.statusText}`,
+      });
     }
-    return res.status(400).json({ error: "Error fetching posts" });
+
+    // Attempt to parse JSON response
+    let friends;
+    try {
+      friends = await response.json();
+    } catch (err) {
+      console.error("Error parsing JSON response:", err);
+      return res.status(500).json({
+        error: "Failed to parse response from friends service",
+      });
+    }
+
+    // Ensure the response contains the expected structure
+    if (!friends || !friends.friends) {
+      console.error("Invalid response structure from friends service");
+      return res.status(500).json({
+        error: "Invalid response from friends service",
+      });
+    }
+
+    const data = await postsInteractor.fetchPostInteractor(
+      userId,
+      friends.friends
+    );
+
+    // Respond with the fetched posts
+    return res.status(200).json({ posts: data.posts, count: data.count });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ error: "Error fetching posts" });
+    // Handle unexpected errors
+    console.error("Unexpected error in fetchPosts:", error);
+    return res.status(500).json({
+      error: "An unexpected error occurred while fetching posts",
+    });
   }
 };
 
@@ -68,16 +85,13 @@ const fetchUserPosts = async (req, res) => {
     const { id } = req.params;
     const cookies = req.headers.cookie;
 
-    const response = await fetch(
-      `http://localhost:3006/friends/relation/${id}`,
-      {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          Cookie: cookies || "", // Handle if cookies is undefined
-        },
-      }
-    );
+    const response = await fetch(`${FRIENDS_BACKEND}/friends/relation/${id}`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Cookie: cookies || "",
+      },
+    });
 
     if (!response.ok) {
       return res

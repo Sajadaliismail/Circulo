@@ -1,0 +1,33 @@
+services:
+  post-service:
+    build:
+      context: ./post-services
+    ports:
+      - "32784:3004" # Maps port 3004 in the container to port 32784 on the host
+    env_file:
+      - ./post-services/.env
+
+  auth-service:
+    build:
+      context: ./user-services
+    ports:
+      - "32787:3002" # Maps port 3002 in the container to port 32787 on the host
+    env_file:
+      - ./user-services/.env
+
+  chat-service:
+    build:
+      context: ./chat-services
+    ports:
+      - "32785:3008" # Maps port 3008 in the container to port 32785 on the host
+      - "32786:3010" # Maps port 3010 in the container to port 32786 on the host
+    env_file:
+      - ./chat-services/.env
+
+  friends-service:
+    build:
+      context: ./friends-services
+    ports:
+      - "32783:3006" # Maps port 3006 in the container to port 32783 on the host
+    env_file:
+      - ./friends-services/.env

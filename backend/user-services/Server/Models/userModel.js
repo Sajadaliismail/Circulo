@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const LOCATION_API = process.env.LOCATION_API;
-const axios = require("axios");
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
@@ -34,16 +33,20 @@ userSchema.pre("save", async function (next) {
     console.log(`Postal code modified: ${this.postalCode}`);
 
     try {
-      const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json`,
-        {
-          params: {
-            address: this.postalCode,
-            key: process.env.LOCATION_API,
-          },
-        }
+      // const response = await axios.get(
+      //   `https://maps.googleapis.com/maps/api/geocode/json`,
+      //   {
+      //     params: {
+      //       address: this.postalCode,
+      //       key: process.env.LOCATION_API,
+      //     },
+      //   }
+      // );
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          this.postalCode
+        )}&key=${LOCATION_API}`
       );
-
       if (response.data.results.length > 0) {
         const { lat, lng } = response.data.results[0].geometry.location;
         if (lat !== undefined && lng !== undefined) {

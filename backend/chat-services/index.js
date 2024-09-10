@@ -9,6 +9,7 @@ require("dotenv").config();
 
 const PORT = process.env.PORT;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
+const SOCKET_PORT = process.env.SOCKET_PORT;
 
 const app = express();
 
@@ -27,8 +28,8 @@ app.listen(PORT, () => {
   console.log(`Chat services connected to port : ${PORT}`);
 });
 app.use("/chats", route);
-httpServer.listen(3010, () => {
-  console.log(`Socket.IO server listening on port 3010`);
+httpServer.listen(SOCKET_PORT, () => {
+  console.log(`Socket.IO server listening on ${SOCKET_PORT}`);
 });
 
 connectDb();
