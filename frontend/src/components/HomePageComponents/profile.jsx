@@ -18,14 +18,16 @@ import { uploadImage } from "../../features/user/userAsyncThunks";
 
 function Profile({ fetchUserData }) {
   const { user } = useSelector((state) => state.user);
+  const { userData } = useSelector((state) => state.friends);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [croppedObject, setCroppedObject] = useState(null);
   const [croppedPreview, setCroppedPreview] = useState(null);
-  const [finalImage, setFinalImage] = useState(null);
   const [croppedCanvas, setCroppedCanvas] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
+
+  fetchUserData(user._id);
 
   const handleClose = async () => {
     setOpen(false);
@@ -119,7 +121,7 @@ function Profile({ fetchUserData }) {
         >
           <Avatar
             className="imgUpload"
-            src={isHovered ? null : user?.profilePicture}
+            src={isHovered ? null : userData[user?._id]?.profilePicture}
             sx={{
               width: 200,
               height: 200,
@@ -148,8 +150,8 @@ function Profile({ fetchUserData }) {
                 alignItems: "center",
                 justifyContent: "center",
                 zIndex: 100,
-                backgroundImage: user?.profilePicture
-                  ? `url(${user?.profilePicture})`
+                backgroundImage: userData[user?._id]?.profilePicture
+                  ? `url(${userData[user?._id]?.profilePicture})`
                   : null,
                 backgroundSize: "cover",
               }}
@@ -179,17 +181,17 @@ function Profile({ fetchUserData }) {
                 <ModeEdit />
               </label>
             </Box>
-            {user.firstName[0].toUpperCase()}
+            {userData[user?._id].firstName[0].toUpperCase()}
           </Avatar>
 
           <Typography>
-            {user.firstName} {user.lastName}
+            {userData[user?._id].firstName} {userData[user?._id].lastName}
           </Typography>
-          <Typography>{user.city}</Typography>
+          <Typography>{userData[user?._id].city}</Typography>
           <Typography>
-            {user.state},{user.country}
+            {userData[user?._id].state},{userData[user?._id].country}
           </Typography>
-          <Typography>{user.email}</Typography>
+          <Typography>{userData[user?._id].email}</Typography>
         </Box>
 
         <Divider variant="fullWidth"></Divider>

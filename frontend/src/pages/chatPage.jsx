@@ -68,7 +68,6 @@ export default function ChatPage() {
     const fetchChatData = async () => {
       setLoading(true);
       await dispatch(fetchChatFriends());
-      console.log(chatFriends);
 
       setLoading(false);
     };
