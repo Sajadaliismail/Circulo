@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
 import Grid from "@mui/material/Grid";
-import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
 import Link from "@mui/material/Link";
 import FormControl from "@mui/material/FormControl";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
@@ -21,7 +18,6 @@ import {
 } from "../../pages/signupUtils";
 import { Box } from "@mui/material";
 import Copyright from "../CommonComponents/copyright";
-import { useNavigate } from "react-router-dom";
 import { signupStyle } from "../../pages/Style";
 import { useDispatch, useSelector } from "react-redux";
 import { signup } from "../../features/auth/authAsyncThunks";

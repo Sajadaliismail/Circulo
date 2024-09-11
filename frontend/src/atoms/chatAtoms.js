@@ -1,4 +1,4 @@
-import { atom, atomFamily } from "recoil";
+import { atom } from "recoil";
 
 export const ChatFriendsData = atom({
   key: "chatRoomsState",

@@ -1,15 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import CssBaseline from "@mui/material/CssBaseline";
-import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Avatar from "@mui/material/Avatar";
-import Cropper, { ReactCropperElement } from "react-cropper";
+import Cropper from "react-cropper";
 import {
   Button,
   ButtonGroup,
   Chip,
   IconButton,
-  Paper,
   TextareaAutosize,
   Tooltip,
 } from "@mui/material";
@@ -24,7 +21,6 @@ import { addPost } from "../../features/posts/postsAsyncThunks";
 import { useSnackbar } from "notistack";
 import Carousel from "react-material-ui-carousel";
 import html2canvas from "html2canvas";
-import { set } from "lodash";
 
 function NewPost({ setPostsData }) {
   const { user } = useSelector((state) => state.user);
@@ -100,7 +96,7 @@ function NewPost({ setPostsData }) {
 
   const cropperRef = useRef(null);
   const onCrop = () => {
-    const cropper = cropperRef.current?.cropper;
+    // const cropper = cropperRef.current?.cropper;
     // console.log(cropper.getCroppedCanvas().toDataURL());
   };
 

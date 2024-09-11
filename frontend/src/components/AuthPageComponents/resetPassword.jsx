@@ -1,11 +1,10 @@
 // ResetPassword.js
 import React, { useEffect, useState } from "react";
-import { Box, Button, Grid, Paper, Typography } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { Logo } from "../CommonComponents/logoComponent";
 import EmailForm from "./emailForm";
 import OtpForm from "./otpForm";
 import PasswordForm from "./passwordForm";
-import { useNavigate } from "react-router-dom";
 import { SVGComponent } from "../CommonComponents/svgComponent";
 
 const ResetPassword = ({ signin }) => {

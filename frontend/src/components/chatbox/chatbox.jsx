@@ -13,8 +13,7 @@ const ChatBox = lazy(() => import("./chatboxinterface"));
 
 function ChatApp({ fetchUserData, msg, setmsg }) {
   const dispatch = useDispatch();
-  const { chats, roomId } = useSelector((state) => state.chats);
-  const { user } = useSelector((state) => state.user);
+  const { chats } = useSelector((state) => state.chats);
   const { userData } = useSelector((state) => state.friends);
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);

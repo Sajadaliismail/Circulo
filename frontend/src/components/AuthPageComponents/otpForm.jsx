@@ -1,6 +1,6 @@
 // OtpForm.js
 import React from "react";
-import { Box, Button, Grid, Paper } from "@mui/material";
+import { Box, Button, Grid } from "@mui/material";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyOtp } from "../../features/auth/authAsyncThunks";
@@ -9,7 +9,7 @@ import { resetErrors } from "../../features/auth/authSlice";
 import { motion } from "framer-motion";
 
 const OtpForm = ({ otp, onOtpChange, count, onResendOtp, onOtpSubmit }) => {
-  const { email, error } = useSelector((state) => state.auth);
+  const { email } = useSelector((state) => state.auth);
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 

@@ -1,25 +1,13 @@
-import { Grid, Box, Typography, IconButton } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useRecoilState } from "recoil";
 import { postDetailFamily } from "../../atoms/postAtoms";
 import { fetchPostData } from "../../fetchRequests/posts";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Close,
-  Comment,
-  Favorite,
-  FavoriteOutlined,
-} from "@mui/icons-material";
+import { Comment, Favorite, FavoriteOutlined } from "@mui/icons-material";
 import Post from "../HomePageComponents/post";
 import { CardContainer, CardBody, CardItem } from "./sample";
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalTrigger,
-} from "./AnimatedModal";
+import { Modal, ModalBody, ModalContent, ModalTrigger } from "./AnimatedModal";
 
 // Motion variants for animations
 const cardVariants = {
@@ -32,11 +20,8 @@ const PostCard = ({ postId, fetchUserData }) => {
   const [postDetails, setPostDetails] = useRecoilState(
     postDetailFamily(postId)
   );
-  const { userData } = useSelector((state) => state.friends);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const dispatch = useDispatch();
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const updatePostData = async (id) => {
@@ -68,7 +53,7 @@ const PostCard = ({ postId, fetchUserData }) => {
   }, [postId, postDetails, fetchUserData]);
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  // const handleClose = () => setOpen(false);
 
   if (loading) {
     return null;

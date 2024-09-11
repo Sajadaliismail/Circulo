@@ -1,11 +1,4 @@
-import {
-  Container,
-  CssBaseline,
-  Box,
-  Button,
-  Skeleton,
-  Typography,
-} from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import Post from "./post";
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,9 +6,8 @@ import { fetchPosts, handleLike } from "../../features/posts/postsAsyncThunks";
 import debounce from "lodash/debounce";
 import { SyncLoader } from "react-spinners";
 import { setPages } from "../../features/posts/postsSlice";
-import { fetchPostData } from "../../fetchRequests/posts";
 import { useSnackbar } from "notistack";
-import { postDetailFamily, postsAtom } from "../../atoms/postAtoms";
+import { postsAtom } from "../../atoms/postAtoms";
 import { useRecoilState } from "recoil";
 import PullToRefresh from "react-simple-pull-to-refresh";
 
@@ -24,7 +16,6 @@ function Posts({ fetchUserData }) {
 
   const { posts, count } = useSelector((state) => state.posts);
 
-  const [isBottom, setIsBottom] = useState(false);
   const [loading, setLoading] = useState(false);
   const [postGenerator, setPostGenerator] = useState(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
@@ -88,14 +79,11 @@ function Posts({ fetchUserData }) {
 
       if (scrollTop + divHeight >= documentHeight - 10) {
         if (!loading) {
-          setIsBottom(true);
           if (postId.length < count) {
             dispatch(setPages());
             loadMore();
           }
         }
-      } else {
-        setIsBottom(false);
       }
     }, 300),
     [loading, postId, count, dispatch]

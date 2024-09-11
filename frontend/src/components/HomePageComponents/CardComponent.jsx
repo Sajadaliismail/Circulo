@@ -1,9 +1,8 @@
 import { Button, Menu, MenuItem } from "@mui/material";
-import { convertUTCToIST } from "../../pages/Utilitis";
 import { cn } from "../../Utilities/utils";
 import { AnimatedTooltip } from "../CommonComponents/AnimatedHoverComponent";
 import { MoreVert } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTimeAgo } from "../../hooks/useTimeAgo";
 
 export function CardComponent({
@@ -79,7 +78,7 @@ export function CardComponent({
               "aria-labelledby": "basic-button",
             }}
           >
-            {postDetails?.author == userId && (
+            {postDetails?.author === userId && (
               <MenuItem onClick={() => handleRemovePost(postDetails?._id)}>
                 Remove post
               </MenuItem>

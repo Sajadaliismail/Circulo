@@ -1,25 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import Homepage from "./pages/homePage";
 import LandingPage from "./pages/landingPage";
-import SignInSide from "./components/AuthPageComponents/signIn";
-import SignUp from "./components/AuthPageComponents/signup";
-import ResetPassword from "./components/AuthPageComponents/resetPassword";
+
 import { AuthRoutes, ProtectedRoute } from "./ProtectedRoutes";
 import ChatPage from "./pages/chatPage";
 import VideoCall from "./pages/VideoCall";
 import UserPage from "./pages/UserPage";
 import useChatSocket from "./hooks/chatSocketHook";
-import chatSocket from "./features/utilities/Socket-io";
-import { fetchUser } from "./features/user/userAsyncThunks";
-import { useDispatch, useSelector } from "react-redux";
 
 function App() {
-  const [msg, setmsg] = useState({});
-  const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.user);
-
   useChatSocket();
 
   return (
@@ -30,29 +21,14 @@ function App() {
             path="/login"
             element={<AuthRoutes element={<LandingPage></LandingPage>} />}
           />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute
-                element={<Homepage msg={msg} setmsg={setmsg} />}
-              />
-            }
-          />
+          <Route path="/" element={<ProtectedRoute element={<Homepage />} />} />
           <Route
             path="/chats"
-            element={
-              <ProtectedRoute
-                element={<ChatPage msg={msg} setmsg={setmsg} />}
-              />
-            }
+            element={<ProtectedRoute element={<ChatPage />} />}
           />
           <Route
             path="/profile/:userId"
-            element={
-              <ProtectedRoute
-                element={<UserPage msg={msg} setmsg={setmsg} />}
-              />
-            }
+            element={<ProtectedRoute element={<UserPage />} />}
           />
           <Route
             path="/video"

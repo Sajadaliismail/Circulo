@@ -20,13 +20,6 @@ export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
   const { userData } = useSelector((state) => state.friends);
   const dispatch = useDispatch();
 
-  const debouncedFetchUserStatus = debounce((userId) => {
-    dispatch(fetchUserStatus(userId));
-  }, 5000);
-
-  const fetchStatus = () => {
-    // debouncedFetchUserStatus(userId);
-  };
   const fetchUserData = useCallback(
     (id) => {
       if (!userData[id]) {
@@ -62,7 +55,6 @@ export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
       className="-mr-4 relative group"
       onMouseEnter={() => {
         setIsHovered(true);
-        fetchStatus();
       }}
       onMouseLeave={() => setIsHovered(false)}
     >

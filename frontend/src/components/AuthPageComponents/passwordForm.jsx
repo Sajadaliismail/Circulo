@@ -25,7 +25,6 @@ const PasswordForm = ({ signin }) => {
   const [error, setError] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
 
   const validatePasswords = () => {
     if (!password || !confirmPassword) {

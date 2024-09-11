@@ -1,15 +1,13 @@
-import { Edit, EditNotifications, ModeEdit } from "@mui/icons-material";
+import { ModeEdit } from "@mui/icons-material";
 import {
   Avatar,
   Box,
-  Button,
-  Container,
   CssBaseline,
   Divider,
   Modal,
   Typography,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Friends from "./friends";
 import { enqueueSnackbar } from "notistack";

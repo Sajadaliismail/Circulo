@@ -21,7 +21,7 @@ import { setLogout } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
 import chatSocket from "../../features/utilities/Socket-io";
 import { useResetRecoilState } from "recoil";
-import { postDetailFamily, postsAtom } from "../../atoms/postAtoms";
+import { postsAtom } from "../../atoms/postAtoms";
 import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
 
 const Search = styled("div")(({ theme }) => ({

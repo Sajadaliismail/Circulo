@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
-  Avatar,
   Button,
-  CssBaseline,
   TextField,
   FormControlLabel,
   Checkbox,
   Link,
-  Paper,
   Box,
   Grid,
-  Typography,
 } from "@mui/material";
 import { motion } from "framer-motion";
 
@@ -21,7 +17,6 @@ import { Logo } from "../CommonComponents/logoComponent";
 import Copyright from "../CommonComponents/copyright";
 import { useDispatch, useSelector } from "react-redux";
 import { signin } from "../../features/auth/authAsyncThunks";
-import VerifyOtp from "./verifyOTp";
 import { useSnackbar } from "notistack";
 import { resetErrors } from "../../features/auth/authSlice";
 import { SVGComponent } from "../CommonComponents/svgComponent";
