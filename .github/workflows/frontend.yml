@@ -23,7 +23,6 @@ jobs:
           REACT_APP_POST_BACKEND=/api/posts \
           REACT_APP_CHAT_BACKEND=/api/chat \
           REACT_APP_FRIENDS_BACKEND=/api/friends \
-          REACT_APP_CHAT_SERVER_URL=/socket.io \
           REACT_APP_LOCATION_API=${{ secrets.LOCATION_API_KEY }} \
           REACT_APP_CLOUD_NAME=dwlegfkli \
           REACT_APP_API_KEY=${{ secrets.CLOUDINARY_API_KEY }} \
