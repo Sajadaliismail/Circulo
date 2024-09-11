@@ -149,8 +149,7 @@ const VideoCall = ({ friend }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen p-4">
-      <h1 className="text-2xl font-bold mb-4">WebRTC Video Call</h1>
+    <div className="flex flex-col items-center justify-center p-4">
       <button
         onClick={() => {
           setOpen(true);
