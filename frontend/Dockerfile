@@ -7,7 +7,7 @@ ENV NODE_ENV=production
 WORKDIR /frontend
 
 # Copy package files and install dependencies
-COPY ["package.json", "package-lock.json*", "./"]
+COPY  ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
 RUN npm install --production --silent
 
 # Copy the rest of the application code
