@@ -4,7 +4,7 @@ FROM node:lts-alpine
 ENV NODE_ENV=production
 
 # Create and set working directory
-WORKDIR /frontend-service
+WORKDIR /frontend
 
 # Copy package files and install dependencies
 COPY ["package.json", "package-lock.json*", "./"]
