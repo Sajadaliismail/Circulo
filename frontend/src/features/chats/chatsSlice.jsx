@@ -12,110 +12,108 @@ const initialState = {
   chatFriends: [],
 };
 
-const updateChatMessages = (
-  state,
-  roomId,
-  senderId,
-  message,
-  timestamp,
-  type,
-  _id
-) => {
-  let newChats;
-  if (type === "text") {
-    newChats = { senderId, timestamp, message, _id };
-  } else if (type === "image") {
-    newChats = { senderId, timestamp, imageUrl: message, _id };
-  }
-  const prevChats = state.chats[roomId]?.messages || [];
+// const updateChatMessages = (
+//   state,
+//   roomId,
+//   senderId,
+//   message,
+//   timestamp,
+//   type,
+//   _id
+// ) => {
+//   let newChats;
+//   if (type === "text") {
+//     newChats = { senderId, timestamp, message, _id };
+//   } else if (type === "image") {
+//     newChats = { senderId, timestamp, imageUrl: message, _id };
+//   }
+//   const prevChats = state.chats[roomId]?.messages || [];
 
-  return [...prevChats, newChats];
-};
+//   return [...prevChats, newChats];
+// };
 
 const chatsSlice = createSlice({
   name: "chats",
   initialState,
   reducers: {
-    setChats: (state, action) => {
-      const { roomId, hasOpened, senderId, message, timestamp, type, _id } =
-        action.payload;
-      const curr = state.chats[roomId];
-
-      state.chats[roomId] = {
-        messages: updateChatMessages(
-          state,
-          roomId,
-          senderId,
-          message,
-          timestamp,
-          type,
-          _id
-        ),
-        ...curr,
-      };
-    },
-    setReceivedChats: (state, action) => {
-      const { message, senderId, roomId, timestamp, type, _id } =
-        action.payload;
-      const curr = state.chats[roomId];
-
-      state.chats[roomId] = {
-        messages: updateChatMessages(
-          state,
-          roomId,
-          senderId,
-          message,
-          timestamp,
-          type,
-          _id
-        ),
-        ...curr,
-      };
-    },
-    setUnreadMessages: (state, action) => {
-      const friendId = action.payload.senderId;
-      state.unReadMessages[friendId] =
-        (state.unReadMessages[friendId] || 0) + 1;
-    },
-    setReadMessages: (state, action) => {
-      const friendId = action.payload;
-      const curr = state.chatFriends.map((user) => {
-        if (user._id === friendId) {
-          console.log(user, friendId);
-          return {
-            ...user,
-            unreadCount: 0,
-          };
-        }
-        return user;
-      });
-      state.chatFriends = curr;
-    },
-    setSentMessages: (state, action) => {
-      const { message, timestamp, type } = action.payload;
-      const roomId = state.roomId;
-      const prevChats = state.chats[roomId]?.messages || [];
-      if (type == "text") {
-        state.chats[roomId].messages = [...prevChats, { message, timestamp }];
-      }
-      if (type == "image") {
-        state.chats[roomId].messages = [
-          ...prevChats,
-          { imageUrl: message, timestamp },
-        ];
-      }
-    },
-    setEmoji: (state, action) => {
-      const { id, emoji } = action.payload;
-      const roomId = state.roomId;
-      state.chats[roomId]?.messages.map((mess) => {
-        if (mess._id === id) {
-          mess.emoji = emoji;
-          return mess;
-        }
-        return mess;
-      });
-    },
+    // setChats: (state, action) => {
+    //   const { roomId, hasOpened, senderId, message, timestamp, type, _id } =
+    //     action.payload;
+    //   const curr = state.chats[roomId];
+    //   state.chats[roomId] = {
+    //     messages: updateChatMessages(
+    //       state,
+    //       roomId,
+    //       senderId,
+    //       message,
+    //       timestamp,
+    //       type,
+    //       _id
+    //     ),
+    //     ...curr,
+    //   };
+    // },
+    // setReceivedChats: (state, action) => {
+    //   const { message, senderId, roomId, timestamp, type, _id } =
+    //     action.payload;
+    //   const curr = state.chats[roomId];
+    //   state.chats[roomId] = {
+    //     messages: updateChatMessages(
+    //       state,
+    //       roomId,
+    //       senderId,
+    //       message,
+    //       timestamp,
+    //       type,
+    //       _id
+    //     ),
+    //     ...curr,
+    //   };
+    // },
+    // setUnreadMessages: (state, action) => {
+    //   const friendId = action.payload.senderId;
+    //   state.unReadMessages[friendId] =
+    //     (state.unReadMessages[friendId] || 0) + 1;
+    // },
+    // setReadMessages: (state, action) => {
+    //   const friendId = action.payload;
+    //   const curr = state.chatFriends.map((user) => {
+    //     if (user._id === friendId) {
+    //       console.log(user, friendId);
+    //       return {
+    //         ...user,
+    //         unreadCount: 0,
+    //       };
+    //     }
+    //     return user;
+    //   });
+    //   state.chatFriends = curr;
+    // },
+    // setSentMessages: (state, action) => {
+    //   const { message, timestamp, type } = action.payload;
+    //   const roomId = state.roomId;
+    //   const prevChats = state.chats[roomId]?.messages || [];
+    //   if (type === "text") {
+    //     state.chats[roomId].messages = [...prevChats, { message, timestamp }];
+    //   }
+    //   if (type === "image") {
+    //     state.chats[roomId].messages = [
+    //       ...prevChats,
+    //       { imageUrl: message, timestamp },
+    //     ];
+    //   }
+    // },
+    // setEmoji: (state, action) => {
+    //   const { id, emoji } = action.payload;
+    //   const roomId = state.roomId;
+    //   state.chats[roomId]?.messages.map((mess) => {
+    //     if (mess._id === id) {
+    //       mess.emoji = emoji;
+    //       return mess;
+    //     }
+    //     return mess;
+    //   });
+    // },
   },
   extraReducers: (builder) => {
     builder
@@ -154,12 +152,12 @@ const chatsSlice = createSlice({
   },
 });
 
-export const {
-  setChats,
-  setUnreadMessages,
-  setReadMessages,
-  setReceivedChats,
-  setSentMessages,
-  setEmoji,
-} = chatsSlice.actions;
+// export const {
+//   setChats,
+//   setUnreadMessages,
+//   setReadMessages,
+//   setReceivedChats,
+//   setSentMessages,
+//   setEmoji,
+// } = chatsSlice.actions;
 export default chatsSlice.reducer;

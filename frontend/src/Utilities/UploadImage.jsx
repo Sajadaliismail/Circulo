@@ -1,4 +1,4 @@
-export const UploadImage = async (id, setImageUrl, chatSocket, image) => {
+export const UploadImage = async (id, chatSocket, image) => {
   const formData = new FormData();
   formData.append("file", image);
   formData.append("upload_preset", "circulo");
@@ -12,7 +12,6 @@ export const UploadImage = async (id, setImageUrl, chatSocket, image) => {
     const data = await response.json();
     const message = data.secure_url;
     if (message) {
-      setImageUrl(data.secure_url);
       chatSocket.emit("message", {
         userId: id,
         message: message,

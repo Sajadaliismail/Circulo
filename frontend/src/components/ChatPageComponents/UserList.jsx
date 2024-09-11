@@ -8,9 +8,6 @@ import {
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
-import { ChatRoomMessages } from "../../atoms/chatAtoms";
-import { useRecoilState } from "recoil";
-import { setReadMessages } from "../../features/chats/chatsSlice";
 
 const UserList = ({
   friend,
@@ -20,7 +17,7 @@ const UserList = ({
   setFriendsData,
 }) => {
   const { userData } = useSelector((state) => state.friends);
-  const [chatMessages, setChatMessages] = useRecoilState(ChatRoomMessages);
+  // const [chatMessages, setChatMessages] = useRecoilState(ChatRoomMessages);
 
   const dispatch = useDispatch();
 
@@ -38,7 +35,6 @@ const UserList = ({
     }
   }, [userData, friend, dispatch]);
   const handleClick = async (e) => {
-    dispatch(setReadMessages(friend));
     setFriendsData((prev) => {
       return prev.map((user) => {
         if (user._id === friend) {

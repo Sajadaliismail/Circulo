@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { addPost, fetchPosts, fetchUser, uploadImage } from "./userAsyncThunks";
-import { handleLike } from "../posts/postsAsyncThunks";
+import { fetchUser, uploadImage } from "./userAsyncThunks";
 
 const initialState = {
   user: {},

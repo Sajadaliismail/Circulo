@@ -59,7 +59,7 @@ export const handleLike = createAsyncThunk(
         },
         body: JSON.stringify({ _id }),
       });
-      const data = await response.json();
+      await response.json();
       if (response.ok) return true;
       return rejectWithValue({ id: _id });
     } catch (error) {

@@ -20,7 +20,6 @@ import useFetchPosts from "../hooks/fetchPostHook";
 import { fetchPosts } from "../features/posts/postsAsyncThunks";
 
 const UserPage = () => {
-  const { user } = useSelector((state) => state.user);
   const { userData } = useSelector((state) => state.friends);
 
   const dispatch = useDispatch();
@@ -31,7 +30,7 @@ const UserPage = () => {
     useFetchPosts(userId);
 
   const fetchFriendsList = async (id) => {
-    if (relation != "FRIENDS" && relation != "SELF") {
+    if (relation !== "FRIENDS" && relation !== "SELF") {
       enqueueSnackbar("Only friends can view this", { variant: "error" });
     }
   };
@@ -230,7 +229,6 @@ const UserPage = () => {
                   borderRadius: "8px",
                   width: "inherit",
                   height: "inherit",
-                  borderRadius: 5,
                 }}
               >
                 <Lock className="mr-1" />

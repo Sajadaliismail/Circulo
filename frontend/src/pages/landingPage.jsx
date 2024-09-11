@@ -12,7 +12,6 @@ import SignUp from "../components/AuthPageComponents/signup";
 import ResetPassword from "../components/AuthPageComponents/resetPassword";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { verifyOtp } from "../features/auth/authAsyncThunks";
 import VerifyOtp from "../components/AuthPageComponents/verifyOTp";
 import { FlipWords } from "../components/CommonComponents/FlipComponent";
 

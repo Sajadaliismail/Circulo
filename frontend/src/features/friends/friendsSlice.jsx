@@ -6,7 +6,6 @@ import {
   getRequests,
   getSuggestions,
 } from "./friendsAsyncThunks";
-import { useTheme } from "@emotion/react";
 
 const initialState = {
   friends: [],

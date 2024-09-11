@@ -12,7 +12,7 @@ export const addFriend = createAsyncThunk("friends/addFriend", async (id) => {
       },
       body: JSON.stringify(id),
     });
-    const data = await response.json();
+    await response.json();
     return true;
   } catch (error) {
     console.log(error);
@@ -191,7 +191,6 @@ export const fetchUserStatus = createAsyncThunk(
     } catch (error) {
       console.log(error);
       return rejectWithValue("User Not found");
-      return;
     }
   }
 );

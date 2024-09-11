@@ -1,13 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Paper,
-  Grid,
-  Divider,
-  TextField,
-  Typography,
-  List,
-} from "@mui/material";
+import { Grid, Divider, TextField, Typography, List } from "@mui/material";
 
 import Header from "../components/CommonComponents/header";
 import MessageArea from "../components/ChatPageComponents/messageArea";
@@ -19,7 +12,6 @@ import {
 } from "../features/friends/friendsAsyncThunks";
 import { fetchChatFriends } from "../features/chats/chatsAsycnThunks";
 import chatSocket from "../features/utilities/Socket-io";
-import useChatSocket from "../hooks/chatSocketHook";
 import { UploadImage } from "../Utilities/UploadImage";
 import { useRecoilState } from "recoil";
 import { ChatFriendsData, ChatRoomMessages } from "../atoms/chatAtoms";
@@ -29,11 +21,9 @@ export default function ChatPage() {
   const dispatch = useDispatch();
   const { chatFriends } = useSelector((state) => state.chats);
   const { friends, userData } = useSelector((state) => state.friends);
-  const { user } = useSelector((state) => state.user);
 
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
-  const [imageUrl, setImageUrl] = useState("");
   const [friend, setFriend] = useState(null);
   const [roomId, setRoomId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,7 +87,7 @@ export default function ChatPage() {
   }, []);
 
   const handleSubmitImage = async () => {
-    await UploadImage(friend, setImageUrl, chatSocket, image);
+    await UploadImage(friend, chatSocket, image);
   };
 
   useEffect(() => {
