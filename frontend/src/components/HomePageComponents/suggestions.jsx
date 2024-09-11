@@ -15,7 +15,7 @@ import { AnimatedTooltip } from "../CommonComponents/AnimatedHoverComponent";
 import { useNavigate } from "react-router-dom";
 
 function Suggestions({ fetchUserData }) {
-  const { suggestions, requestsPending, friends } = useSelector(
+  const { suggestions, requestsPending } = useSelector(
     (state) => state.friends
   );
   const dispatch = useDispatch();
@@ -66,7 +66,6 @@ function Suggestions({ fetchUserData }) {
           display: "flex",
           flexDirection: "column",
           rowGap: "10px",
-          height: "100%",
         }}
       >
         <Typography variant="h6">Friend requests</Typography>

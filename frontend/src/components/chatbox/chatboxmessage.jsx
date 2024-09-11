@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MoreVert from "@mui/icons-material/MoreVert";
 import {
   ClickAwayListener,
@@ -8,7 +8,6 @@ import {
   MenuItem,
   SpeedDial,
   SpeedDialAction,
-  Typography,
 } from "@mui/material";
 import AvatarWithUsername from "./withusername";
 import { useSelector } from "react-redux";
@@ -19,8 +18,6 @@ const ChatBoxMessage = ({
   messageId,
   message,
   author,
-  avatar,
-  onEdit,
   data,
   onRemove,
   emoji,
