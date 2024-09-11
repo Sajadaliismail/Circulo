@@ -4,20 +4,19 @@ FROM node:lts-alpine
 ENV NODE_ENV=production
 
 # Create and set working directory
-WORKDIR /frontend
+WORKDIR /frontend-service
 
 # Copy package files and install dependencies
-COPY  ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
+COPY frontend/package.json frontend/package-lock.json* frontend/npm-shrinkwrap.json* ./
 RUN npm install --production --silent
 
 # Copy the rest of the application code
-COPY . .
+COPY frontend/ ./
 
 # Build the React application
 RUN npm run build
 
 # Serve the built application
-# Use a lightweight web server like `serve` or `http-server`
 RUN npm install -g serve
 
 # Expose the port the app runs on
