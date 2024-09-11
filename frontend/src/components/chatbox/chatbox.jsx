@@ -3,7 +3,7 @@ import chatSocket from "../../features/utilities/Socket-io";
 
 import OnlinePeopleAccordion from "./online";
 import ChatBoxHeader from "./chatboxheade";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 import { ChatRoomMessages } from "../../atoms/chatAtoms";
 import { useRecoilState } from "recoil";
@@ -12,12 +12,12 @@ const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 const ChatBox = lazy(() => import("./chatboxinterface"));
 
 function ChatApp({ fetchUserData, msg, setmsg }) {
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const { chats } = useSelector((state) => state.chats);
-  const { userData } = useSelector((state) => state.friends);
+  // const { userData } = useSelector((state) => state.friends);
   const [message, setMessage] = useState("");
-  const [image, setImage] = useState(null);
-  const [imageUrl, setImageUrl] = useState("");
+  // const [image, setImage] = useState(null);
+  // const [imageUrl, setImageUrl] = useState("");
   const [friend, setFriend] = useState({});
   const friendRef = useRef(friend);
 

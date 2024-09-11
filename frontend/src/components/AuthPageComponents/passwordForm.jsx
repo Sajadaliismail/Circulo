@@ -14,7 +14,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { updatePassword } from "../../features/auth/authAsyncThunks"; // Import your action
 import Copyright from "../CommonComponents/copyright";
 import { useSnackbar } from "notistack";
-import { useNavigate } from "react-router-dom";
 import { resetErrors } from "../../features/auth/authSlice";
 
 const PasswordForm = ({ signin }) => {

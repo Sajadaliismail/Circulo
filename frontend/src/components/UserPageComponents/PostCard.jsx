@@ -2,19 +2,11 @@ import { Box, Typography } from "@mui/material";
 import { useRecoilState } from "recoil";
 import { postDetailFamily } from "../../atoms/postAtoms";
 import { fetchPostData } from "../../fetchRequests/posts";
-import { useDispatch, useSelector } from "react-redux";
 import { Comment, Favorite, FavoriteOutlined } from "@mui/icons-material";
 import Post from "../HomePageComponents/post";
 import { CardContainer, CardBody, CardItem } from "./sample";
 import { useEffect, useState } from "react";
 import { Modal, ModalBody, ModalContent, ModalTrigger } from "./AnimatedModal";
-
-// Motion variants for animations
-const cardVariants = {
-  initial: { opacity: 0, scale: 0.9 },
-  animate: { opacity: 1, scale: 1 },
-  exit: { opacity: 0, scale: 0.9 },
-};
 
 const PostCard = ({ postId, fetchUserData }) => {
   const [postDetails, setPostDetails] = useRecoilState(

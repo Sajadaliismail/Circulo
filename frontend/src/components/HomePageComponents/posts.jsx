@@ -2,7 +2,7 @@ import { Box, Skeleton, Typography } from "@mui/material";
 import Post from "./post";
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPosts, handleLike } from "../../features/posts/postsAsyncThunks";
+import { fetchPosts } from "../../features/posts/postsAsyncThunks";
 import debounce from "lodash/debounce";
 import { SyncLoader } from "react-spinners";
 import { setPages } from "../../features/posts/postsSlice";

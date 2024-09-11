@@ -76,7 +76,7 @@ const ChatBoxMessage = ({
           <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl relative">
             {message}
           </div>
-          {author == user._id ? (
+          {author === user._id ? (
             emoji && (
               <Fab
                 sx={{

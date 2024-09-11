@@ -17,11 +17,11 @@ const ChatBox = ({
 }) => {
   const messagesEndRef = useRef(null);
   const { user } = useSelector((state) => state.user);
-  const { userData } = useSelector((state) => state.friends);
+  // const { userData } = useSelector((state) => state.friends);
   const [friendId, setFriendId] = useState("");
 
   useEffect(() => {
-    if (data.user1 == user._id) setFriendId(data.user2);
+    if (data.user1 === user._id) setFriendId(data.user2);
     else setFriendId(data.user1);
   }, []);
 

@@ -17,7 +17,7 @@ import { uploadImage } from "../../features/user/userAsyncThunks";
 function Profile({ fetchUserData }) {
   const { user } = useSelector((state) => state.user);
   const { userData } = useSelector((state) => state.friends);
-  const [uploadedImage, setUploadedImage] = useState(null);
+  // const [uploadedImage, setUploadedImage] = useState(null);
   const [croppedObject, setCroppedObject] = useState(null);
   const [croppedPreview, setCroppedPreview] = useState(null);
   const [croppedCanvas, setCroppedCanvas] = useState(null);
@@ -47,7 +47,7 @@ function Profile({ fetchUserData }) {
         return;
       }
 
-      setUploadedImage(file);
+      // setUploadedImage(file);
       const ObjectUrl = URL.createObjectURL(file);
       setCroppedObject(ObjectUrl);
       setOpen(true);

@@ -1,6 +1,5 @@
 import { lazy, useEffect, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import MinimizeIcon from "@mui/icons-material/Remove";
 import { Box, IconButton } from "@mui/material";
 import { useSelector } from "react-redux";
 
@@ -12,7 +11,7 @@ const ChatBoxHeader = ({ onClose, onMinimize, data }) => {
   const [friendId, setFriendId] = useState("");
 
   useEffect(() => {
-    if (data.user1 == user._id) setFriendId(data.user2);
+    if (data.user1 === user._id) setFriendId(data.user2);
     else setFriendId(data.user1);
   }, []);
 

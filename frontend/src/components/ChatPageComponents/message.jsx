@@ -60,7 +60,11 @@ export const RecieverMessageList = ({ mess }) => {
             </Typography>
           )}
           {mess.imageUrl && (
-            <img style={{ maxWidth: "100%" }} alt="image" src={mess.imageUrl} />
+            <img
+              style={{ maxWidth: "100%" }}
+              alt="message"
+              src={mess.imageUrl}
+            />
           )}
         </Box>
 
@@ -165,7 +169,11 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
             </Typography>
           )}
           {mess.imageUrl && (
-            <img style={{ maxWidth: "100%" }} alt="image" src={mess.imageUrl} />
+            <img
+              style={{ maxWidth: "100%" }}
+              alt="message"
+              src={mess.imageUrl}
+            />
           )}
         </Box>
 

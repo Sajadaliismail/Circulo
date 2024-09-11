@@ -11,11 +11,11 @@ function UserPosts({ userId, fetchUserData, postsId, count }) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
-  const { user } = useSelector((state) => state.user);
-  const [posts, setPosts] = useState([]);
+  // const { user } = useSelector((state) => state.user);
+  // const [posts, setPosts] = useState([]);
   const [chunkSize] = useState(10);
 
-  const { enqueueSnackbar } = useSnackbar();
+  // const { enqueueSnackbar } = useSnackbar();
 
   const handleScroll = useCallback(
     debounce(() => {

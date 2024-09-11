@@ -6,12 +6,9 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { Avatar, Badge, debounce } from "@mui/material";
+import { Avatar, Badge } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchUserDetails,
-  fetchUserStatus,
-} from "../../features/friends/friendsAsyncThunks";
+import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
 import { useNavigate } from "react-router-dom";
 
 export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
