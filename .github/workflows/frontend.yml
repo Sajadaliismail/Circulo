@@ -14,11 +14,21 @@ jobs:
         uses: actions/checkout@v3
 
       # Build the React app
-      - name: Build React App
+      - name: Build React App with Environment Variables
         run: |
           echo "Building frontend service..."
-          cd frontend 
+          cd frontend
           npm install
+          REACT_APP_USER_BACKEND=/api/auth \
+          REACT_APP_POST_BACKEND=/api/posts \
+          REACT_APP_CHAT_BACKEND=/api/chat \
+          REACT_APP_FRIENDS_BACKEND=/api/friends \
+          REACT_APP_CHAT_SERVER_URL=/socket \
+          REACT_APP_LOCATION_API=${{ secrets.LOCATION_API_KEY }} \
+          REACT_APP_CLOUD_NAME=dwlegfkli \
+          REACT_APP_API_KEY=${{ secrets.CLOUDINARY_API_KEY }} \
+          REACT_APP_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }} \
+          REACT_APP_CLOUDINARY_URL=https://api.cloudinary.com/v1_1/dwlegfkli/image/upload \
           npm run build || true
           echo "React app build complete!"
 
