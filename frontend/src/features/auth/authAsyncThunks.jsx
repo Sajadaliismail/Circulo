@@ -6,7 +6,7 @@ export const signup = createAsyncThunk(
   "auth/signup",
   async (formData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await fetch(`${BACKEND}/signup`, {
+      const response = await fetch(`/api/auth/signup`, {
         method: "POST",
         credentials: "include",
         headers: {
