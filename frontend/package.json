@@ -46,6 +46,8 @@
     "yup": "^1.4.0"
   },
   "scripts": {
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --quiet --fix",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
