@@ -107,9 +107,13 @@ const useChatSocket = () => {
       });
 
       chatSocket.on("offer", async (offer) => {
-        console.log("Received offer");
+        console.log("Received offer", offer);
       });
 
+      chatSocket.on("offer_failed", async () => {
+        console.log("not online");
+        enqueueSnackbar("not online", { variant: "info" });
+      });
       return () => {
         chatSocket.off("newMessage");
         chatSocket.off("connect");

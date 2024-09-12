@@ -30,7 +30,6 @@ export const signup = createAsyncThunk(
 export const signin = createAsyncThunk(
   "auth/signin",
   async (formData, { rejectWithValue, dispatch }) => {
-    console.log(BACKEND, process.env);
     try {
       const response = await fetch(`${BACKEND}/signin`, {
         method: "POST",
