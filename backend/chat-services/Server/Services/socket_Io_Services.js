@@ -101,13 +101,14 @@ const handleMessage = async (userId, message, type, io, socket) => {
     console.error("Error emitting message:", error);
   }
 };
-const handleCallStart = async (userId, offer) => {
+const handleCallStart = async (userId, offer, io, socket) => {
   try {
     const receiverSocketId = await userClient.get(userId);
+    const senderSocketId = await userClient.get(socket.user);
     if (receiverSocketId) {
-      console.log("offer emitted");
-
       io.to(receiverSocketId).emit("offer", offer);
+    } else if (senderSocketId) {
+      io.to(senderSocketId).emit("offer_failed");
     }
   } catch (error) {}
 };

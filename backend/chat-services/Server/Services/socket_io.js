@@ -2,7 +2,6 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const { createAdapter } = require("@socket.io/redis-adapter");
 const { pubClient, subClient, userClient } = require("./redis");
-const { Rooms, Message } = require("../Models/mongoDb");
 const authenticate = require("../Middlewares/SocketIoJWT");
 const {
   authorize,
@@ -14,7 +13,6 @@ const {
 } = require("./socket_Io_Services");
 require("dotenv").config();
 
-const SOCKET_IO_PORT = process.env.SOCKET_IO_PORT;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
 
 const httpServer = createServer();
@@ -49,7 +47,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start-call", async ({ recipientId, offer }) => {
-    await handleCallStart(recipientId, offer);
+    await handleCallStart(recipientId, offer, io, socket);
   });
 
   socket.on("logout", async () => {
