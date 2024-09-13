@@ -23,7 +23,7 @@ jobs:
           REACT_APP_POST_BACKEND=/api/posts \
           REACT_APP_CHAT_BACKEND=/api/chat \
           REACT_APP_FRIENDS_BACKEND=/api/friends \
-          REACT_APP_CHAT_SERVER_URL= wss://circulo.icu/socket.io \
+          REACT_APP_CHAT_SERVER_URL=wss://circulo.icu/socket.io \
           REACT_APP_LOCATION_API=${{ secrets.REACT_APP_LOCATION_API }} \
           REACT_APP_CLOUD_NAME=dwlegfkli \
           REACT_APP_API_KEY=${{ secrets.REACT_APP_API_KEY }} \
