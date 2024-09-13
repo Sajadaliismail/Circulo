@@ -31,10 +31,6 @@ jobs:
       - name: Log Post-Service Dependencies
         run: echo "Dependencies installed for post-service"
 
-      #  - name: Run tests for post-service
-      #    working-directory: ./backend/post-services
-      #    run: npm test
-
       - name: Build Docker image for post-service
         working-directory: ./backend/post-services
         run: |
@@ -48,10 +44,6 @@ jobs:
         run: npm install
       - name: Log Auth-Service Dependencies
         run: echo "Dependencies installed for auth-service"
-
-      #  - name: Run tests for auth-service
-      #    working-directory: ./backend/user-services
-      #    run: npm test
 
       - name: Build Docker image for auth-service
         working-directory: ./backend/user-services
@@ -67,10 +59,6 @@ jobs:
       - name: Log Chat-Service Dependencies
         run: echo "Dependencies installed for chat-service"
 
-      #  - name: Run tests for chat-service
-      #    working-directory: ./backend/chat-services
-      #    run: npm test
-
       - name: Build Docker image for chat-service
         working-directory: ./backend/chat-services
         run: |
@@ -84,10 +72,6 @@ jobs:
         run: npm install
       - name: Log Friends-Service Dependencies
         run: echo "Dependencies installed for friends-service"
-
-      #  - name: Run tests for friends-service
-      #    working-directory: ./backend/friends-services
-      #    run: npm test
 
       - name: Build Docker image for friends-service
         working-directory: ./backend/friends-services
@@ -133,26 +117,18 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-
-          # Write the RSA private key to a file
-           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > key.pem
-           # Set the correct permissions for the private key
-           chmod 600 key.pem
-           
-           echo "Starting deployment to production..."
-            ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
-
-           echo "Removing old Docker images..."
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > key.pem
+          chmod 600 key.pem
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
+            echo "Removing old Docker images..."
             docker image prune -a -f
 
-           echo "Pulling new Docker images from DockerHub..."
+            echo "Pulling new Docker images from DockerHub..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/post-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/chat-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/friends-service:latest
 
-           echo "Starting services with docker-compose..."
-            docker-compose -f /home/ec2-user/circulo//docker-compose.yml up -d
-
-           echo "Deployment complete!"
-           EOF
+            echo "Starting services with docker-compose..."
+            docker-compose -f /home/ec2-user/circulo/docker-compose.yml up -d
+          EOF
