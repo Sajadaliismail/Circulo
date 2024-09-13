@@ -1,4 +1,12 @@
-import { AttachFile, Send } from "@mui/icons-material";
+import {
+  AttachFile,
+  Call,
+  Image,
+  Mic,
+  Send,
+  Stop,
+  Videocam,
+} from "@mui/icons-material";
 import {
   Grid,
   List,
@@ -8,12 +16,17 @@ import {
   Typography,
   Avatar,
   Box,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+  InputAdornment,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RecieverMessageList, SenderMessageList } from "./message";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
 import VideoCall from "../../pages/VideoCall";
+import Menu from "@mui/icons-material/Menu";
 
 const MessageArea = ({
   handleSubmitImage,
@@ -30,7 +43,17 @@ const MessageArea = ({
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.friends);
   const [userDetails, setUserDetails] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
+  const handleDataAvailable = useCallback((event) => {
+    if (event.data.size > 0) {
+      chunksRef.current.push(event.data);
+    }
+  }, []);
   useEffect(() => {
     const fetchData = async () => {
       await dispatch(fetchUserDetails(friend));
@@ -59,25 +82,69 @@ const MessageArea = ({
 
   if (!userDetails) {
     return (
-      <Grid
-        container
-        sx={{
-          padding: "20px",
-          height: "70vh",
-          alignContent: "center",
-        }}
-      >
+      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
         <Typography variant="h4" sx={{ marginX: "auto" }}>
           Click on any of the chats
         </Typography>
-      </Grid>
+      </Box>
     );
   }
 
+  const startRecording = async () => {
+    setIsRecording(true);
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    mediaRecorderRef.current.addEventListener(
+      "dataavailable",
+      handleDataAvailable
+    );
+    mediaRecorderRef.current.start();
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+  };
   return (
     <>
       <>
         <Box
+          sx={{
+            p: 2,
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {isMobile && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              // onClick={() => setDrawerOpen(true)}
+              sx={{ mr: 2 }}
+            >
+              <Menu />
+            </IconButton>
+          )}
+          <Avatar src={userDetails.profilePicture}>
+            {userDetails.firstName[0]}
+          </Avatar>
+          <Typography variant="h6">
+            {userDetails.firstName} {userDetails.lastName}
+          </Typography>
+
+          <IconButton color="inherit">
+            <Call />
+          </IconButton>
+          <IconButton
+            color="inherit"
+            //  onClick={handleStartVideoCall}
+          >
+            <Videocam />
+          </IconButton>
+        </Box>
+        {/* <Box
           sx={{
             display: "flex",
             alignItems: "center",
@@ -87,14 +154,8 @@ const MessageArea = ({
             padding: "10px",
           }}
         >
-          <Avatar src={userDetails.profilePicture}>
-            {userDetails.firstName[0]}
-          </Avatar>
-          <Typography variant="h6">
-            {userDetails.firstName} {userDetails.lastName}
-          </Typography>
           <VideoCall friend={friend} />
-        </Box>
+        </Box> */}
 
         <List
           ref={messageEl}
@@ -136,17 +197,40 @@ const MessageArea = ({
             padding: "20px",
           }}
         >
-          <Grid item xs={10}>
+          <Grid item xs={12}>
             <TextField
               id="outlined-basic-email"
               label="Type your message"
               fullWidth
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton component="label">
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={handleImageChange}
+                      />
+                      <Image />
+                    </IconButton>
+                    <IconButton
+                      onClick={isRecording ? stopRecording : startRecording}
+                    >
+                      {isRecording ? <Stop /> : <Mic />}
+                    </IconButton>
+                    <IconButton onClick={() => handleSubmit(friend, roomId)}>
+                      <Send />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
 
-          <Grid item xs={1} align="right">
+          {/* <Grid item xs={1} align="right">
             <input
               accept="image/*"
               style={{ display: "none" }}
@@ -169,7 +253,7 @@ const MessageArea = ({
             >
               <Send />
             </Fab>
-          </Grid>
+          </Grid> */}
         </Grid>
       </>
     </>

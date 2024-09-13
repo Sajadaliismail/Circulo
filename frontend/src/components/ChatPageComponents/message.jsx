@@ -13,9 +13,10 @@ export const RecieverMessageList = ({ mess }) => {
     <>
       <Box
         sx={{
+          flexGrow: 1,
           display: "flex",
           flexDirection: "column",
-          width: "100%",
+          // width: "100%",
           alignItems: "flex-end",
           textWrap: "wrap",
         }}

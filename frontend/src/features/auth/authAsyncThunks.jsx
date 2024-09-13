@@ -108,7 +108,7 @@ export const verifyOtp = createAsyncThunk(
 
 export const updatePassword = createAsyncThunk(
   "auth/updatePassword",
-  async (formData, { rejectWithValue, dispatch }) => {
+  async (formData, { rejectWithValue }) => {
     try {
       const response = await fetch(`${BACKEND}/updatepassword`, {
         method: "PATCH",
