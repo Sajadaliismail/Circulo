@@ -25,6 +25,7 @@ import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
 import { useState } from "react";
 import { useRef } from "react";
 import { enqueueSnackbar } from "notistack";
+import { useEffect } from "react";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -105,36 +106,62 @@ export default function Header() {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
-  chatSocket.on("incomingCall", async (offer) => {
-    console.log(offer);
+  useEffect(() => {
+    const handleIncomingCall = async (offer) => {
+      setIncomingCall(true);
+      setOfferDetails(offer);
 
-    setIncomingCall(true);
-    setOfferDetails(offer);
+      console.log("Video ref:", remoteVideoRef.current);
 
-    if (!peerConnection) {
-      const pc = new RTCPeerConnection(configuration);
-      setPeerConnection(pc);
+      if (!peerConnection) {
+        const pc = new RTCPeerConnection(configuration);
+        setPeerConnection(pc);
 
-      pc.ontrack = (event) => {
-        if (event.streams && event.streams[0]) {
-          remoteVideoRef.current.srcObject = event.streams[0];
+        pc.ontrack = (event) => {
+          console.log("Track event:", event);
+          if (event.streams && event.streams[0]) {
+            console.log("Stream:", event.streams[0]);
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = event.streams[0];
+            } else {
+              console.error("Remote video ref is not set");
+            }
+          } else {
+            console.error("No streams available in ontrack event");
+          }
+        };
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            chatSocket.emit("ice-candidate", { candidate: event.candidate });
+          }
+        };
+
+        try {
+          const offerDesc = new RTCSessionDescription(offer);
+          await pc.setRemoteDescription(offerDesc);
+
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          chatSocket.emit("answer", { recipientId: offer.senderId, answer });
+        } catch (error) {
+          console.error("Error during WebRTC setup:", error);
         }
-      };
 
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          chatSocket.emit("ice-candidate", { candidate: event.candidate });
-        }
-      };
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        return () => {
+          pc.close(); // Clean up the peer connection
+          setPeerConnection(null); // Clear the state
+        };
+      }
+    };
 
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      chatSocket.emit("answer", { recipientId: offer.senderId, answer });
-    }
+    chatSocket.on("incomingCall", handleIncomingCall);
 
-    // enqueueSnackbar("incoming call", { variant: "success" });
-  });
+    // Cleanup on unmount
+    return () => {
+      chatSocket.off("incomingCall", handleIncomingCall);
+    };
+  }, [peerConnection]);
 
   const menuId = "primary-search-account-menu";
 
@@ -307,11 +334,11 @@ export default function Header() {
       </AppBar>
       {renderMobileMenu}
       {/* <video
+        // className="absolute"
+        ref={remoteVideoRef}
         autoPlay
         playsInline
-        // controls
-        className="absolute bg-slate-400"
-        ref={remoteVideoRef}
+        style={{ width: "100%", height: "auto" }} // Ensure it is visible
       /> */}
     </Box>
   );

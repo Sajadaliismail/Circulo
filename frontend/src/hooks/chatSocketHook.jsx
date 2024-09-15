@@ -7,7 +7,6 @@ import { useRecoilState } from "recoil";
 import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
-import { Modal } from "@mui/material";
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);

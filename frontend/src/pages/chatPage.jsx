@@ -140,7 +140,7 @@ export default function ChatPage() {
         enqueueSnackbar("Error sending message. Please try again", {
           variant: "error",
         });
-        chatSocket.connect();
+        // chatSocket.connect();
       }
       chatSocket.emit("message", {
         userId: id,

@@ -34,8 +34,6 @@ const VideoCall = ({
   };
 
   const handleUserMedia = (stream) => {
-    console.log(stream);
-
     setLocalStream(stream);
   };
 
