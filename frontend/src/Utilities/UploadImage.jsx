@@ -1,3 +1,5 @@
+import { enqueueSnackbar } from "notistack";
+
 export const UploadImage = async (id, chatSocket, image) => {
   const formData = new FormData();
   formData.append("file", image);
@@ -10,6 +12,11 @@ export const UploadImage = async (id, chatSocket, image) => {
     });
 
     const data = await response.json();
+    if (!response.ok) {
+      enqueueSnackbar("Error sending image", { variant: "error" });
+      return;
+    }
+
     const message = data.secure_url;
     if (message) {
       chatSocket.emit("message", {
@@ -19,6 +26,7 @@ export const UploadImage = async (id, chatSocket, image) => {
       });
     }
   } catch (err) {
+    enqueueSnackbar("Error sending image", { variant: "error" });
     console.error("Error uploading image:", err);
   }
 };

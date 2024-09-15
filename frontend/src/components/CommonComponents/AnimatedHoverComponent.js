@@ -58,7 +58,7 @@ export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
       <AnimatePresence mode="popLayout">
         {isHovered && (
           <motion.div
-            onClick={() => navigate(`profile/${userId}`)}
+            onClick={() => navigate(`/profile/${userId}`)}
             initial={{ opacity: 0, y: 20, scale: 0.6 }}
             animate={{
               opacity: 1,

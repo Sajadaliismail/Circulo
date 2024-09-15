@@ -1,6 +1,8 @@
 import {
+  ArrowBack,
   AttachFile,
   Call,
+  CameraAlt,
   Image,
   Mic,
   Send,
@@ -20,13 +22,22 @@ import {
   useMediaQuery,
   useTheme,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Button,
+  DialogActions,
 } from "@mui/material";
+import Webcam from "react-webcam";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RecieverMessageList, SenderMessageList } from "./message";
+import { PulseLoader } from "react-spinners";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+
+import { enqueueSnackbar } from "notistack";
+import chatSocket from "../../features/utilities/Socket-io";
 import VideoCall from "../../pages/VideoCall";
-import Menu from "@mui/icons-material/Menu";
 
 const MessageArea = ({
   handleSubmitImage,
@@ -38,6 +49,7 @@ const MessageArea = ({
   messages,
   handleEmoji,
   roomId,
+  setDrawerOpen,
 }) => {
   const messageEl = useRef(null);
   const dispatch = useDispatch();
@@ -48,6 +60,19 @@ const MessageArea = ({
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const textFieldRef = useRef(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [userIsTyping, setUserIsTyping] = useState(false);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  const [isCameraOn, setIsCameraOn] = useState(false);
+
+  useEffect(() => {
+    chatSocket.emit("userIsTyping", {
+      id: friend,
+      roomId: roomId,
+      userIsTyping,
+    });
+  }, [userIsTyping]);
 
   const handleDataAvailable = useCallback((event) => {
     if (event.data.size > 0) {
@@ -73,11 +98,37 @@ const MessageArea = ({
         behavior: "smooth",
       });
     }
+
+    if (textFieldRef.current) {
+      textFieldRef.current.focus();
+      textFieldRef.current.select();
+    }
   }, [messages]);
 
+  const handleStartVideoCall = () => {
+    setIsVideoCallActive(true);
+    setIsCameraOn(true);
+  };
   const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
-    handleSubmitImage();
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const fileType = file.type;
+      const fileSize = file.size;
+
+      if (!fileType.startsWith("image/")) {
+        enqueueSnackbar("Please select an image file.", { variant: "error" });
+
+        return;
+      }
+
+      if (fileSize > 3 * 1024 * 1024) {
+        enqueueSnackbar("File size exceeds 3 MB.", { variant: "error" });
+        return;
+      }
+      setImage(file);
+      const objectUrl = URL.createObjectURL(file);
+      setImagePreview(objectUrl);
+    }
   };
 
   if (!userDetails) {
@@ -105,6 +156,7 @@ const MessageArea = ({
     mediaRecorderRef.current.stop();
     setIsRecording(false);
   };
+
   return (
     <>
       <>
@@ -121,10 +173,10 @@ const MessageArea = ({
             <IconButton
               edge="start"
               color="inherit"
-              // onClick={() => setDrawerOpen(true)}
+              onClick={() => setDrawerOpen(true)}
               sx={{ mr: 2 }}
             >
-              <Menu />
+              <ArrowBack />
             </IconButton>
           )}
           <Avatar src={userDetails.profilePicture}>
@@ -133,29 +185,15 @@ const MessageArea = ({
           <Typography variant="h6">
             {userDetails.firstName} {userDetails.lastName}
           </Typography>
-
-          <IconButton color="inherit">
-            <Call />
-          </IconButton>
-          <IconButton
-            color="inherit"
-            //  onClick={handleStartVideoCall}
-          >
-            <Videocam />
-          </IconButton>
+          <Box className="ml-auto">
+            <IconButton color="inherit">
+              <Call />
+            </IconButton>
+            <IconButton color="inherit" onClick={handleStartVideoCall}>
+              <Videocam />
+            </IconButton>
+          </Box>
         </Box>
-        {/* <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            paddingLeft: "15px",
-
-            padding: "10px",
-          }}
-        >
-          <VideoCall friend={friend} />
-        </Box> */}
 
         <List
           ref={messageEl}
@@ -188,22 +226,53 @@ const MessageArea = ({
             </Typography>
           )}
         </List>
-
         <Divider />
 
         <Grid
           container
           sx={{
-            padding: "20px",
+            paddingY: "8px",
+            paddingX: "10px",
           }}
         >
-          <Grid item xs={12}>
+          <Grid item xs={12} className="dark:text-white">
+            {imagePreview && (
+              <>
+                <img
+                  width={200}
+                  className="ml-auto"
+                  src={imagePreview}
+                  alt="pics"
+                />
+              </>
+            )}
+            {messages?.isTyping ? (
+              <>
+                <span className="text-blue-950 dark:text-white flex flex-row flex-nowrap items-center gap-1">
+                  <b>{userData[friend]?.firstName} </b> is typing
+                  <PulseLoader color="#1976d2" size={5} />
+                </span>
+              </>
+            ) : null}
+
             <TextField
-              id="outlined-basic-email"
               label="Type your message"
+              className="dark:text-white  dark:placeholder:text-white"
+              focused={true}
               fullWidth
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                if (!userIsTyping) setUserIsTyping(true);
+                else if (message.trim().length <= 2) setUserIsTyping(false);
+              }}
+              inputRef={textFieldRef}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  setUserIsTyping(false);
+                  handleSubmit(friend, roomId);
+                }
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -214,47 +283,44 @@ const MessageArea = ({
                         accept="image/*"
                         onChange={handleImageChange}
                       />
-                      <Image />
+                      <Image className="dark:text-white" />
                     </IconButton>
                     <IconButton
                       onClick={isRecording ? stopRecording : startRecording}
                     >
-                      {isRecording ? <Stop /> : <Mic />}
+                      {isRecording ? (
+                        <Stop className="dark:text-white" />
+                      ) : (
+                        <Mic className="dark:text-white" />
+                      )}
                     </IconButton>
-                    <IconButton onClick={() => handleSubmit(friend, roomId)}>
-                      <Send />
+                    <IconButton
+                      onClick={() => {
+                        if (imagePreview) {
+                          handleSubmitImage();
+
+                          setImagePreview(null);
+                        } else {
+                          setUserIsTyping(false);
+                          handleSubmit(friend, roomId);
+                        }
+                      }}
+                    >
+                      <Send className="dark:text-white" />
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
           </Grid>
-
-          {/* <Grid item xs={1} align="right">
-            <input
-              accept="image/*"
-              style={{ display: "none" }}
-              id="contained-button-file"
-              type="file"
-              onChange={handleImageChange}
-            />
-            <label htmlFor="contained-button-file">
-              <Fab component="span" color="secondary">
-                <AttachFile />
-              </Fab>
-            </label>
-          </Grid>
-
-          <Grid item xs={1} align="right">
-            <Fab
-              onClick={() => handleSubmit(friend, roomId)}
-              color="primary"
-              aria-label="send"
-            >
-              <Send />
-            </Fab>
-          </Grid> */}
         </Grid>
+        <VideoCall
+          isCameraOn={isCameraOn}
+          isVideoCallActive={isVideoCallActive}
+          setIsCameraOn={setIsCameraOn}
+          setIsVideoCallActive={setIsVideoCallActive}
+          recipientId={friend}
+        />
       </>
     </>
   );

@@ -1,5 +1,5 @@
 // src/hooks/useChatSocket.js
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import chatSocket from "../features/utilities/Socket-io";
 import { fetchUser } from "../features/user/userAsyncThunks";
@@ -7,12 +7,14 @@ import { useRecoilState } from "recoil";
 import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
+import { Modal } from "@mui/material";
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
   const { user } = useSelector((state) => state.user);
   const [socketConnected, setSocketConnected] = useState(false);
   const [chatMessages, setChatMessages] = useRecoilState(ChatRoomMessages);
+
   const { enqueueSnackbar } = useSnackbar();
 
   const dispatch = useDispatch();
@@ -48,9 +50,11 @@ const useChatSocket = () => {
         const { roomId, senderId, message, type, _id } = arg;
 
         dispatch(setStatus(senderId));
+
         setChatMessages((chats) => {
           const prevChats = { ...chats };
           const chatRoom = prevChats[roomId] || { messages: [] };
+
           const chatMessages = chatRoom.messages;
 
           const isDuplicate = chatMessages.some((msg) => msg._id === _id);
@@ -103,16 +107,24 @@ const useChatSocket = () => {
 
       chatSocket.on("newMessage", (arg) => {
         console.log(arg);
+        console.log(chatMessages);
+
         enqueueSnackbar("You have one message", { variant: "success" });
       });
 
-      chatSocket.on("offer", async (offer) => {
-        console.log("Received offer", offer);
-      });
-
-      chatSocket.on("offer_failed", async () => {
+      chatSocket.on("callFailed", async () => {
         console.log("not online");
         enqueueSnackbar("not online", { variant: "info" });
+      });
+
+      chatSocket.on("typingAlert", async ({ id, roomId, userIsTyping }) => {
+        setChatMessages((prevChats) => ({
+          ...prevChats,
+          [roomId]: {
+            ...prevChats[roomId],
+            isTyping: userIsTyping,
+          },
+        }));
       });
       return () => {
         chatSocket.off("newMessage");

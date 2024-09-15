@@ -9,20 +9,22 @@ import Badge from "@mui/material/Badge";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
-import SearchIcon from "@mui/icons-material/Search";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import { Brightness2Rounded } from "@mui/icons-material";
-import { Button } from "@mui/material";
-import { useDispatch } from "react-redux";
+import { Brightness2Rounded, Logout, LogoutRounded } from "@mui/icons-material";
+import { Button, Fade } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import { setLogout } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
 import chatSocket from "../../features/utilities/Socket-io";
 import { useResetRecoilState } from "recoil";
 import { postsAtom } from "../../atoms/postAtoms";
 import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
+import { useState } from "react";
+import { useRef } from "react";
+import { enqueueSnackbar } from "notistack";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -64,7 +66,8 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function Header({ setmsg }) {
+export default function Header() {
+  const { user } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -73,6 +76,10 @@ export default function Header({ setmsg }) {
   const postReset = useResetRecoilState(postsAtom);
   const chatfriendsReset = useResetRecoilState(ChatFriendsData);
   const chatmessageReset = useResetRecoilState(ChatRoomMessages);
+  const [incomingCall, setIncomingCall] = useState(false);
+  const [offerDetails, setOfferDetails] = useState(null);
+  const [peerConnection, setPeerConnection] = useState(null);
+  const remoteVideoRef = useRef(null);
   const handleLogout = async () => {
     chatSocket.emit("logout");
     postReset();
@@ -80,50 +87,56 @@ export default function Header({ setmsg }) {
     chatmessageReset();
     dispatch(setLogout());
   };
+
+  const configuration = {
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  };
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark");
   };
 
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
   const handleMobileMenuClose = () => {
     setMobileMoreAnchorEl(null);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    handleMobileMenuClose();
   };
 
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
+  chatSocket.on("incomingCall", async (offer) => {
+    console.log(offer);
+
+    setIncomingCall(true);
+    setOfferDetails(offer);
+
+    if (!peerConnection) {
+      const pc = new RTCPeerConnection(configuration);
+      setPeerConnection(pc);
+
+      pc.ontrack = (event) => {
+        if (event.streams && event.streams[0]) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+        }
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          chatSocket.emit("ice-candidate", { candidate: event.candidate });
+        }
+      };
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      chatSocket.emit("answer", { recipientId: offer.senderId, answer });
+    }
+
+    // enqueueSnackbar("incoming call", { variant: "success" });
+  });
+
   const menuId = "primary-search-account-menu";
-  const renderMenu = (
-    <Menu
-      anchorEl={anchorEl}
-      anchorOrigin={{
-        vertical: "top",
-        horizontal: "right",
-      }}
-      id={menuId}
-      keepMounted
-      transformOrigin={{
-        vertical: "top",
-        horizontal: "right",
-      }}
-      open={isMenuOpen}
-      onClose={handleMenuClose}
-    >
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
-    </Menu>
-  );
 
   const mobileMenuId = "primary-search-account-menu-mobile";
   const renderMobileMenu = (
@@ -133,6 +146,9 @@ export default function Header({ setmsg }) {
         vertical: "top",
         horizontal: "right",
       }}
+      MenuListProps={{
+        "aria-labelledby": "fade-button",
+      }}
       id={mobileMenuId}
       keepMounted
       transformOrigin={{
@@ -141,49 +157,54 @@ export default function Header({ setmsg }) {
       }}
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
+      TransitionComponent={Fade}
+      sx={{
+        "& .MuiPaper-root": {
+          backgroundColor: "slategray",
+        },
+      }}
     >
-      <MenuItem>
-        <IconButton size="large" aria-label="show 4 new mails" color="inherit">
-          <Badge badgeContent={4} color="error">
-            <MailIcon />
-          </Badge>
-        </IconButton>
-        <p>Messages</p>
-      </MenuItem>
-      <MenuItem>
+      <MenuItem
+        onClick={() => {
+          navigate(`/profile/${user._id}`);
+          handleMobileMenuClose();
+        }}
+      >
         <IconButton
-          size="large"
-          aria-label="show 17 new notifications"
-          color="inherit"
-        >
-          <Badge badgeContent={17} color="error">
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
-        <p>Notifications</p>
-      </MenuItem>
-      <MenuItem onClick={handleProfileMenuOpen}>
-        <IconButton
-          size="large"
+          // size="large"
           aria-label="account of current user"
           aria-controls="primary-search-account-menu"
-          aria-haspopup="true"
+          // aria-haspopup="true"
           color="inherit"
         >
           <AccountCircle />
         </IconButton>
         <p>Profile</p>
       </MenuItem>
-      <IconButton color="inherit" onClick={toggleDarkMode}>
-        <Brightness2Rounded />
-      </IconButton>
+      <MenuItem
+        onClick={() => {
+          toggleDarkMode();
+          handleMobileMenuClose();
+        }}
+      >
+        <IconButton
+          // size="large"
+          aria-label="account of current user"
+          aria-controls="primary-search-account-menu"
+          // aria-haspopup="true"
+          color="inherit"
+        >
+          <Brightness2Rounded />
+        </IconButton>
+        <p>Mode</p>
+      </MenuItem>
     </Menu>
   );
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
-        <Toolbar className="bg-cyan-700 ">
+        <Toolbar className="bg-cyan-700 dark:bg-slate-700 ">
           <IconButton
             size="large"
             edge="start"
@@ -195,13 +216,14 @@ export default function Header({ setmsg }) {
           </IconButton>
 
           <img
+            className="dark:bg-gray-400 dark:rounded-lg"
             onClick={() => navigate("/")}
             style={{ height: "45px" }}
             alt="Logo"
             src="/circulo.png"
           />
 
-          <Search>
+          {/* <Search>
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
@@ -209,7 +231,7 @@ export default function Header({ setmsg }) {
               placeholder="Search…"
               inputProps={{ "aria-label": "search" }}
             />
-          </Search>
+          </Search> */}
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton
@@ -237,19 +259,39 @@ export default function Header({ setmsg }) {
               aria-label="account of current user"
               aria-controls={menuId}
               aria-haspopup="true"
-              onClick={handleProfileMenuOpen}
               color="inherit"
+              onClick={() => navigate(`/profile/${user._id}`)}
             >
               <AccountCircle />
             </IconButton>
             <IconButton color="inherit" onClick={toggleDarkMode}>
               <Brightness2Rounded />
             </IconButton>
-            <Button variant="contained" onClick={handleLogout}>
-              Logout
-            </Button>
+            <IconButton color="inherit" onClick={handleLogout}>
+              <LogoutRounded />
+            </IconButton>
           </Box>
           <Box sx={{ display: { xs: "flex", md: "none" } }}>
+            <IconButton
+              onClick={() => navigate("/chats")}
+              size="large"
+              aria-label="show 4 new mails"
+              color="inherit"
+            >
+              <Badge badgeContent={4} color="error">
+                <MailIcon />
+              </Badge>
+            </IconButton>
+            <IconButton
+              size="large"
+              aria-label="show 17 new notifications"
+              color="inherit"
+            >
+              <Badge badgeContent={17} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+
             <IconButton
               size="large"
               aria-label="show more"
@@ -264,7 +306,13 @@ export default function Header({ setmsg }) {
         </Toolbar>
       </AppBar>
       {renderMobileMenu}
-      {renderMenu}
+      {/* <video
+        autoPlay
+        playsInline
+        // controls
+        className="absolute bg-slate-400"
+        ref={remoteVideoRef}
+      /> */}
     </Box>
   );
 }

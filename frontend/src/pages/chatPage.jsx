@@ -11,6 +11,7 @@ import {
   Box,
   IconButton,
   Menu,
+  Drawer,
 } from "@mui/material";
 
 import Header from "../components/CommonComponents/header";
@@ -26,16 +27,16 @@ import chatSocket from "../features/utilities/Socket-io";
 import { UploadImage } from "../Utilities/UploadImage";
 import { useRecoilState } from "recoil";
 import { ChatFriendsData, ChatRoomMessages } from "../atoms/chatAtoms";
+import { enqueueSnackbar } from "notistack";
+import { ArrowBack } from "@mui/icons-material";
 const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
 export default function ChatPage() {
   const dispatch = useDispatch();
   const { chatFriends } = useSelector((state) => state.chats);
   const { friends, userData } = useSelector((state) => state.friends);
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
   const [friend, setFriend] = useState(null);
@@ -73,7 +74,6 @@ export default function ChatPage() {
     const fetchChatData = async () => {
       setLoading(true);
       await dispatch(fetchChatFriends());
-
       setLoading(false);
     };
 
@@ -95,6 +95,7 @@ export default function ChatPage() {
   }, [searchQuery, friendsData]);
 
   const handleChat = useCallback((friend, roomId) => {
+    setDrawerOpen(false);
     setRoomId(roomId);
     setFriend(friend);
     setMessage("");
@@ -103,6 +104,7 @@ export default function ChatPage() {
 
   const handleSubmitImage = async () => {
     await UploadImage(friend, chatSocket, image);
+    setImage(null);
   };
 
   useEffect(() => {
@@ -134,6 +136,12 @@ export default function ChatPage() {
 
   const handleSubmit = (id, room) => {
     if (message.trim()) {
+      if (!chatSocket.connected) {
+        enqueueSnackbar("Error sending message. Please try again", {
+          variant: "error",
+        });
+        chatSocket.connect();
+      }
       chatSocket.emit("message", {
         userId: id,
         message,
@@ -280,20 +288,29 @@ export default function ChatPage() {
           friend={friend}
           messages={chatMessages[roomId]}
           roomId={roomId}
+          setDrawerOpen={setDrawerOpen}
         />
       ) : (
-        <Typography
-          variant="h6"
-          sx={{
-            margin: "auto",
-            padding: "20px",
-            textAlign: "center",
-            color: "#999",
-            fontStyle: "italic",
-          }}
-        >
-          Click on any user to start chatting!
-        </Typography>
+        <>
+          {isMobile ? (
+            <Box sx={{ borderRight: 1, borderColor: "divider" }}>
+              {renderUserList()}
+            </Box>
+          ) : (
+            <Typography
+              variant="h6"
+              sx={{
+                margin: "auto",
+                padding: "20px",
+                textAlign: "center",
+                color: "#999",
+                fontStyle: "italic",
+              }}
+            >
+              `Click on any user to start chatting!`
+            </Typography>
+          )}
+        </>
       )}
     </Box>
   );
@@ -301,7 +318,7 @@ export default function ChatPage() {
   return (
     <>
       <Header setChatMessages={setChatMessages} />
-      <Grid container>
+      <Grid container sx={{ height: "91vh", flexWrap: "nowrap" }}>
         {!isMobile && (
           <Box sx={{ maxWidth: 300, borderRight: 1, borderColor: "divider" }}>
             {renderUserList()}
@@ -311,6 +328,31 @@ export default function ChatPage() {
           {renderChatArea()}
         </Box>
       </Grid>
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: "100%",
+          },
+        }}
+      >
+        <Box role="presentation">
+          <Box sx={{ p: 2, display: "flex", alignItems: "center" }}>
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={() => setDrawerOpen(false)}
+              sx={{ mr: 2 }}
+            >
+              <ArrowBack />
+            </IconButton>
+            <Typography variant="h6">Contacts</Typography>
+          </Box>
+          {renderUserList()}
+        </Box>
+      </Drawer>
     </>
   );
 }

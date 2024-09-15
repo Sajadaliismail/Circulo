@@ -1,14 +1,27 @@
 import {
   Box,
+  Dialog,
+  DialogContent,
   Fab,
+  IconButton,
   SpeedDial,
   SpeedDialAction,
   Typography,
 } from "@mui/material";
 import { convertUTCToIST } from "../../pages/Utilitis";
-import { AddReaction } from "@mui/icons-material";
+import { AddReaction, Close } from "@mui/icons-material";
+import { useState } from "react";
 
 export const RecieverMessageList = ({ mess }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
   return (
     <>
       <Box
@@ -62,9 +75,10 @@ export const RecieverMessageList = ({ mess }) => {
           )}
           {mess.imageUrl && (
             <img
-              style={{ maxWidth: "100%" }}
+              style={{ maxHeight: "350px" }}
               alt="message"
               src={mess.imageUrl}
+              onClick={handleClickOpen}
             />
           )}
         </Box>
@@ -73,12 +87,39 @@ export const RecieverMessageList = ({ mess }) => {
           {convertUTCToIST(mess.timestamp)}
         </Typography>
       </Box>
+      <Dialog open={open} onClose={handleClose} fullWidth>
+        <DialogContent sx={{ marginX: "auto", overflow: "hidden" }}>
+          <IconButton
+            edge="end"
+            color="inherit"
+            onClick={handleClose}
+            aria-label="close"
+            style={{ position: "absolute", top: 8, right: 8 }}
+          >
+            <Close />
+          </IconButton>
+          <img
+            src={mess.imageUrl}
+            alt="enlarged message"
+            style={{ maxHeight: "80vh" }}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
 
 export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
   const emojis = ["😀", "😂", "❤️", "👍", "👎"];
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   return (
     <>
@@ -171,9 +212,10 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
           )}
           {mess.imageUrl && (
             <img
-              style={{ maxWidth: "100%" }}
+              style={{ maxHeight: "350px" }}
               alt="message"
               src={mess.imageUrl}
+              onClick={handleClickOpen}
             />
           )}
         </Box>
@@ -182,6 +224,24 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
           {convertUTCToIST(mess.timestamp)}
         </Typography>
       </Box>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogContent>
+          <IconButton
+            edge="end"
+            color="inherit"
+            onClick={handleClose}
+            aria-label="close"
+            style={{ position: "absolute", top: 8, right: 8 }}
+          >
+            <Close />
+          </IconButton>
+          <img
+            src={mess.imageUrl}
+            alt="enlarged message"
+            style={{ height: "100%", width: "auto" }}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
