@@ -106,11 +106,13 @@ const handleCallStart = async (userId, offer, io, socket) => {
     const receiverSocketId = await userClient.get(userId);
     const senderSocketId = await userClient.get(socket.user);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("offer", offer);
+      io.to(receiverSocketId).emit("incomingCall", offer);
     } else if (senderSocketId) {
-      io.to(senderSocketId).emit("offer_failed");
+      io.to(senderSocketId).emit("callFailed");
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+  }
 };
 const handleLogout = async (socket) => {
   const userId = socket.userId;
@@ -121,6 +123,21 @@ const handleLogout = async (socket) => {
   const message = { _id: userId, onlineStatus: false };
   await publishMessage("userStatus", message);
 };
+
+const handleTyping = async (socket, io, id, roomId, userIsTyping) => {
+  const userId = socket.userId;
+  const message = {
+    id,
+    roomId,
+    userIsTyping,
+  };
+  const receiverSocketId = await userClient.get(id);
+
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("typingAlert", message);
+  }
+};
+
 module.exports = {
   authorize,
   joinRoom,
@@ -128,4 +145,5 @@ module.exports = {
   handleMessage,
   handleLogout,
   handleCallStart,
+  handleTyping,
 };

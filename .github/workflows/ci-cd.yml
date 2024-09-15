@@ -119,7 +119,7 @@ jobs:
         run: |
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > key.pem
           chmod 600 key.pem
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@ec2-65-0-173-200.ap-south-1.compute.amazonaws.com << EOF
             echo "Removing old Docker images..."
             docker image prune -a -f
 

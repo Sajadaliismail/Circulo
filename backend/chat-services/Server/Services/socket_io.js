@@ -10,6 +10,7 @@ const {
   handleMessage,
   handleLogout,
   handleCallStart,
+  handleTyping,
 } = require("./socket_Io_Services");
 require("dotenv").config();
 
@@ -47,7 +48,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start-call", async ({ recipientId, offer }) => {
+    console.log(recipientId);
+
     await handleCallStart(recipientId, offer, io, socket);
+  });
+
+  socket.on("userIsTyping", async ({ id, roomId, userIsTyping }) => {
+    // console.log("typing ");
+    await handleTyping(socket, io, id, roomId, userIsTyping);
   });
 
   socket.on("logout", async () => {

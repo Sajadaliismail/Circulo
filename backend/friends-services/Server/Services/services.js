@@ -7,10 +7,14 @@ const addUserDetails = async (user) => {
 
     await session.run(
       `MERGE (u:User {id: $id})
-       SET u.firstName = $firstName,
-           u.lastName = $lastName,
-           u.postalCode = $postalCode,
-           u.email = $email`,
+       ON CREATE SET u.firstName = $firstName,
+                     u.lastName = $lastName,
+                     u.postalCode = $postalCode,
+                     u.email = $email
+       ON MATCH SET  u.firstName = $firstName,
+                     u.lastName = $lastName,
+                     u.postalCode = $postalCode,
+                     u.email = $email`,
       {
         id: user._id,
         firstName: user.firstName,
@@ -19,9 +23,9 @@ const addUserDetails = async (user) => {
         email: user.email,
       }
     );
-    console.log("User added to the neo4j Database");
+    console.log("User added/updated in the Neo4j database");
   } catch (error) {
-    console.error("Error adding user details:", error);
+    console.error("Error adding/updating user details:", error);
     throw error;
   } finally {
     console.log("Neo4j Connection closed");
@@ -30,7 +34,6 @@ const addUserDetails = async (user) => {
 };
 
 const updateProfilePicture = async (userData) => {
-  console.log(userData);
   const session = driver.session();
   try {
     console.log("Neo4j Connection open");
