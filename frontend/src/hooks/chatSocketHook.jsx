@@ -1,5 +1,4 @@
-// src/hooks/useChatSocket.js
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import chatSocket from "../features/utilities/Socket-io";
 import { fetchUser } from "../features/user/userAsyncThunks";
@@ -11,20 +10,19 @@ import { useSnackbar } from "notistack";
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
   const { user } = useSelector((state) => state.user);
-  const [socketConnected, setSocketConnected] = useState(false);
   const [chatMessages, setChatMessages] = useRecoilState(ChatRoomMessages);
-
   const { enqueueSnackbar } = useSnackbar();
-
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && user?._id) {
       dispatch(fetchUser());
-    }
-    if (isLoggedIn && user?._id && !socketConnected) {
+
       chatSocket.connect();
+      console.log("Socket connected");
+
       const id = user._id;
+
       chatSocket.emit("authenticate", id, (response) => {
         if (response.status === "ok") {
           console.log("Authentication acknowledged by server.");
@@ -33,65 +31,33 @@ const useChatSocket = () => {
         }
       });
 
-      setSocketConnected(true);
-
-      chatSocket.on("disconnect", () => {
-        console.log("Socket disconnected");
-        setSocketConnected(false);
-      });
-
-      chatSocket.on("connect", () => {
-        console.log("Socket connected");
-        setSocketConnected(true);
-      });
-
       chatSocket.on("newMessageNotification", (arg) => {
         const { roomId, senderId, message, type, _id } = arg;
 
         dispatch(setStatus(senderId));
 
-        setChatMessages((chats) => {
-          const prevChats = { ...chats };
-          const chatRoom = prevChats[roomId] || { messages: [] };
-
-          const chatMessages = chatRoom.messages;
+        setChatMessages((prevChats) => {
+          const prevRoom = prevChats[roomId] || { messages: [] };
+          const chatMessages = prevRoom.messages;
 
           const isDuplicate = chatMessages.some((msg) => msg._id === _id);
+          if (isDuplicate) return prevChats;
 
-          if (isDuplicate) {
-            return prevChats;
-          }
+          const newMessage =
+            type === "image"
+              ? { imageUrl: message, timestamp: Date.now(), senderId, _id }
+              : { message, timestamp: Date.now(), senderId, _id };
 
-          if (type === "image") {
-            prevChats[roomId] = {
-              ...chatRoom,
-              messages: [
-                ...chatMessages,
-                {
-                  imageUrl: message,
-                  timestamp: Date.now(),
-                  senderId,
-                  _id,
-                },
-              ],
-            };
-          } else if (type === "text") {
-            prevChats[roomId] = {
-              ...chatRoom,
-              messages: [
-                ...chatMessages,
-                {
-                  message,
-                  timestamp: Date.now(),
-                  senderId,
-                  _id,
-                },
-              ],
-            };
-          }
-          return prevChats;
+          return {
+            ...prevChats,
+            [roomId]: {
+              ...prevRoom,
+              messages: [...chatMessages, newMessage],
+            },
+          };
         });
       });
+
       chatSocket.on("emoji_recieved", ({ id, emoji, roomId }) => {
         setChatMessages((prevChats) => ({
           ...prevChats,
@@ -105,13 +71,10 @@ const useChatSocket = () => {
       });
 
       chatSocket.on("newMessage", (arg) => {
-        console.log(arg);
-        console.log(chatMessages);
-
-        enqueueSnackbar("You have one message", { variant: "success" });
+        enqueueSnackbar("You have one new message", { variant: "success" });
       });
 
-      chatSocket.on("typingAlert", async ({ id, roomId, userIsTyping }) => {
+      chatSocket.on("typingAlert", ({ roomId, userIsTyping }) => {
         setChatMessages((prevChats) => ({
           ...prevChats,
           [roomId]: {
@@ -120,35 +83,33 @@ const useChatSocket = () => {
           },
         }));
       });
+
+      chatSocket.on("disconnect", () => {
+        console.log("Socket disconnected");
+      });
+
+      // Cleanup event listeners and socket connection
       return () => {
-        chatSocket.off("newMessage");
-        chatSocket.off("connect");
-        chatSocket.off("disconnect");
         chatSocket.off("newMessageNotification");
         chatSocket.off("emoji_recieved");
+        chatSocket.off("newMessage");
+        chatSocket.off("typingAlert");
+        chatSocket.off("disconnect");
         chatSocket.disconnect();
-        setSocketConnected(false);
       };
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, user?._id]);
 
   useEffect(() => {
     const handleCleanup = () => {
       chatSocket.emit("logout");
       chatSocket.disconnect();
-      setSocketConnected(false);
-
-      chatSocket.off("connect");
-      chatSocket.off("disconnect");
-      chatSocket.off("newMessageNotification");
-      chatSocket.off("emoji_recieved");
     };
 
     window.addEventListener("beforeunload", handleCleanup);
     window.addEventListener("unload", handleCleanup);
 
     return () => {
-      handleCleanup();
       window.removeEventListener("beforeunload", handleCleanup);
       window.removeEventListener("unload", handleCleanup);
     };
