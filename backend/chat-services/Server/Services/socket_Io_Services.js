@@ -106,12 +106,16 @@ const handleCallStart = async (userId, offer, io, socket) => {
     const receiverSocketId = await userClient.get(userId);
     const senderSocketId = await userClient.get(socket.user);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("incomingCall", offer);
+      const data = {
+        offer,
+        senderId: socket.user,
+      };
+      io.to(receiverSocketId).emit("incomingCall", data);
     } else if (senderSocketId) {
       io.to(senderSocketId).emit("callFailed");
     }
   } catch (error) {
-    console.log(error);
+    console.log(error.message);
   }
 };
 const handleLogout = async (socket) => {

@@ -48,7 +48,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start-call", async ({ recipientId, offer }) => {
-    console.log(recipientId);
+    // console.log(recipientId);
 
     await handleCallStart(recipientId, offer, io, socket);
   });
@@ -58,6 +58,38 @@ io.on("connection", (socket) => {
     await handleTyping(socket, io, id, roomId, userIsTyping);
   });
 
+  socket.on("ice-candidate", async (data) => {
+    const { recipientId, candidate } = data;
+
+    try {
+      const receiverSocketId = await userClient.get(recipientId);
+      ``;
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("ice-candidate", { candidate });
+      }
+    } catch (error) {
+      console.error("Error forwarding ICE candidate:", error.message);
+    }
+  });
+
+  socket.on("answer", async (data) => {
+    const { recipientId, answer } = data;
+    console.log(answer);
+
+    console.log("answer recieved", recipientId);
+    try {
+      // Get the recipient's (User 1) socket ID from Redis
+      const receiverSocketId = await userClient.get(recipientId);
+
+      if (receiverSocketId) {
+        // Forward the answer to User 1
+        io.to(receiverSocketId).emit("callAnswered", answer);
+      } else {
+      }
+    } catch (error) {
+      console.error("Error forwarding answer:", error.message);
+    }
+  });
   socket.on("logout", async () => {
     await handleLogout(socket);
   });
