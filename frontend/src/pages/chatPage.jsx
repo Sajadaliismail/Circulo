@@ -136,12 +136,12 @@ export default function ChatPage() {
 
   const handleSubmit = (id, room) => {
     if (message.trim()) {
-      // if (!chatSocket.connected) {
-      //   enqueueSnackbar("Error sending message. Please try again", {
-      //     variant: "error",
-      //   });
-      //   // chatSocket.connect();
-      // }
+      if (!chatSocket.connected) {
+        enqueueSnackbar("Error sending message. Please try again", {
+          variant: "error",
+        });
+        chatSocket.connect();
+      }
       chatSocket.emit("message", {
         userId: id,
         message,
