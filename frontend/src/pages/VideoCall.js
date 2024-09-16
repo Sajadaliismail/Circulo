@@ -10,6 +10,8 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import chatSocket from "../features/utilities/Socket-io";
+import { enqueueSnackbar } from "notistack";
+import { useSelector } from "react-redux";
 
 const VideoCall = ({
   isVideoCallActive,
@@ -18,8 +20,11 @@ const VideoCall = ({
   setIsCameraOn,
   recipientId,
 }) => {
+  const { userData } = useSelector((state) => state.friends);
   const [localStream, setLocalStream] = useState(null);
   const [peerConnection, setPeerConnection] = useState(null);
+  const [isCalling, setIscalling] = useState(false);
+  const [isRinging, setIsRinging] = useState("Calling...");
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const webcamRef = useRef(null);
@@ -27,6 +32,7 @@ const VideoCall = ({
   const handleEndVideoCall = () => {
     setIsVideoCallActive(false);
     setIsCameraOn(false);
+    setIscalling(false);
   };
 
   const toggleCamera = () => {
@@ -35,6 +41,7 @@ const VideoCall = ({
 
   const handleUserMedia = (stream) => {
     setLocalStream(stream);
+    setIscalling(true);
   };
 
   useEffect(() => {
@@ -47,30 +54,61 @@ const VideoCall = ({
           .forEach((track) => pc.addTrack(track, localStream));
 
         pc.ontrack = (event) => {
+          console.log(event, "event");
+
           if (remoteVideoRef.current) {
+            console.log("setting remote video");
+
             remoteVideoRef.current.srcObject = event.streams[0];
           }
         };
 
         pc.onicecandidate = (event) => {
           if (event.candidate) {
-            chatSocket.emit("ice-candidate", {
-              recipientId,
-              candidate: event.candidate,
-            });
+            const data = { recipientId, candidate: event.candidate };
+            chatSocket.emit("ice-candidate", data);
           }
         };
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        chatSocket.emit("start-call", { recipientId, offer });
+        const data = { recipientId, offer };
+        chatSocket.emit("start-call", data);
 
         setPeerConnection(pc);
       }
     };
 
+    chatSocket.on("callFailed", async () => {
+      // enqueueSnackbar("not online", { variant: "info" });
+      setIsRinging("Not reachable now.");
+      console.log("1");
+    });
+
     makeCall();
-  }, [localStream]);
+  }, [isCalling, chatSocket]);
+
+  useEffect(() => {
+    console.log("running answred");
+
+    const handleAnswer = async (answer) => {
+      if (peerConnection) {
+        const answerDesc = new RTCSessionDescription(answer);
+
+        try {
+          const connectionState = peerConnection.signalingState;
+          console.log(`Connection state: ${connectionState}`);
+
+          await peerConnection.setRemoteDescription(answerDesc);
+          console.log("Answer successfully set as remote description");
+        } catch (error) {
+          console.error("Error setting remote description for answer:", error);
+        }
+      }
+    };
+
+    chatSocket.on("callAnswered", handleAnswer);
+  });
 
   return (
     <Dialog
@@ -79,7 +117,11 @@ const VideoCall = ({
       maxWidth="md"
       fullWidth
     >
-      <DialogTitle>Video Call with </DialogTitle>
+      <DialogTitle>
+        Video Call with {userData[recipientId]?.firstName}
+        <Typography>{isRinging}</Typography>
+      </DialogTitle>
+
       <DialogContent>
         <Box
           sx={{
@@ -110,7 +152,7 @@ const VideoCall = ({
           >
             {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
           </Button>
-          <video ref={localVideoRef} autoPlay muted />
+          {/* <video ref={localVideoRef} autoPlay muted /> */}
           <video ref={remoteVideoRef} autoPlay />
         </Box>
       </DialogContent>

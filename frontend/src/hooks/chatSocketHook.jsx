@@ -111,11 +111,6 @@ const useChatSocket = () => {
         enqueueSnackbar("You have one message", { variant: "success" });
       });
 
-      chatSocket.on("callFailed", async () => {
-        console.log("not online");
-        enqueueSnackbar("not online", { variant: "info" });
-      });
-
       chatSocket.on("typingAlert", async ({ id, roomId, userIsTyping }) => {
         setChatMessages((prevChats) => ({
           ...prevChats,

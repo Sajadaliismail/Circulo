@@ -1,20 +1,23 @@
 import * as React from "react";
 import { styled, alpha } from "@mui/material/styles";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import InputBase from "@mui/material/InputBase";
-import Badge from "@mui/material/Badge";
-import MenuItem from "@mui/material/MenuItem";
-import Menu from "@mui/material/Menu";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Badge,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+} from "@mui/material";
+import { Menu, MenuItem, Fade } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import { Brightness2Rounded, Logout, LogoutRounded } from "@mui/icons-material";
-import { Button, Fade } from "@mui/material";
+import { Brightness2Rounded, LogoutRounded } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { setLogout } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
@@ -22,50 +25,8 @@ import chatSocket from "../../features/utilities/Socket-io";
 import { useResetRecoilState } from "recoil";
 import { postsAtom } from "../../atoms/postAtoms";
 import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
-import { useState } from "react";
-import { useRef } from "react";
-import { enqueueSnackbar } from "notistack";
-import { useEffect } from "react";
-
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(3),
-    width: "auto",
-  },
-}));
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "20ch",
-    },
-  },
-}));
+import { useState, useRef, useEffect } from "react";
+import Webcam from "react-webcam";
 
 export default function Header() {
   const { user } = useSelector((state) => state.user);
@@ -73,14 +34,17 @@ export default function Header() {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
-
   const postReset = useResetRecoilState(postsAtom);
   const chatfriendsReset = useResetRecoilState(ChatFriendsData);
   const chatmessageReset = useResetRecoilState(ChatRoomMessages);
   const [incomingCall, setIncomingCall] = useState(false);
   const [offerDetails, setOfferDetails] = useState(null);
   const [peerConnection, setPeerConnection] = useState(null);
+  const [sender, setSender] = useState(null);
   const remoteVideoRef = useRef(null);
+  const webcamRef = useRef(null);
+  const localVideoRef = useRef(null);
+
   const handleLogout = async () => {
     chatSocket.emit("logout");
     postReset();
@@ -92,6 +56,7 @@ export default function Header() {
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
+
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const toggleDarkMode = () => {
@@ -106,90 +71,126 @@ export default function Header() {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
+  const handleUserMedia = () => {
+    // setlocal
+  };
   useEffect(() => {
-    const handleIncomingCall = async (offer) => {
+    const handleIncomingCall = async ({ offer, senderId }) => {
+      console.log("incoming call");
+
       setIncomingCall(true);
       setOfferDetails(offer);
-
-      console.log("Video ref:", remoteVideoRef.current);
+      setSender(senderId);
 
       if (!peerConnection) {
         const pc = new RTCPeerConnection(configuration);
-        setPeerConnection(pc);
 
         pc.ontrack = (event) => {
-          console.log("Track event:", event);
-          if (event.streams && event.streams[0]) {
-            console.log("Stream:", event.streams[0]);
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = event.streams[0];
-            } else {
-              console.error("Remote video ref is not set");
-            }
-          } else {
-            console.error("No streams available in ontrack event");
+          console.log(event, "event");
+
+          if (remoteVideoRef.current) {
+            console.log("setting remote video");
+
+            remoteVideoRef.current.srcObject = event.streams[0];
           }
         };
 
         pc.onicecandidate = (event) => {
           if (event.candidate) {
-            chatSocket.emit("ice-candidate", { candidate: event.candidate });
+            const data = { recipientId: senderId, candidate: event.candidate };
+
+            chatSocket.emit("ice-candidate", data);
           }
         };
 
         try {
-          const offerDesc = new RTCSessionDescription(offer);
-          await pc.setRemoteDescription(offerDesc);
+          await pc.setRemoteDescription(offer);
 
+          // Create and send an answer
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          chatSocket.emit("answer", { recipientId: offer.senderId, answer });
+          setPeerConnection(pc);
+          const data = { recipientId: senderId, answer };
+          chatSocket.emit("answer", data);
         } catch (error) {
           console.error("Error during WebRTC setup:", error);
         }
+      }
+    };
 
-        return () => {
-          pc.close(); // Clean up the peer connection
-          setPeerConnection(null); // Clear the state
-        };
+    const handleIceCandidate = async (data) => {
+      const { candidate } = data;
+
+      if (peerConnection) {
+        try {
+          if (peerConnection.remoteDescription) {
+            await peerConnection.addIceCandidate(candidate);
+            console.log("ICE candidate added successfully");
+          } else {
+            console.error(
+              "Remote description not set, can't add ICE candidate yet"
+            );
+          }
+        } catch (error) {
+          console.error("Error adding received ICE candidate:", error);
+        }
       }
     };
 
     chatSocket.on("incomingCall", handleIncomingCall);
+    chatSocket.on("ice-candidate", handleIceCandidate);
 
-    // Cleanup on unmount
     return () => {
       chatSocket.off("incomingCall", handleIncomingCall);
+      chatSocket.off("ice-candidate", handleIceCandidate);
     };
   }, [peerConnection]);
 
-  const menuId = "primary-search-account-menu";
+  const handleAcceptCall = async () => {
+    console.log(peerConnection, offerDetails);
 
+    if (peerConnection && offerDetails) {
+      try {
+        // Ensure offerDetails.offer contains valid SDP string
+        if (offerDetails.sdp && offerDetails.type === "offer") {
+          const offerDesc = new RTCSessionDescription({
+            type: "offer",
+            sdp: offerDetails.sdp,
+          });
+
+          await peerConnection.setRemoteDescription(offerDesc);
+
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          const data = {
+            recipientId: sender,
+            answer,
+          };
+          chatSocket.emit("answer", data);
+          // setIncomingCall(false); // Hide incoming call UI
+        } else {
+          throw new Error("Invalid offer details");
+        }
+      } catch (error) {
+        console.error("Error accepting call:", error);
+      }
+    }
+  };
+
+  const menuId = "primary-search-account-menu";
   const mobileMenuId = "primary-search-account-menu-mobile";
   const renderMobileMenu = (
     <Menu
       anchorEl={mobileMoreAnchorEl}
-      anchorOrigin={{
-        vertical: "top",
-        horizontal: "right",
-      }}
-      MenuListProps={{
-        "aria-labelledby": "fade-button",
-      }}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      MenuListProps={{ "aria-labelledby": "fade-button" }}
       id={mobileMenuId}
       keepMounted
-      transformOrigin={{
-        vertical: "top",
-        horizontal: "right",
-      }}
+      transformOrigin={{ vertical: "top", horizontal: "right" }}
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
       TransitionComponent={Fade}
-      sx={{
-        "& .MuiPaper-root": {
-          backgroundColor: "slategray",
-        },
-      }}
+      sx={{ "& .MuiPaper-root": { backgroundColor: "slategray" } }}
     >
       <MenuItem
         onClick={() => {
@@ -197,13 +198,7 @@ export default function Header() {
           handleMobileMenuClose();
         }}
       >
-        <IconButton
-          // size="large"
-          aria-label="account of current user"
-          aria-controls="primary-search-account-menu"
-          // aria-haspopup="true"
-          color="inherit"
-        >
+        <IconButton aria-label="account of current user" color="inherit">
           <AccountCircle />
         </IconButton>
         <p>Profile</p>
@@ -214,16 +209,16 @@ export default function Header() {
           handleMobileMenuClose();
         }}
       >
-        <IconButton
-          // size="large"
-          aria-label="account of current user"
-          aria-controls="primary-search-account-menu"
-          // aria-haspopup="true"
-          color="inherit"
-        >
+        <IconButton aria-label="toggle dark mode" color="inherit">
           <Brightness2Rounded />
         </IconButton>
         <p>Mode</p>
+      </MenuItem>
+      <MenuItem onClick={handleLogout}>
+        <IconButton color="inherit">
+          <LogoutRounded />
+        </IconButton>
+        <p>Logout</p>
       </MenuItem>
     </Menu>
   );
@@ -231,7 +226,7 @@ export default function Header() {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
-        <Toolbar className="bg-cyan-700 dark:bg-slate-700 ">
+        <Toolbar className="bg-cyan-700 dark:bg-slate-700">
           <IconButton
             size="large"
             edge="start"
@@ -241,7 +236,6 @@ export default function Header() {
           >
             <MenuIcon />
           </IconButton>
-
           <img
             className="dark:bg-gray-400 dark:rounded-lg"
             onClick={() => navigate("/")}
@@ -249,16 +243,6 @@ export default function Header() {
             alt="Logo"
             src="/circulo.png"
           />
-
-          {/* <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ "aria-label": "search" }}
-            />
-          </Search> */}
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton
@@ -318,7 +302,6 @@ export default function Header() {
                 <NotificationsIcon />
               </Badge>
             </IconButton>
-
             <IconButton
               size="large"
               aria-label="show more"
@@ -333,13 +316,45 @@ export default function Header() {
         </Toolbar>
       </AppBar>
       {renderMobileMenu}
-      {/* <video
-        // className="absolute"
-        ref={remoteVideoRef}
-        autoPlay
-        playsInline
-        style={{ width: "100%", height: "auto" }} // Ensure it is visible
-      /> */}
+      <Box sx={{ padding: 2 }}>
+        {/* {incomingCall && ( */}
+        <Dialog open={incomingCall} maxWidth="md" fullWidth>
+          <DialogTitle>Incoming call</DialogTitle>
+          <DialogContent>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAcceptCall}
+            >
+              Accept Call
+            </Button>
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              videoConstraints={{ facingMode: "user" }}
+              onUserMedia={handleUserMedia}
+              style={{
+                // width: "100%",
+                maxHeight: "500px",
+                objectFit: "contain",
+                position: "relative",
+              }}
+            />
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              style={{
+                height: "250px",
+                // position: "absolute",
+                backgroundColor: "red",
+              }}
+            />
+            <button onClick={() => setIncomingCall(false)}>Hang up</button>
+          </DialogContent>
+        </Dialog>
+        {/* )} */}
+      </Box>
     </Box>
   );
 }
