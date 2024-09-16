@@ -314,13 +314,15 @@ const MessageArea = ({
             />
           </Grid>
         </Grid>
-        <VideoCall
-          isCameraOn={isCameraOn}
-          isVideoCallActive={isVideoCallActive}
-          setIsCameraOn={setIsCameraOn}
-          setIsVideoCallActive={setIsVideoCallActive}
-          recipientId={friend}
-        />
+        {isVideoCallActive && (
+          <VideoCall
+            isCameraOn={isCameraOn}
+            isVideoCallActive={isVideoCallActive}
+            setIsCameraOn={setIsCameraOn}
+            setIsVideoCallActive={setIsVideoCallActive}
+            recipientId={friend}
+          />
+        )}
       </>
     </>
   );

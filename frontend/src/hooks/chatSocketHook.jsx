@@ -116,10 +116,6 @@ const useChatSocket = () => {
         }));
       });
 
-      chatSocket.on("offer", async (offer) => {
-        console.log("Received offer");
-      });
-
       return () => {
         chatSocket.off("newMessage");
         chatSocket.off("connect");

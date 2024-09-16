@@ -144,7 +144,7 @@ export default function Header() {
       chatSocket.off("incomingCall", handleIncomingCall);
       chatSocket.off("ice-candidate", handleIceCandidate);
     };
-  }, [peerConnection]);
+  }, [peerConnection, chatSocket]);
 
   const handleAcceptCall = async () => {
     console.log(peerConnection, offerDetails);
