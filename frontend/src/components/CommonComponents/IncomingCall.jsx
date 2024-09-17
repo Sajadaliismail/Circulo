@@ -2,6 +2,7 @@ import React from "react";
 import { Dialog, DialogTitle, DialogContent, Button } from "@mui/material";
 import useChatSocket from "../../hooks/chatSocketHook";
 import Webcam from "react-webcam";
+import ReactPlayer from "react-player";
 
 export default function IncomingCallDialog() {
   const {
@@ -9,9 +10,10 @@ export default function IncomingCallDialog() {
     setIncomingCall,
     caller,
     handleAcceptCall,
-    remoteVideoRef,
+    remoteUrl,
     webcamRef,
     setLocalStream,
+    remoteVideoRef,
   } = useChatSocket();
 
   const handleUserMedia = (stream) => {
@@ -37,14 +39,12 @@ export default function IncomingCallDialog() {
             marginTop: "20px",
           }}
         />
+        {/* {remoteUrl && <ReactPlayer url={remoteUrl} autoPlay />} */}
         <video
           ref={remoteVideoRef}
-          style={{
-            width: "100%",
-            height: "300px",
-            backgroundColor: "darkgray",
-            marginTop: "20px",
-          }}
+          autoPlay
+          playsInline
+          style={{ width: "100%", height: "auto" }}
         />
 
         <Button

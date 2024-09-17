@@ -7,8 +7,6 @@ import { useRecoilState } from "recoil";
 import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
-// import { Button, Dialog, DialogContent, DialogTitle } from "@mui/material";
-// import Webcam from "react-webcam";
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
@@ -19,9 +17,9 @@ const useChatSocket = () => {
   const [offerDetails, setOfferDetails] = useState(null);
   const [peerConnection, setPeerConnection] = useState(null);
   const [caller, setCaller] = useState(null);
+  const [remoteUrl, setRemoteUrl] = useState(null);
   const remoteVideoRef = useRef(null);
   const webcamRef = useRef(null);
-  // const localVideoRef = useRef(null);
   const [localStream, setLocalStream] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const configuration = {
@@ -34,15 +32,10 @@ const useChatSocket = () => {
     // setlocal
   };
   const handleAcceptCall = async () => {
-    console.log(peerConnection, offerDetails);
-
     if (peerConnection && offerDetails) {
       try {
         if (offerDetails.sdp && offerDetails.type === "offer") {
-          const offerDesc = new RTCSessionDescription({
-            type: "offer",
-            sdp: offerDetails.sdp,
-          });
+          const offerDesc = new RTCSessionDescription(offerDetails);
 
           await peerConnection.setRemoteDescription(offerDesc);
 
@@ -53,7 +46,6 @@ const useChatSocket = () => {
             answer,
           };
           chatSocket.emit("answer", data);
-          // setIncomingCall(false); // Hide incoming call UI
         } else {
           throw new Error("Invalid offer details");
         }
@@ -64,8 +56,6 @@ const useChatSocket = () => {
   };
 
   const handleIncomingCall = async ({ offer, senderId }) => {
-    console.log("incoming call");
-
     setIncomingCall(true);
     setOfferDetails(offer);
     setCaller(senderId);
@@ -74,12 +64,13 @@ const useChatSocket = () => {
       const pc = new RTCPeerConnection(configuration);
 
       pc.ontrack = (event) => {
-        console.log(event, "event");
-
+        const remoteStream = event.streams[0];
+        console.log(remoteStream);
         if (remoteVideoRef.current) {
-          console.log("setting remote video");
-
-          remoteVideoRef.current.srcObject = event.streams[0];
+          remoteVideoRef.current.srcObject = remoteStream;
+        }
+        if (remoteStream) {
+          setRemoteUrl(remoteStream);
         }
       };
 
@@ -92,14 +83,11 @@ const useChatSocket = () => {
       };
 
       try {
-        await pc.setRemoteDescription(offer);
-
-        // Create and send an answer
+        const offerDesc = new RTCSessionDescription(offer);
+        await pc.setRemoteDescription(offerDesc);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         setPeerConnection(pc);
-        const data = { recipientId: senderId, answer };
-        chatSocket.emit("answer", data);
       } catch (error) {
         console.error("Error during WebRTC setup:", error);
       }
@@ -268,9 +256,11 @@ const useChatSocket = () => {
     setIncomingCall,
     caller,
     handleAcceptCall,
-    remoteVideoRef,
+    remoteUrl,
     webcamRef,
     setLocalStream,
+    chatSocket,
+    remoteVideoRef,
   };
   // return (
   //   <>

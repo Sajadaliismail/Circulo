@@ -12,6 +12,11 @@ import Webcam from "react-webcam";
 import chatSocket from "../features/utilities/Socket-io";
 import { enqueueSnackbar } from "notistack";
 import { useSelector } from "react-redux";
+import ReactPlayer from "react-player";
+
+const configuration = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+};
 
 const VideoCall = ({
   isVideoCallActive,
@@ -25,9 +30,10 @@ const VideoCall = ({
   const [peerConnection, setPeerConnection] = useState(null);
   const [isCalling, setIscalling] = useState(false);
   const [isRinging, setIsRinging] = useState("Calling...");
+  const [remoteUrl, setRemoteUrl] = useState(null);
   const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
   const webcamRef = useRef(null);
+  const remoteVideoRef = useRef(null);
 
   const handleEndVideoCall = () => {
     setIsVideoCallActive(false);
@@ -47,20 +53,24 @@ const VideoCall = ({
   useEffect(() => {
     const makeCall = async () => {
       if (localStream) {
-        const pc = new RTCPeerConnection();
+        const pc = new RTCPeerConnection(configuration);
 
         localStream
           .getTracks()
           .forEach((track) => pc.addTrack(track, localStream));
 
         pc.ontrack = (event) => {
-          console.log(event, "event");
-
+          const remoteStream = event.streams[0];
           if (remoteVideoRef.current) {
-            console.log("setting remote video");
-
-            remoteVideoRef.current.srcObject = event.streams[0];
+            remoteVideoRef.current.srcObject = remoteStream;
           }
+          if (remoteStream) {
+            setRemoteUrl(remoteStream);
+          }
+          // console.log(event, "event");
+          // if (remoteVideoRef.current) {
+          //   remoteVideoRef.current.srcObject = event.streams[0];
+          // }
         };
 
         pc.onicecandidate = (event) => {
@@ -152,8 +162,13 @@ const VideoCall = ({
           >
             {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
           </Button>
-          {/* <video ref={localVideoRef} autoPlay muted /> */}
-          <video ref={remoteVideoRef} autoPlay />
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            style={{ width: "100%", height: "auto" }}
+          />
+          {/* {remoteUrl && <ReactPlayer url={remoteUrl} autoPlay />} */}
         </Box>
       </DialogContent>
       <DialogActions>
