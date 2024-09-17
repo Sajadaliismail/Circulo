@@ -261,7 +261,7 @@ const useChatSocket = () => {
       window.removeEventListener("beforeunload", handleCleanup);
       window.removeEventListener("unload", handleCleanup);
     };
-  }, []);
+  }, [isLoggedIn]);
 
   return {
     incomingCall,

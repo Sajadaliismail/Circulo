@@ -4,12 +4,13 @@ import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import LandingPage from "./pages/landingPage";
 import useChatSocket from "./hooks/chatSocketHook";
+import IncomingCallDialog from "./components/CommonComponents/IncomingCall";
 
 export const ProtectedRoute = ({ element }) => {
   const { isEmailVerified, isLoggedIn, isSetupComplete } = useSelector(
     (state) => state.auth
   );
-  // useChatSocket();
+  useChatSocket();
 
   if (!isLoggedIn) {
     return <Navigate to={"/login"} />;
@@ -26,7 +27,13 @@ export const ProtectedRoute = ({ element }) => {
   if (!isSetupComplete) {
     return <SetupPage />;
   }
-  if (element) return element;
+  if (element)
+    return (
+      <>
+        <IncomingCallDialog />
+        {element}
+      </>
+    );
   return <Navigate to={"/"} />;
 };
 

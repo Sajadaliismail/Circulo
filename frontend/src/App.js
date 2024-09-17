@@ -15,7 +15,6 @@ function App() {
   // useChatSocket();
   return (
     <SnackbarProvider maxSnack={5}>
-      <IncomingCallDialog />
       <Router>
         <Routes>
           <Route
@@ -31,11 +30,12 @@ function App() {
             path="/profile/:userId"
             element={<ProtectedRoute element={<UserPage />} />}
           />
-          <Route
+          {/* <Route
             path="/video"
             element={<ProtectedRoute element={<VideoCall />} />}
-          />
+          /> */}
           <Route path="/setup" element={<ProtectedRoute />} />
+          <Route path="*" element={<ProtectedRoute element={<Homepage />} />} />
         </Routes>
       </Router>
     </SnackbarProvider>
