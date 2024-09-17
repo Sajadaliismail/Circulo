@@ -9,12 +9,13 @@ import ChatPage from "./pages/chatPage";
 import VideoCall from "./pages/VideoCall";
 import UserPage from "./pages/UserPage";
 import useChatSocket from "./hooks/chatSocketHook";
+import IncomingCallDialog from "./components/CommonComponents/IncomingCall";
 
 function App() {
-  useChatSocket();
-
+  // useChatSocket();
   return (
     <SnackbarProvider maxSnack={5}>
+      <IncomingCallDialog />
       <Router>
         <Routes>
           <Route

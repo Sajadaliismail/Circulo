@@ -25,8 +25,6 @@ import chatSocket from "../../features/utilities/Socket-io";
 import { useResetRecoilState } from "recoil";
 import { postsAtom } from "../../atoms/postAtoms";
 import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
-import { useState, useRef, useEffect } from "react";
-import Webcam from "react-webcam";
 
 export default function Header() {
   const { user } = useSelector((state) => state.user);
@@ -37,13 +35,6 @@ export default function Header() {
   const postReset = useResetRecoilState(postsAtom);
   const chatfriendsReset = useResetRecoilState(ChatFriendsData);
   const chatmessageReset = useResetRecoilState(ChatRoomMessages);
-  const [incomingCall, setIncomingCall] = useState(false);
-  const [offerDetails, setOfferDetails] = useState(null);
-  const [peerConnection, setPeerConnection] = useState(null);
-  const [sender, setSender] = useState(null);
-  const remoteVideoRef = useRef(null);
-  const webcamRef = useRef(null);
-  const localVideoRef = useRef(null);
 
   const handleLogout = async () => {
     chatSocket.emit("logout");
@@ -51,10 +42,6 @@ export default function Header() {
     chatfriendsReset();
     chatmessageReset();
     dispatch(setLogout());
-  };
-
-  const configuration = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
 
   const isMenuOpen = Boolean(anchorEl);
@@ -69,112 +56,6 @@ export default function Header() {
 
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
-  };
-
-  const handleUserMedia = () => {
-    // setlocal
-  };
-  useEffect(() => {
-    const handleIncomingCall = async ({ offer, senderId }) => {
-      console.log("incoming call");
-
-      setIncomingCall(true);
-      setOfferDetails(offer);
-      setSender(senderId);
-
-      if (!peerConnection) {
-        const pc = new RTCPeerConnection(configuration);
-
-        pc.ontrack = (event) => {
-          console.log(event, "event");
-
-          if (remoteVideoRef.current) {
-            console.log("setting remote video");
-
-            remoteVideoRef.current.srcObject = event.streams[0];
-          }
-        };
-
-        pc.onicecandidate = (event) => {
-          if (event.candidate) {
-            const data = { recipientId: senderId, candidate: event.candidate };
-
-            chatSocket.emit("ice-candidate", data);
-          }
-        };
-
-        try {
-          await pc.setRemoteDescription(offer);
-
-          // Create and send an answer
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          setPeerConnection(pc);
-          const data = { recipientId: senderId, answer };
-          chatSocket.emit("answer", data);
-        } catch (error) {
-          console.error("Error during WebRTC setup:", error);
-        }
-      }
-    };
-
-    const handleIceCandidate = async (data) => {
-      const { candidate } = data;
-
-      if (peerConnection) {
-        try {
-          if (peerConnection.remoteDescription) {
-            await peerConnection.addIceCandidate(candidate);
-            console.log("ICE candidate added successfully");
-          } else {
-            console.error(
-              "Remote description not set, can't add ICE candidate yet"
-            );
-          }
-        } catch (error) {
-          console.error("Error adding received ICE candidate:", error);
-        }
-      }
-    };
-
-    chatSocket.on("incomingCall", handleIncomingCall);
-    chatSocket.on("ice-candidate", handleIceCandidate);
-
-    return () => {
-      chatSocket.off("incomingCall", handleIncomingCall);
-      chatSocket.off("ice-candidate", handleIceCandidate);
-    };
-  }, [peerConnection, chatSocket]);
-
-  const handleAcceptCall = async () => {
-    console.log(peerConnection, offerDetails);
-
-    if (peerConnection && offerDetails) {
-      try {
-        // Ensure offerDetails.offer contains valid SDP string
-        if (offerDetails.sdp && offerDetails.type === "offer") {
-          const offerDesc = new RTCSessionDescription({
-            type: "offer",
-            sdp: offerDetails.sdp,
-          });
-
-          await peerConnection.setRemoteDescription(offerDesc);
-
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
-          const data = {
-            recipientId: sender,
-            answer,
-          };
-          chatSocket.emit("answer", data);
-          // setIncomingCall(false); // Hide incoming call UI
-        } else {
-          throw new Error("Invalid offer details");
-        }
-      } catch (error) {
-        console.error("Error accepting call:", error);
-      }
-    }
   };
 
   const menuId = "primary-search-account-menu";
@@ -316,45 +197,7 @@ export default function Header() {
         </Toolbar>
       </AppBar>
       {renderMobileMenu}
-      <Box sx={{ padding: 2 }}>
-        {/* {incomingCall && ( */}
-        <Dialog open={incomingCall} maxWidth="md" fullWidth>
-          <DialogTitle>Incoming call</DialogTitle>
-          <DialogContent>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleAcceptCall}
-            >
-              Accept Call
-            </Button>
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              videoConstraints={{ facingMode: "user" }}
-              onUserMedia={handleUserMedia}
-              style={{
-                // width: "100%",
-                maxHeight: "500px",
-                objectFit: "contain",
-                position: "relative",
-              }}
-            />
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              style={{
-                height: "250px",
-                // position: "absolute",
-                backgroundColor: "red",
-              }}
-            />
-            <button onClick={() => setIncomingCall(false)}>Hang up</button>
-          </DialogContent>
-        </Dialog>
-        {/* )} */}
-      </Box>
+      <Box sx={{ padding: 2 }}></Box>
     </Box>
   );
 }
