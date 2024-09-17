@@ -10,7 +10,6 @@ export const ProtectedRoute = ({ element }) => {
   const { isEmailVerified, isLoggedIn, isSetupComplete } = useSelector(
     (state) => state.auth
   );
-  useChatSocket();
 
   if (!isLoggedIn) {
     return <Navigate to={"/login"} />;
