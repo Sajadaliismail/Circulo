@@ -6,6 +6,8 @@ import {
   DialogContent,
   DialogTitle,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
@@ -35,72 +37,121 @@ const VideoCall = ({
   const webcamRef = useRef(null);
   const remoteVideoRef = useRef(null);
 
+  const stopCamera = () => {
+    if (localStream) {
+      localStream.getTracks().forEach((track) => {
+        track.stop();
+        localStream.removeTrack(track);
+      });
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
+      }
+      setLocalStream(null);
+    }
+  };
   const handleEndVideoCall = () => {
     setIsVideoCallActive(false);
     setIsCameraOn(false);
-    setIscalling(false);
+
+    stopCamera();
+
+    if (peerConnection) {
+      peerConnection.close();
+      setPeerConnection(null);
+      console.log("Closed the WebRTC peer connection");
+    }
+
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null; // Clear the remote video element
+    }
+
+    //   navigator.mediaDevices
+    //     .getUserMedia({ audio: true, video: true })
+    //     .then((stream) => {
+    //       stream.getTracks().forEach((track) => {
+    //         track.stop();
+    //       });
+    //     })
+    //     .catch((error) => console.error("Error accessing media devices:", error));
+
+    //   // Release camera and microphone
+    //   navigator.mediaDevices
+    //     .getUserMedia({ audio: false, video: false })
+    //     .then(() => {
+    //       console.log("Camera and microphone access released");
+    //     })
+    //     .catch((error) => console.error("Error releasing media devices:", error));
   };
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const toggleCamera = () => {
     setIsCameraOn(!isCameraOn);
   };
 
-  const handleUserMedia = (stream) => {
-    setLocalStream(stream);
-    setIscalling(true);
-  };
-
   useEffect(() => {
     const makeCall = async () => {
-      if (localStream) {
-        const pc = new RTCPeerConnection(configuration);
+      // Initialize RTCPeerConnection first
+      const pc = new RTCPeerConnection(configuration);
+      console.log(pc);
 
-        localStream
-          .getTracks()
-          .forEach((track) => pc.addTrack(track, localStream));
-
-        pc.ontrack = (event) => {
-          const remoteStream = event.streams[0];
+      pc.ontrack = (event) => {
+        console.log("Remote stream added:", event);
+        const remoteStream = event.streams[0];
+        if (remoteStream) {
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
+            console.log("Remote stream set to video element");
           }
-          if (remoteStream) {
-            setRemoteUrl(remoteStream);
-          }
-          // console.log(event, "event");
-          // if (remoteVideoRef.current) {
-          //   remoteVideoRef.current.srcObject = event.streams[0];
-          // }
-        };
+          setRemoteUrl(remoteStream);
+        } else {
+          console.error("No remote stream available");
+        }
+      };
 
-        pc.onicecandidate = (event) => {
-          if (event.candidate) {
-            const data = { recipientId, candidate: event.candidate };
-            chatSocket.emit("ice-candidate", data);
-          }
-        };
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          const data = { recipientId, candidate: event.candidate };
+          chatSocket.emit("ice-candidate", data);
+        }
+      };
 
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        const data = { recipientId, offer };
-        chatSocket.emit("start-call", data);
+      // Store the peer connection in the state so it can be referenced later
+      setPeerConnection(pc);
 
-        setPeerConnection(pc);
-      }
+      // Acquire media stream
+      await navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then(async (stream) => {
+          // Set local video stream
+          localVideoRef.current.srcObject = stream;
+          setLocalStream(stream);
+
+          // Add media tracks to the peer connection
+          stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+          // Create and send offer after setting the local description
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          const data = { recipientId, offer };
+          chatSocket.emit("start-call", data);
+        })
+        .catch((error) => {
+          console.error("Error getting media stream:", error);
+        });
     };
 
-    chatSocket.on("callFailed", async () => {
-      // enqueueSnackbar("not online", { variant: "info" });
+    // Listen for failed calls
+    chatSocket.on("callFailed", () => {
       setIsRinging("Not reachable now.");
-      console.log("1");
     });
 
+    // Start the call
     makeCall();
   }, [isCalling, chatSocket]);
 
   useEffect(() => {
-    console.log("running answred");
-
     const handleAnswer = async (answer) => {
       if (peerConnection) {
         const answerDesc = new RTCSessionDescription(answer);
@@ -110,6 +161,7 @@ const VideoCall = ({
           console.log(`Connection state: ${connectionState}`);
 
           await peerConnection.setRemoteDescription(answerDesc);
+
           console.log("Answer successfully set as remote description");
         } catch (error) {
           console.error("Error setting remote description for answer:", error);
@@ -118,6 +170,7 @@ const VideoCall = ({
     };
 
     chatSocket.on("callAnswered", handleAnswer);
+    return () => chatSocket.off("callAnswered", handleAnswer);
   });
 
   return (
@@ -126,52 +179,80 @@ const VideoCall = ({
       // onClose={handleEndVideoCall}
       maxWidth="md"
       fullWidth
+      PaperProps={{
+        style: {
+          backgroundColor: "black",
+          height: isMobile ? "100%" : "auto",
+          maxHeight: isMobile ? "100%" : "80vh",
+        },
+      }}
     >
-      <DialogTitle>
+      <DialogTitle style={{ color: "white" }}>
         Video Call with {userData[recipientId]?.firstName}
-        <Typography>{isRinging}</Typography>
+        <Typography color="white">{isRinging}</Typography>
       </DialogTitle>
-
       <DialogContent>
         <Box
           sx={{
-            width: "100%",
-            height: 400,
-            bgcolor: "black",
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            height: isMobile ? "calc(100vh - 200px)" : "60vh",
             position: "relative",
           }}
         >
-          {isCameraOn ? (
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              videoConstraints={{ facingMode: "user" }}
-              onUserMedia={handleUserMedia}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <Typography color="white">Camera is off</Typography>
-          )}
-        </Box>
-        <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-          <Button
-            onClick={toggleCamera}
-            variant="contained"
-            color={isCameraOn ? "error" : "primary"}
-            sx={{ mr: 2 }}
+          <Box
+            sx={{
+              width: isCalling || isMobile ? "100%" : "50%",
+              height: isMobile && !isCalling ? "20%" : "100%",
+              position: isMobile && !isCalling ? "absolute" : "relative",
+              top: isMobile && !isCalling ? 10 : 0,
+              right: isMobile && !isCalling ? 10 : 0,
+              zIndex: isMobile && !isCalling ? 1 : "auto",
+            }}
           >
-            {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
-          </Button>
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            style={{ width: "100%", height: "auto" }}
-          />
-          {/* {remoteUrl && <ReactPlayer url={remoteUrl} autoPlay />} */}
+            <video
+              ref={localVideoRef}
+              autoPlay
+              muted
+              playsInline
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                transform: isMobile && !isCalling ? "scaleX(-1)" : "none",
+              }}
+            />
+          </Box>
+          {/* {!isCalling && ( */}
+          <Box
+            sx={{
+              width: isMobile ? "100%" : "50%",
+              height: isMobile ? "80%" : "100%",
+            }}
+          >
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </Box>
+          {/* )}   */}
         </Box>
       </DialogContent>
-      <DialogActions>
+      <DialogActions style={{ justifyContent: "center" }}>
+        <Button
+          onClick={toggleCamera}
+          variant="contained"
+          color={isCameraOn ? "error" : "primary"}
+          sx={{ mr: 2 }}
+        >
+          {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+        </Button>
         <Button onClick={handleEndVideoCall} color="error" variant="contained">
           End Call
         </Button>
