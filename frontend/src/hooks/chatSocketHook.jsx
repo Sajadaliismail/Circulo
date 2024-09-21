@@ -18,27 +18,32 @@ const useChatSocket = () => {
   const [callRejected, setCallRejected] = useState(false);
   const [offerDetails, setOfferDetails] = useState(null);
   const [peerConnection, setPeerConnection] = useState(null);
+  const [isCameraOn, setIsCameraOn] = useState(false);
   const [caller, setCaller] = useState(null);
-  const [remoteUrl, setRemoteUrl] = useState(null);
   const remoteVideoRef = useRef(null);
   const localVideoRef = useRef(null);
-  const webcamRef = useRef(null);
   const [localStream, setLocalStream] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+
   const configuration = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun.l.google.com:5349" },
+      { urls: "stun:stun1.l.google.com:3478" },
+      { urls: "stun:stun1.l.google.com:5349" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:5349" },
+      { urls: "stun:stun3.l.google.com:3478" },
+      { urls: "stun:stun3.l.google.com:5349" },
+      { urls: "stun:stun4.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:5349" },
+    ],
   };
 
   const dispatch = useDispatch();
 
-  const handleUserMedia = () => {
-    // setlocal
-  };
-
   let isCallAccepted = false;
   const handleAcceptCall = async () => {
-    // e.preventDefault();
-    console.log("Accept call triggered");
     if (isCallAccepted) return;
     isCallAccepted = true;
     if (peerConnection && offerDetails) {
@@ -64,58 +69,77 @@ const useChatSocket = () => {
     }
   };
 
+  const stopCamera = () => {
+    if (localStream) {
+      localStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    setLocalStream(null);
+    setCallAccepted(false);
+  };
+
   const handleAccept = async () => {
     setCallAccepted(true);
-    await navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then(async (stream) => {
-        if (!peerConnection) {
-          const pc = new RTCPeerConnection(configuration);
+    setIncomingCall(false);
+    if (!peerConnection) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+        const pc = new RTCPeerConnection(configuration);
+        setIsCameraOn(true);
+        localVideoRef.current.srcObject = stream;
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-          localVideoRef.current.srcObject = stream;
-          stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        setLocalStream(stream);
+        pc.ontrack = (event) => {
+          const remoteStream = event.streams[0];
 
-          setLocalStream(stream);
-          pc.ontrack = (event) => {
-            console.log(event);
-
-            const remoteStream = event.streams[0];
-
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream;
-            } else {
-              console.log("no remote");
-            }
-          };
-
-          pc.onicecandidate = (event) => {
-            if (event.candidate) {
-              const data = {
-                recipientId: caller,
-                candidate: event.candidate,
-              };
-
-              chatSocket.emit("ice-candidate", data);
-            }
-          };
-
-          try {
-            const offerDesc = new RTCSessionDescription(offerDetails);
-            await pc.setRemoteDescription(offerDesc);
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            setPeerConnection(pc);
-          } catch (error) {
-            console.error("Error during WebRTC setup:", error);
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+          } else {
+            console.log("no remote");
           }
-        }
-      })
-      .finally(() => {
+        };
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            const data = {
+              recipientId: caller,
+              candidate: event.candidate,
+            };
+
+            chatSocket.emit("ice-candidate", data);
+          }
+        };
+
+        const offerDesc = new RTCSessionDescription(offerDetails);
+        await pc.setRemoteDescription(offerDesc);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        setPeerConnection(pc);
         handleAcceptCall();
-      });
+      } catch (error) {
+        console.error("Error during WebRTC setup:", error);
+      }
+    }
   };
 
   const handleReject = async () => {
+    console.log("callRejected");
+
+    chatSocket.emit("call_status", {
+      recipientId: caller,
+      message: "Call rejected",
+    });
     setCallRejected(true);
     setPeerConnection(null);
     localVideoRef.current = null;
@@ -126,9 +150,17 @@ const useChatSocket = () => {
   };
 
   const handleIncomingCall = async ({ offer, senderId }) => {
-    setIncomingCall(true);
-    setOfferDetails(offer);
-    setCaller(senderId);
+    if (peerConnection) {
+      chatSocket.emit("call_status", {
+        recipientId: caller,
+        message: "on another call",
+      });
+      return;
+    } else {
+      setIncomingCall(true);
+      setOfferDetails(offer);
+      setCaller(senderId);
+    }
   };
 
   const handleIceCandidate = async (data) => {
@@ -299,46 +331,13 @@ const useChatSocket = () => {
     handleReject,
     callAccepted,
     localVideoRef,
+    peerConnection,
+    stopCamera,
+    setPeerConnection,
+    localStream,
+    isCameraOn,
+    setIsCameraOn,
   };
-  // return (
-  //   <>
-  //     <Dialog open={true} maxWidth="md" fullWidth>
-  //       <DialogTitle>Incoming call</DialogTitle>
-  //       <DialogContent>
-  //         <Button
-  //           variant="contained"
-  //           color="primary"
-  //           onClick={handleAcceptCall}
-  //         >
-  //           Accept Call
-  //         </Button>
-  //         <Webcam
-  //           audio={false}
-  //           ref={webcamRef}
-  //           videoConstraints={{ facingMode: "user" }}
-  //           onUserMedia={handleUserMedia}
-  //           style={{
-  //             // width: "100%",
-  //             maxHeight: "500px",
-  //             objectFit: "contain",
-  //             position: "relative",
-  //           }}
-  //         />
-  //         <video
-  //           ref={remoteVideoRef}
-  //           autoPlay
-  //           playsInline
-  //           style={{
-  //             height: "250px",
-  //             // position: "absolute",
-  //             backgroundColor: "red",
-  //           }}
-  //         />
-  //         <button onClick={() => setIncomingCall(false)}>Hang up</button>
-  //       </DialogContent>
-  //     </Dialog>
-  //   </>
-  // );
 };
 
 export default useChatSocket;

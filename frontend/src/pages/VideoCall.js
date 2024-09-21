@@ -10,14 +10,22 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
-import Webcam from "react-webcam";
 import chatSocket from "../features/utilities/Socket-io";
-import { enqueueSnackbar } from "notistack";
 import { useSelector } from "react-redux";
-import ReactPlayer from "react-player";
 
 const configuration = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun.l.google.com:5349" },
+    { urls: "stun:stun1.l.google.com:3478" },
+    { urls: "stun:stun1.l.google.com:5349" },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:5349" },
+    { urls: "stun:stun3.l.google.com:3478" },
+    { urls: "stun:stun3.l.google.com:5349" },
+    { urls: "stun:stun4.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:5349" },
+  ],
 };
 
 const VideoCall = ({
@@ -32,80 +40,84 @@ const VideoCall = ({
   const [peerConnection, setPeerConnection] = useState(null);
   const [isCalling, setIscalling] = useState(false);
   const [isRinging, setIsRinging] = useState("Calling...");
-  const [remoteUrl, setRemoteUrl] = useState(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [remoteError, setRemoteError] = useState(null);
   const localVideoRef = useRef(null);
-  const webcamRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const [callAnswered, setCallAnswered] = useState(false);
+  const [timerStart, setTimerStart] = useState(false);
+  const [timer, setTimer] = useState(0);
+  let mounted = false;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const stopCamera = () => {
-    if (localStream) {
-      localStream.getTracks().forEach((track) => {
-        track.stop();
-        localStream.removeTrack(track);
-      });
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = null;
-      }
-      setLocalStream(null);
+  useEffect(() => {
+    let interval = null;
+
+    if (timerStart) {
+      interval = setInterval(() => {
+        setTimer((prevTime) => prevTime + 1);
+      }, 1000);
+    } else if (!timerStart && timer !== 0) {
+      clearInterval(interval);
     }
+
+    return () => clearInterval(interval);
+  }, [timerStart, timer]);
+
+  const formatTime = (timeInSeconds) => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = timeInSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+      2,
+      "0"
+    )}`;
   };
   const handleEndVideoCall = () => {
     setIsVideoCallActive(false);
     setIsCameraOn(false);
-
+    setIsMuted(false);
     stopCamera();
-
     if (peerConnection) {
       peerConnection.close();
       setPeerConnection(null);
       console.log("Closed the WebRTC peer connection");
     }
-
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = null; // Clear the remote video element
-    }
-
-    //   navigator.mediaDevices
-    //     .getUserMedia({ audio: true, video: true })
-    //     .then((stream) => {
-    //       stream.getTracks().forEach((track) => {
-    //         track.stop();
-    //       });
-    //     })
-    //     .catch((error) => console.error("Error accessing media devices:", error));
-
-    //   // Release camera and microphone
-    //   navigator.mediaDevices
-    //     .getUserMedia({ audio: false, video: false })
-    //     .then(() => {
-    //       console.log("Camera and microphone access released");
-    //     })
-    //     .catch((error) => console.error("Error releasing media devices:", error));
+    chatSocket.emit("call-hung", { recipientId });
   };
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const toggleCamera = async () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !isCameraOn;
+        setIsCameraOn(!isCameraOn);
+      }
+    }
+  };
 
-  const toggleCamera = () => {
-    setIsCameraOn(!isCameraOn);
+  const toggleMute = async () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !isMuted;
+        setIsMuted(!isMuted);
+      }
+    }
   };
 
   useEffect(() => {
     const makeCall = async () => {
-      // Initialize RTCPeerConnection first
       const pc = new RTCPeerConnection(configuration);
-      console.log(pc);
 
       pc.ontrack = (event) => {
-        console.log("Remote stream added:", event);
         const remoteStream = event.streams[0];
         if (remoteStream) {
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
-            console.log("Remote stream set to video element");
           }
-          setRemoteUrl(remoteStream);
         } else {
+          setRemoteError("No remote stream available");
           console.error("No remote stream available");
         }
       };
@@ -117,79 +129,111 @@ const VideoCall = ({
         }
       };
 
-      // Store the peer connection in the state so it can be referenced later
       setPeerConnection(pc);
 
-      // Acquire media stream
-      await navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then(async (stream) => {
-          // Set local video stream
-          localVideoRef.current.srcObject = stream;
-          setLocalStream(stream);
-
-          // Add media tracks to the peer connection
-          stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-
-          // Create and send offer after setting the local description
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          const data = { recipientId, offer };
-          chatSocket.emit("start-call", data);
-        })
-        .catch((error) => {
-          console.error("Error getting media stream:", error);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
         });
+
+        localVideoRef.current.srcObject = stream;
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        setLocalStream(stream);
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        const data = { recipientId, offer };
+        chatSocket.emit("start-call", data);
+      } catch (error) {
+        console.error("Error getting media stream:", error);
+      }
     };
 
-    // Listen for failed calls
     chatSocket.on("callFailed", () => {
       setIsRinging("Not reachable now.");
     });
 
-    // Start the call
-    makeCall();
-  }, [isCalling, chatSocket]);
+    if (!mounted) {
+      makeCall();
+      mounted = true;
+    }
+
+    return () => {
+      chatSocket.off("callFailed");
+      stopCamera();
+    };
+  }, []);
 
   useEffect(() => {
     const handleAnswer = async (answer) => {
+      console.log("call answered");
+
+      setCallAnswered(true);
       if (peerConnection) {
         const answerDesc = new RTCSessionDescription(answer);
-
         try {
-          const connectionState = peerConnection.signalingState;
-          console.log(`Connection state: ${connectionState}`);
-
           await peerConnection.setRemoteDescription(answerDesc);
-
           console.log("Answer successfully set as remote description");
+          setTimerStart(true);
         } catch (error) {
           console.error("Error setting remote description for answer:", error);
         }
       }
     };
 
+    const handleCallStatus = async (data) => {
+      console.log(data, "ethy");
+
+      setIsRinging(data.message);
+    };
+
     chatSocket.on("callAnswered", handleAnswer);
-    return () => chatSocket.off("callAnswered", handleAnswer);
-  });
+    chatSocket.on("user_status", handleCallStatus);
+    return () => {
+      chatSocket.off("callAnswered", handleAnswer);
+      chatSocket.off("user_status", handleCallStatus);
+    };
+  }, [peerConnection]);
+
+  const stopCamera = () => {
+    if (localStream) {
+      localStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    setLocalStream(null);
+  };
 
   return (
     <Dialog
       open={isVideoCallActive}
-      // onClose={handleEndVideoCall}
-      maxWidth="md"
       fullWidth
       PaperProps={{
         style: {
           backgroundColor: "black",
           height: isMobile ? "100%" : "auto",
           maxHeight: isMobile ? "100%" : "80vh",
+          margin: isMobile ? "0px" : "0px",
+          width: isMobile ? "100%" : 1200,
+          maxWidth: isMobile ? "100%" : 1200,
         },
       }}
     >
       <DialogTitle style={{ color: "white" }}>
         Video Call with {userData[recipientId]?.firstName}
         <Typography color="white">{isRinging}</Typography>
+        {timerStart && (
+          <span className="text-white font-thin text-sm">
+            In call: {formatTime(timer)}
+          </span>
+        )}
       </DialogTitle>
       <DialogContent>
         <Box
@@ -203,11 +247,11 @@ const VideoCall = ({
           <Box
             sx={{
               width: isCalling || isMobile ? "100%" : "50%",
-              height: isMobile && !isCalling ? "20%" : "100%",
-              position: isMobile && !isCalling ? "absolute" : "relative",
-              top: isMobile && !isCalling ? 10 : 0,
-              right: isMobile && !isCalling ? 10 : 0,
-              zIndex: isMobile && !isCalling ? 1 : "auto",
+              height: isMobile && callAnswered ? "20%" : "100%",
+              position: isMobile && callAnswered ? "absolute" : "relative",
+              bottom: isMobile && callAnswered ? 10 : 0,
+              left: isMobile && callAnswered ? 90 : 0,
+              zIndex: isMobile && callAnswered ? 1 : "auto",
             }}
           >
             <video
@@ -218,30 +262,31 @@ const VideoCall = ({
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
+                objectFit: "contain",
                 transform: isMobile && !isCalling ? "scaleX(-1)" : "none",
               }}
             />
           </Box>
-          {/* {!isCalling && ( */}
-          <Box
-            sx={{
-              width: isMobile ? "100%" : "50%",
-              height: isMobile ? "80%" : "100%",
-            }}
-          >
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              style={{
-                width: "100%",
+          {callAnswered && (
+            <Box
+              sx={{
+                width: isMobile ? "100%" : "50%",
                 height: "100%",
-                objectFit: "cover",
               }}
-            />
-          </Box>
-          {/* )}   */}
+            >
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            </Box>
+          )}
         </Box>
       </DialogContent>
       <DialogActions style={{ justifyContent: "center" }}>
@@ -252,6 +297,14 @@ const VideoCall = ({
           sx={{ mr: 2 }}
         >
           {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+        </Button>
+        <Button
+          onClick={toggleMute}
+          variant="contained"
+          color={isMuted ? "warning" : "primary"}
+          sx={{ mr: 2 }}
+        >
+          {isMuted ? "Unmute" : "Mute"}
         </Button>
         <Button onClick={handleEndVideoCall} color="error" variant="contained">
           End Call

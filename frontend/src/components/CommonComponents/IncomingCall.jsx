@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,29 +9,65 @@ import {
   Stack,
   Box,
   Typography,
+  useTheme,
+  useMediaQuery,
+  DialogActions,
 } from "@mui/material";
 import TrapFocus from "@mui/material/Unstable_TrapFocus";
 import useChatSocket from "../../hooks/chatSocketHook";
-import Webcam from "react-webcam";
-import ReactPlayer from "react-player";
 import { useSelector } from "react-redux";
 
 export default function IncomingCallDialog() {
   const {
     incomingCall,
-    setIncomingCall,
     caller,
-    setLocalStream,
     remoteVideoRef,
     handleAccept,
     handleReject,
     callAccepted,
     localVideoRef,
+    peerConnection,
+    stopCamera,
+    setPeerConnection,
+    chatSocket,
+    localStream,
+    isCameraOn,
+    setIsCameraOn,
   } = useChatSocket();
   const { userData } = useSelector((state) => state.friends);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [isMuted, setIsMuted] = useState(false);
 
-  const handleUserMedia = async (stream) => {
-    setLocalStream(stream);
+  const handleEndVideoCall = () => {
+    setIsMuted(false);
+    stopCamera();
+    if (peerConnection) {
+      peerConnection.close();
+      setPeerConnection(null);
+      console.log("Closed the WebRTC peer connection");
+    }
+    chatSocket.emit("call-ended", { caller });
+  };
+
+  const toggleCamera = async () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !isCameraOn;
+        setIsCameraOn(!isCameraOn);
+      }
+    }
+  };
+
+  const toggleMute = async () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !isMuted;
+        setIsMuted(!isMuted);
+      }
+    }
   };
 
   return (
@@ -82,7 +118,7 @@ export default function IncomingCallDialog() {
                 <Button
                   color="success"
                   variant="contained"
-                  onClick={handleAccept}
+                  onClick={() => handleAccept()}
                 >
                   Accept
                 </Button>
@@ -98,40 +134,98 @@ export default function IncomingCallDialog() {
           </Box>
         </Fade>
       </TrapFocus>
-      <Dialog open={callAccepted} maxWidth="md" fullWidth>
+      <Dialog
+        open={callAccepted}
+        PaperProps={{
+          style: {
+            backgroundColor: "black",
+            height: isMobile ? "100%" : "auto",
+            maxHeight: isMobile ? "100%" : "80vh",
+            margin: isMobile ? "0px" : "0px",
+            width: isMobile ? "100%" : 1200,
+            maxWidth: isMobile ? "100%" : 1200,
+          },
+        }}
+        fullWidth
+      >
         <DialogTitle>In call with {userData[caller]?.firstName}</DialogTitle>
         <DialogContent>
-          {/* <Button
-            variant="contained"
-            color="primary"
-            onClick={(e) => handleAcceptCall(e)}
-          >
-            Accept Call
-          </Button> */}
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              // transform: isMobile && !isCalling ? "scaleX(-1)" : "none",
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              height: isMobile ? "calc(100vh - 200px)" : "60vh",
+              position: "relative",
             }}
-          />
-          {/* {remoteUrl && <ReactPlayer url={remoteUrl} autoPlay />} */}
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            style={{ width: "100%", height: "300px" }}
-          />
-
-          <Button onClick={handleReject} style={{ marginTop: "20px" }}>
-            Hang up
-          </Button>
+          >
+            <Box
+              sx={{
+                width: isMobile ? "100%" : "50%",
+                height: isMobile ? "20%" : "100%",
+                position: isMobile ? "absolute" : "relative",
+                bottom: isMobile ? 10 : 0,
+                left: isMobile ? 90 : 0,
+                zIndex: isMobile ? 1 : "auto",
+              }}
+            >
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  transform: isMobile ? "scaleX(-1)" : "none",
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                width: isMobile ? "100%" : "50%",
+                height: "100%",
+              }}
+            >
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions style={{ justifyContent: "center" }}>
+          <Button
+            onClick={toggleCamera}
+            variant="contained"
+            color={isCameraOn ? "error" : "primary"}
+            sx={{ mr: 2 }}
+          >
+            {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+          </Button>
+          <Button
+            onClick={toggleMute}
+            variant="contained"
+            color={isMuted ? "warning" : "primary"}
+            sx={{ mr: 2 }}
+          >
+            {isMuted ? "Unmute" : "Mute"}
+          </Button>
+          <Button
+            onClick={handleEndVideoCall}
+            color="error"
+            variant="contained"
+          >
+            End Call
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

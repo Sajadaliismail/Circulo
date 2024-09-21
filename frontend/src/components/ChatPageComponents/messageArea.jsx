@@ -105,9 +105,12 @@ const MessageArea = ({
     }
   }, [messages]);
 
-  const handleStartVideoCall = () => {
-    setIsVideoCallActive(true);
-    setIsCameraOn(true);
+  const handleStartVideoCall = (e) => {
+    e.preventDefault();
+    if (!isVideoCallActive) {
+      setIsVideoCallActive(true);
+      setIsCameraOn(true);
+    }
   };
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -189,7 +192,10 @@ const MessageArea = ({
             <IconButton color="inherit">
               <Call />
             </IconButton>
-            <IconButton color="inherit" onClick={handleStartVideoCall}>
+            <IconButton
+              color="inherit"
+              onClick={(e) => handleStartVideoCall(e)}
+            >
               <Videocam />
             </IconButton>
           </Box>
