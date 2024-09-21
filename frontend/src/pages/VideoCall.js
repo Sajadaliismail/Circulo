@@ -12,6 +12,13 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
+import {
+  CallEnd,
+  Mic,
+  MicOff,
+  Videocam,
+  VideocamOff,
+} from "@mui/icons-material";
 
 const configuration = {
   iceServers: [
@@ -73,6 +80,7 @@ const VideoCall = ({
       "0"
     )}`;
   };
+
   const handleEndVideoCall = () => {
     setIsVideoCallActive(false);
     setIsCameraOn(false);
@@ -83,7 +91,7 @@ const VideoCall = ({
       setPeerConnection(null);
       console.log("Closed the WebRTC peer connection");
     }
-    chatSocket.emit("call-hung", { recipientId });
+    // chatSocket.emit("call_ended", { recipientId });
   };
 
   const toggleCamera = async () => {
@@ -120,6 +128,22 @@ const VideoCall = ({
           setRemoteError("No remote stream available");
           console.error("No remote stream available");
         }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log("ICE Connection State: ", pc.iceConnectionState);
+        if (pc.iceConnectionState === "connected") {
+          console.log("Peers are connected");
+        } else if (pc.iceConnectionState === "disconnected") {
+          console.log("Peers are disconnected");
+        } else if (pc.iceConnectionState === "failed") {
+          console.log("ICE connection failed");
+        }
+      };
+
+      // Monitor ICE gathering state
+      pc.ongatheringstatechange = () => {
+        console.log("ICE Gathering State: ", pc.iceGatheringState);
       };
 
       pc.onicecandidate = (event) => {
@@ -267,26 +291,24 @@ const VideoCall = ({
               }}
             />
           </Box>
-          {callAnswered && (
-            <Box
-              sx={{
-                width: isMobile ? "100%" : "50%",
+          <Box
+            sx={{
+              width: isMobile ? "100%" : "50%",
+              height: "100%",
+            }}
+          >
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                width: "100%",
                 height: "100%",
+                objectFit: "cover",
               }}
-            >
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-              />
-            </Box>
-          )}
+            />
+          </Box>
         </Box>
       </DialogContent>
       <DialogActions style={{ justifyContent: "center" }}>
@@ -296,18 +318,13 @@ const VideoCall = ({
           color={isCameraOn ? "error" : "primary"}
           sx={{ mr: 2 }}
         >
-          {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+          {isCameraOn ? <Videocam /> : <VideocamOff />}
         </Button>
-        <Button
-          onClick={toggleMute}
-          variant="contained"
-          color={isMuted ? "warning" : "primary"}
-          sx={{ mr: 2 }}
-        >
-          {isMuted ? "Unmute" : "Mute"}
+        <Button onClick={toggleMute} variant="contained" sx={{ mr: 2 }}>
+          {isMuted ? <Mic /> : <MicOff />}
         </Button>
         <Button onClick={handleEndVideoCall} color="error" variant="contained">
-          End Call
+          <CallEnd />
         </Button>
       </DialogActions>
     </Dialog>

@@ -16,6 +16,13 @@ import {
 import TrapFocus from "@mui/material/Unstable_TrapFocus";
 import useChatSocket from "../../hooks/chatSocketHook";
 import { useSelector } from "react-redux";
+import {
+  CallEnd,
+  Mic,
+  MicOff,
+  Videocam,
+  VideocamOff,
+} from "@mui/icons-material";
 
 export default function IncomingCallDialog() {
   const {
@@ -33,6 +40,7 @@ export default function IncomingCallDialog() {
     localStream,
     isCameraOn,
     setIsCameraOn,
+    setAccepted,
   } = useChatSocket();
   const { userData } = useSelector((state) => state.friends);
   const theme = useTheme();
@@ -41,6 +49,7 @@ export default function IncomingCallDialog() {
 
   const handleEndVideoCall = () => {
     setIsMuted(false);
+    setAccepted(false);
     stopCamera();
     if (peerConnection) {
       peerConnection.close();
@@ -118,7 +127,7 @@ export default function IncomingCallDialog() {
                 <Button
                   color="success"
                   variant="contained"
-                  onClick={() => handleAccept()}
+                  onClick={handleAccept}
                 >
                   Accept
                 </Button>
@@ -160,11 +169,11 @@ export default function IncomingCallDialog() {
           >
             <Box
               sx={{
-                width: isMobile ? "100%" : "50%",
+                width: isMobile ? "50%" : "50%",
                 height: isMobile ? "20%" : "100%",
                 position: isMobile ? "absolute" : "relative",
                 bottom: isMobile ? 10 : 0,
-                left: isMobile ? 90 : 0,
+                right: isMobile ? 90 : 0,
                 zIndex: isMobile ? 1 : "auto",
               }}
             >
@@ -191,7 +200,6 @@ export default function IncomingCallDialog() {
                 ref={remoteVideoRef}
                 autoPlay
                 playsInline
-                muted
                 style={{
                   width: "100%",
                   height: "100%",
@@ -208,22 +216,17 @@ export default function IncomingCallDialog() {
             color={isCameraOn ? "error" : "primary"}
             sx={{ mr: 2 }}
           >
-            {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+            {isCameraOn ? <Videocam /> : <VideocamOff />}
           </Button>
-          <Button
-            onClick={toggleMute}
-            variant="contained"
-            color={isMuted ? "warning" : "primary"}
-            sx={{ mr: 2 }}
-          >
-            {isMuted ? "Unmute" : "Mute"}
+          <Button onClick={toggleMute} variant="contained" sx={{ mr: 2 }}>
+            {isMuted ? <Mic /> : <MicOff />}
           </Button>
           <Button
             onClick={handleEndVideoCall}
             color="error"
             variant="contained"
           >
-            End Call
+            <CallEnd />
           </Button>
         </DialogActions>
       </Dialog>

@@ -22,6 +22,8 @@ const useChatSocket = () => {
   const [caller, setCaller] = useState(null);
   const remoteVideoRef = useRef(null);
   const localVideoRef = useRef(null);
+  const [accepted, setAccepted] = useState(false);
+
   const [localStream, setLocalStream] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -43,31 +45,6 @@ const useChatSocket = () => {
   const dispatch = useDispatch();
 
   let isCallAccepted = false;
-  const handleAcceptCall = async () => {
-    if (isCallAccepted) return;
-    isCallAccepted = true;
-    if (peerConnection && offerDetails) {
-      try {
-        if (offerDetails.sdp && offerDetails.type === "offer") {
-          const offerDesc = new RTCSessionDescription(offerDetails);
-
-          await peerConnection.setRemoteDescription(offerDesc);
-
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
-          const data = {
-            recipientId: caller,
-            answer,
-          };
-          chatSocket.emit("answer", data);
-        } else {
-          throw new Error("Invalid offer details");
-        }
-      } catch (error) {
-        console.error("Error accepting call:", error);
-      }
-    }
-  };
 
   const stopCamera = () => {
     if (localStream) {
@@ -85,9 +62,38 @@ const useChatSocket = () => {
     setCallAccepted(false);
   };
 
-  const handleAccept = async () => {
+  const handleAcceptCall = async () => {
+    if (isCallAccepted) return;
+    isCallAccepted = true;
+    if (peerConnection && offerDetails) {
+      try {
+        if (offerDetails.sdp && offerDetails.type === "offer") {
+          const offerDesc = new RTCSessionDescription(offerDetails);
+
+          await peerConnection.setRemoteDescription(offerDesc);
+
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+        } else {
+          throw new Error("Invalid offer details");
+        }
+      } catch (error) {
+        console.error("Error accepting call:", error);
+      }
+    }
+  };
+
+  const handleAccept = async (e) => {
+    console.log("handleAccept called", accepted);
+    if (accepted) {
+      return;
+    }
+
+    setAccepted(true);
+    e.preventDefault();
     setCallAccepted(true);
     setIncomingCall(false);
+
     if (!peerConnection) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -95,6 +101,8 @@ const useChatSocket = () => {
           audio: true,
         });
         const pc = new RTCPeerConnection(configuration);
+        setPeerConnection(pc);
+
         setIsCameraOn(true);
         localVideoRef.current.srcObject = stream;
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
@@ -102,12 +110,25 @@ const useChatSocket = () => {
         setLocalStream(stream);
         pc.ontrack = (event) => {
           const remoteStream = event.streams[0];
-
-          if (remoteVideoRef.current) {
+          if (remoteVideoRef.current && remoteStream) {
             remoteVideoRef.current.srcObject = remoteStream;
           } else {
-            console.log("no remote");
           }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          console.log("ICE Connection State: ", pc.iceConnectionState);
+          if (pc.iceConnectionState === "connected") {
+            console.log("Peers are connected");
+          } else if (pc.iceConnectionState === "disconnected") {
+            console.log("Peers are disconnected");
+          } else if (pc.iceConnectionState === "failed") {
+            console.log("ICE connection failed");
+          }
+        };
+
+        pc.ongatheringstatechange = () => {
+          console.log("ICE Gathering State: ", pc.iceGatheringState);
         };
 
         pc.onicecandidate = (event) => {
@@ -125,8 +146,13 @@ const useChatSocket = () => {
         await pc.setRemoteDescription(offerDesc);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        setPeerConnection(pc);
-        handleAcceptCall();
+        const data = {
+          recipientId: caller,
+          answer,
+        };
+        console.log("emtted", data);
+
+        chatSocket.emit("answer", data);
       } catch (error) {
         console.error("Error during WebRTC setup:", error);
       }
@@ -134,8 +160,6 @@ const useChatSocket = () => {
   };
 
   const handleReject = async () => {
-    console.log("callRejected");
-
     chatSocket.emit("call_status", {
       recipientId: caller,
       message: "Call rejected",
@@ -167,17 +191,14 @@ const useChatSocket = () => {
     const { candidate } = data;
 
     if (peerConnection) {
-      try {
-        if (peerConnection.remoteDescription) {
-          await peerConnection.addIceCandidate(candidate);
-          console.log("ICE candidate added successfully");
-        } else {
-          console.error(
-            "Remote description not set, can't add ICE candidate yet"
+      if (peerConnection.remoteDescription) {
+        const candidateData = new RTCIceCandidate(candidate);
+        peerConnection
+          .addIceCandidate(candidateData)
+          .then(() => console.log("ICE candidate added"))
+          .catch((error) =>
+            console.error("Error adding ICE candidate:", error)
           );
-        }
-      } catch (error) {
-        console.error("Error adding received ICE candidate:", error);
       }
     }
   };
@@ -337,6 +358,7 @@ const useChatSocket = () => {
     localStream,
     isCameraOn,
     setIsCameraOn,
+    setAccepted,
   };
 };
 
