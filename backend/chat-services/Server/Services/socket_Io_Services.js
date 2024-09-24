@@ -84,7 +84,12 @@ const handleMessage = async (userId, message, type, io, socket) => {
     const senderSocketId = await userClient.get(socket.user);
     const receiverSocketId = await userClient.get(userId);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", { message: message });
+      io.to(receiverSocketId).emit("newMessage", {
+        senderId: socket.user,
+        message: message,
+        timestamp: Date.now(),
+        roomId: roomId,
+      });
     }
 
     io.to(roomId).emit("newMessageNotification", {

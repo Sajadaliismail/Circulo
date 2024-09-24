@@ -60,7 +60,6 @@ io.on("connection", (socket) => {
 
     try {
       const receiverSocketId = await userClient.get(recipientId);
-      ``;
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("ice-candidate", { candidate });
       }
@@ -73,9 +72,14 @@ io.on("connection", (socket) => {
     const { recipientId, answer } = data;
     try {
       const receiverSocketId = await userClient.get(recipientId);
+      console.log(recipientId, socket.user);
 
       if (receiverSocketId) {
+        console.log("emitted");
+
         io.to(receiverSocketId).emit("callAnswered", answer);
+      } else {
+        console.log("not found");
       }
     } catch (error) {
       console.error("Error forwarding answer:", error.message);
