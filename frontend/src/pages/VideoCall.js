@@ -1,3 +1,4 @@
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -9,9 +10,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
-import chatSocket from "../features/utilities/Socket-io";
-import { useSelector } from "react-redux";
 import {
   CallEnd,
   Mic,
@@ -19,19 +17,13 @@ import {
   Videocam,
   VideocamOff,
 } from "@mui/icons-material";
+import chatSocket from "../features/utilities/Socket-io";
+import { useSelector } from "react-redux";
 
 const configuration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun.l.google.com:5349" },
-    { urls: "stun:stun1.l.google.com:3478" },
-    { urls: "stun:stun1.l.google.com:5349" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:5349" },
-    { urls: "stun:stun3.l.google.com:3478" },
-    { urls: "stun:stun3.l.google.com:5349" },
-    { urls: "stun:stun4.l.google.com:19302" },
-    { urls: "stun:stun4.l.google.com:5349" },
+    // ... (keep other STUN servers)
   ],
 };
 
@@ -45,22 +37,20 @@ const VideoCall = ({
   const { userData } = useSelector((state) => state.friends);
   const [localStream, setLocalStream] = useState(null);
   const [peerConnection, setPeerConnection] = useState(null);
-  const [isCalling, setIscalling] = useState(false);
   const [isRinging, setIsRinging] = useState("Calling...");
   const [isMuted, setIsMuted] = useState(false);
-  const [remoteError, setRemoteError] = useState(null);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const [callAnswered, setCallAnswered] = useState(false);
   const [timerStart, setTimerStart] = useState(false);
   const [timer, setTimer] = useState(0);
-  let mounted = false;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+  const remoteStreamRef = useRef(new MediaStream());
+
   useEffect(() => {
     let interval = null;
-
     if (timerStart) {
       interval = setInterval(() => {
         setTimer((prevTime) => prevTime + 1);
@@ -68,7 +58,6 @@ const VideoCall = ({
     } else if (!timerStart && timer !== 0) {
       clearInterval(interval);
     }
-
     return () => clearInterval(interval);
   }, [timerStart, timer]);
 
@@ -81,20 +70,26 @@ const VideoCall = ({
     )}`;
   };
 
-  const handleEndVideoCall = () => {
+  const handleEndVideoCall = useCallback(() => {
     setIsVideoCallActive(false);
     setIsCameraOn(false);
     setIsMuted(false);
-    stopCamera();
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+    }
     if (peerConnection) {
       peerConnection.close();
-      setPeerConnection(null);
-      console.log("Closed the WebRTC peer connection");
     }
-    // chatSocket.emit("call_ended", { recipientId });
-  };
+    chatSocket.emit("call_ended", { recipientId });
+  }, [
+    setIsVideoCallActive,
+    setIsCameraOn,
+    localStream,
+    peerConnection,
+    recipientId,
+  ]);
 
-  const toggleCamera = async () => {
+  const toggleCamera = useCallback(() => {
     if (localStream) {
       const videoTrack = localStream.getVideoTracks()[0];
       if (videoTrack) {
@@ -102,9 +97,9 @@ const VideoCall = ({
         setIsCameraOn(!isCameraOn);
       }
     }
-  };
+  }, [localStream, isCameraOn, setIsCameraOn]);
 
-  const toggleMute = async () => {
+  const toggleMute = useCallback(() => {
     if (localStream) {
       const audioTrack = localStream.getAudioTracks()[0];
       if (audioTrack) {
@@ -112,44 +107,42 @@ const VideoCall = ({
         setIsMuted(!isMuted);
       }
     }
-  };
+  }, [localStream, isMuted]);
 
   useEffect(() => {
     const makeCall = async () => {
       const pc = new RTCPeerConnection(configuration);
 
       pc.ontrack = (event) => {
-        const remoteStream = event.streams[0];
-        if (remoteStream) {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteStream;
-          }
-        } else {
-          setRemoteError("No remote stream available");
-          console.error("No remote stream available");
+        console.log(`Received ${event.track.kind} track`);
+        remoteStreamRef.current.addTrack(event.track);
+
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteStreamRef.current;
         }
+
+        event.streams.forEach((stream, index) => {
+          console.log(`Stream ${index}:`, stream.id);
+          stream.getTracks().forEach((track) => {
+            console.log(`  Track:`, track.kind, track.id);
+          });
+        });
       };
 
       pc.oniceconnectionstatechange = () => {
         console.log("ICE Connection State: ", pc.iceConnectionState);
-        if (pc.iceConnectionState === "connected") {
-          console.log("Peers are connected");
-        } else if (pc.iceConnectionState === "disconnected") {
-          console.log("Peers are disconnected");
-        } else if (pc.iceConnectionState === "failed") {
-          console.log("ICE connection failed");
-        }
       };
 
-      // Monitor ICE gathering state
-      pc.ongatheringstatechange = () => {
-        console.log("ICE Gathering State: ", pc.iceGatheringState);
+      pc.onsignalingstatechange = () => {
+        console.log("Signaling State: ", pc.signalingState);
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          const data = { recipientId, candidate: event.candidate };
-          chatSocket.emit("ice-candidate", data);
+          chatSocket.emit("ice-candidate", {
+            recipientId,
+            candidate: event.candidate,
+          });
         }
       };
 
@@ -160,80 +153,72 @@ const VideoCall = ({
           video: true,
           audio: true,
         });
-
-        localVideoRef.current.srcObject = stream;
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
         setLocalStream(stream);
+
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        const data = { recipientId, offer };
-        chatSocket.emit("start-call", data);
+        chatSocket.emit("start-call", { recipientId, offer });
       } catch (error) {
         console.error("Error getting media stream:", error);
       }
     };
 
-    chatSocket.on("callFailed", () => {
-      setIsRinging("Not reachable now.");
-    });
-
-    if (!mounted) {
+    if (isVideoCallActive) {
       makeCall();
-      mounted = true;
     }
 
     return () => {
-      chatSocket.off("callFailed");
-      stopCamera();
+      if (peerConnection) {
+        peerConnection.close();
+      }
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+      }
     };
-  }, []);
+  }, [isVideoCallActive, recipientId]);
 
   useEffect(() => {
     const handleAnswer = async (answer) => {
-      console.log("call answered");
-
-      setCallAnswered(true);
-      if (peerConnection) {
-        const answerDesc = new RTCSessionDescription(answer);
+      if (peerConnection && peerConnection.signalingState !== "closed") {
         try {
-          await peerConnection.setRemoteDescription(answerDesc);
-          console.log("Answer successfully set as remote description");
+          await peerConnection.setRemoteDescription(
+            new RTCSessionDescription(answer)
+          );
+          console.log("Answer set as remote description");
+          setCallAnswered(true);
           setTimerStart(true);
         } catch (error) {
-          console.error("Error setting remote description for answer:", error);
+          console.error("Error setting remote description:", error);
         }
       }
     };
 
-    const handleCallStatus = async (data) => {
-      console.log(data, "ethy");
-
-      setIsRinging(data.message);
+    const handleIceCandidate = async (data) => {
+      if (peerConnection && peerConnection.remoteDescription) {
+        try {
+          await peerConnection.addIceCandidate(
+            new RTCIceCandidate(data.candidate)
+          );
+        } catch (error) {
+          console.error("Error adding received ice candidate", error);
+        }
+      }
     };
 
     chatSocket.on("callAnswered", handleAnswer);
-    chatSocket.on("user_status", handleCallStatus);
+    chatSocket.on("ice-candidate", handleIceCandidate);
+
     return () => {
       chatSocket.off("callAnswered", handleAnswer);
-      chatSocket.off("user_status", handleCallStatus);
+      chatSocket.off("ice-candidate", handleIceCandidate);
     };
   }, [peerConnection]);
-
-  const stopCamera = () => {
-    if (localStream) {
-      localStream.getTracks().forEach((track) => {
-        track.stop();
-      });
-    }
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = null;
-    }
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = null;
-    }
-    setLocalStream(null);
-  };
 
   return (
     <Dialog
@@ -270,7 +255,7 @@ const VideoCall = ({
         >
           <Box
             sx={{
-              width: isCalling || isMobile ? "100%" : "50%",
+              width: !callAnswered || isMobile ? "100%" : "50%",
               height: isMobile && callAnswered ? "20%" : "100%",
               position: isMobile && callAnswered ? "absolute" : "relative",
               bottom: isMobile && callAnswered ? 10 : 0,
@@ -287,7 +272,7 @@ const VideoCall = ({
                 width: "100%",
                 height: "100%",
                 objectFit: "contain",
-                transform: isMobile && !isCalling ? "scaleX(-1)" : "none",
+                transform: isMobile && callAnswered ? "scaleX(-1)" : "none",
               }}
             />
           </Box>
@@ -301,7 +286,6 @@ const VideoCall = ({
               ref={remoteVideoRef}
               autoPlay
               playsInline
-              muted
               style={{
                 width: "100%",
                 height: "100%",
@@ -315,13 +299,18 @@ const VideoCall = ({
         <Button
           onClick={toggleCamera}
           variant="contained"
-          color={isCameraOn ? "error" : "primary"}
+          color={isCameraOn ? "primary" : "error"}
           sx={{ mr: 2 }}
         >
           {isCameraOn ? <Videocam /> : <VideocamOff />}
         </Button>
-        <Button onClick={toggleMute} variant="contained" sx={{ mr: 2 }}>
-          {isMuted ? <Mic /> : <MicOff />}
+        <Button
+          onClick={toggleMute}
+          variant="contained"
+          color={isMuted ? "error" : "primary"}
+          sx={{ mr: 2 }}
+        >
+          {isMuted ? <MicOff /> : <Mic />}
         </Button>
         <Button onClick={handleEndVideoCall} color="error" variant="contained">
           <CallEnd />

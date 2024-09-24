@@ -4,6 +4,7 @@ import {
   fetchChatFriends,
   fetchchats,
 } from "./chatsAsycnThunks";
+import { act } from "react";
 
 const initialState = {
   chats: {},
@@ -70,11 +71,38 @@ const chatsSlice = createSlice({
     //     ...curr,
     //   };
     // },
-    // setUnreadMessages: (state, action) => {
-    //   const friendId = action.payload.senderId;
-    //   state.unReadMessages[friendId] =
-    //     (state.unReadMessages[friendId] || 0) + 1;
-    // },
+    setUnreadMessages: (state, action) => {
+      console.log(action.payload);
+
+      const friendId = action.payload.senderId;
+      const roomId = action.payload.roomId;
+
+      // Check if the friend already exists in the chatFriends list
+      const existingFriend = state.chatFriends.find(
+        (friends) => friends._id === friendId
+      );
+
+      if (existingFriend) {
+        // Map over the array to update the unreadCount of the correct friend
+        state.chatFriends = state.chatFriends.map((friends) => {
+          if (friends._id === friendId) {
+            return {
+              ...friends,
+              unreadCount: friends.unreadCount + 1, // Increment unreadCount immutably
+            };
+          }
+          return friends; // Return other friends unchanged
+        });
+      } else {
+        // Add new friend to the list with unreadCount of 1
+        state.chatFriends.unshift({
+          _id: friendId,
+          unreadCount: 1,
+          roomId: roomId,
+        });
+      }
+    },
+
     // setReadMessages: (state, action) => {
     //   const friendId = action.payload;
     //   const curr = state.chatFriends.map((user) => {
@@ -152,12 +180,12 @@ const chatsSlice = createSlice({
   },
 });
 
-// export const {
-//   setChats,
-//   setUnreadMessages,
-//   setReadMessages,
-//   setReceivedChats,
-//   setSentMessages,
-//   setEmoji,
-// } = chatsSlice.actions;
+export const {
+  //   setChats,
+  setUnreadMessages,
+  //   setReadMessages,
+  //   setReceivedChats,
+  //   setSentMessages,
+  //   setEmoji,
+} = chatsSlice.actions;
 export default chatsSlice.reducer;

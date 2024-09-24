@@ -7,6 +7,7 @@ import { useRecoilState } from "recoil";
 import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
+import { setUnreadMessages } from "../features/chats/chatsSlice";
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
@@ -101,7 +102,6 @@ const useChatSocket = () => {
           audio: true,
         });
         const pc = new RTCPeerConnection(configuration);
-        setPeerConnection(pc);
 
         setIsCameraOn(true);
         localVideoRef.current.srcObject = stream;
@@ -113,6 +113,7 @@ const useChatSocket = () => {
           if (remoteVideoRef.current && remoteStream) {
             remoteVideoRef.current.srcObject = remoteStream;
           } else {
+            console.log("setting remote video failed");
           }
         };
 
@@ -146,6 +147,8 @@ const useChatSocket = () => {
         await pc.setRemoteDescription(offerDesc);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        setPeerConnection(pc);
+
         const data = {
           recipientId: caller,
           answer,
@@ -291,6 +294,7 @@ const useChatSocket = () => {
       chatSocket.on("ice-candidate", handleIceCandidate);
 
       chatSocket.on("newMessage", (arg) => {
+        dispatch(setUnreadMessages(arg));
         console.log(arg);
         enqueueSnackbar("You have one message", { variant: "success" });
       });

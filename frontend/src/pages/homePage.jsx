@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Box, Grid } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../features/friends/friendsAsyncThunks";
@@ -9,17 +9,28 @@ import NewPost from "../components/HomePageComponents/newPost";
 import Posts from "../components/HomePageComponents/posts";
 import ChatApp from "../components/chatbox/chatbox";
 import "cropperjs/dist/cropper.css";
+import { fetchChatFriends } from "../features/chats/chatsAsycnThunks";
 
 export default function Homepage({ msg, setmsg }) {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.user);
   const { userData } = useSelector((state) => state.friends);
+  const { chatFriends } = useSelector((state) => state.chats);
 
   const fetchUserData = (id) => {
     if (!userData[id]) {
       dispatch(fetchUserDetails(id));
     }
   };
+
+  useEffect(() => {
+    const fetchChat = async () => {
+      await dispatch(fetchChatFriends());
+    };
+    fetchChat().then(() => {
+      chatFriends?.map((friend) => fetchUserData(friend._id));
+    });
+  }, []);
 
   if (!user?.firstName) return null;
 

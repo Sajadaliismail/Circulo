@@ -25,9 +25,15 @@ import chatSocket from "../../features/utilities/Socket-io";
 import { useResetRecoilState } from "recoil";
 import { postsAtom } from "../../atoms/postAtoms";
 import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
+import { fetchChatFriends } from "../../features/chats/chatsAsycnThunks";
+import { useEffect } from "react";
+import { useState } from "react";
 
 export default function Header() {
   const { user } = useSelector((state) => state.user);
+  const { chatFriends } = useSelector((state) => state.chats);
+  const { userData } = useSelector((state) => state.friends);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -35,6 +41,22 @@ export default function Header() {
   const postReset = useResetRecoilState(postsAtom);
   const chatfriendsReset = useResetRecoilState(ChatFriendsData);
   const chatmessageReset = useResetRecoilState(ChatRoomMessages);
+  const [unreadChatsCount, setUreadChatsCount] = useState(0);
+  useEffect(() => {
+    const unread =
+      chatFriends?.filter((friend) => friend.unreadCount > 0).length || 0;
+    setUreadChatsCount(unread);
+  }, [chatFriends]);
+
+  const [anchorElMessage, setAnchorElMessage] = React.useState(null);
+  const open = Boolean(anchorElMessage);
+  const handleClick = async (event) => {
+    setAnchorElMessage(event.currentTarget);
+    await dispatch(fetchChatFriends());
+  };
+  const handleClose = () => {
+    setAnchorElMessage(null);
+  };
 
   const handleLogout = async () => {
     chatSocket.emit("logout");
@@ -127,15 +149,83 @@ export default function Header() {
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton
-              onClick={() => navigate("/chats")}
+              // onClick={() => navigate("/chats")}
+              id="basic-button"
+              aria-controls={open ? "basic-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={open ? "true" : undefined}
+              onClick={handleClick}
               size="large"
               aria-label="show 4 new mails"
               color="inherit"
             >
-              <Badge badgeContent={4} color="error">
+              <Badge badgeContent={unreadChatsCount} color="error">
                 <MailIcon />
               </Badge>
             </IconButton>
+            <Menu
+              id="basic-menu"
+              anchorEl={anchorElMessage}
+              open={open}
+              onClose={handleClose}
+              MenuListProps={{
+                "aria-labelledby": "basic-button",
+              }}
+            >
+              {chatFriends &&
+                chatFriends.map((friend, index) => (
+                  <MenuItem
+                    sx={{
+                      width: 300,
+                      height: 50,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontWeight: friend.unreadCount === 0 ? "100" : "bold",
+                      bgcolor:
+                        friend.unreadCount > 0
+                          ? "rgba(255,0,0,0.1)"
+                          : "transparent",
+                    }}
+                    key={index}
+                  >
+                    <Box display="flex" alignItems="center">
+                      {userData[friend._id]?.firstName}
+                    </Box>
+
+                    {friend.unreadCount === 0 && (
+                      <span
+                        className="ml-auto"
+                        style={{
+                          fontSize: 12,
+                          color: "gray",
+                        }}
+                      >
+                        (Read)
+                      </span>
+                    )}
+                    {friend.unreadCount > 0 && (
+                      <>
+                        <span style={{ fontSize: 14 }}>
+                          {friend?.unreadCount} new messages
+                        </span>
+                        <Badge
+                          color="error"
+                          variant="dot"
+                          sx={{ marginRight: 2 }}
+                        ></Badge>
+                      </>
+                    )}
+                  </MenuItem>
+                ))}
+
+              <MenuItem onClick={() => navigate("/chats")}>
+                See all messages
+              </MenuItem>
+              {/*
+              <MenuItem onClick={handleClose}>My account</MenuItem>
+              <MenuItem onClick={handleClose}>Logout</MenuItem> */}
+            </Menu>
             <IconButton
               size="large"
               aria-label="show 17 new notifications"
