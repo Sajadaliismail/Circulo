@@ -103,14 +103,16 @@ const VideoCall = ({
 
   useEffect(() => {
     const handleAnswer = (answer) => {
+      console.log(answer);
+
       if (peer) {
-        peer.signal(answer); // Signal the answer to the peer
+        peer.signal(answer);
       }
     };
 
     const handleIceCandidate = (data) => {
       if (peer) {
-        peer.signal(data.candidate); // Signal the ICE candidate to the peer
+        peer.signal(data.candidate);
       }
     };
 

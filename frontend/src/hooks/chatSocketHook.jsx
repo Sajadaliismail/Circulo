@@ -90,7 +90,7 @@ const useChatSocket = () => {
     p.on("signal", (answerSignal) => {
       const data = {
         recipientId: caller,
-        signal: answerSignal,
+        answer: answerSignal,
       };
       chatSocket.emit("answer", data);
     });
