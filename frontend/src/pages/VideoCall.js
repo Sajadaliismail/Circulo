@@ -17,7 +17,7 @@ import {
   Videocam,
   VideocamOff,
 } from "@mui/icons-material";
-import SimplePeer from "simple-peer/simplepeer.min.js";
+import SimplePeer from "simple-peer";
 
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
@@ -86,7 +86,7 @@ const VideoCall = ({
 
     return () => {
       if (peer) {
-        peer.destroy(); // Cleanup on unmount
+        peer.destroy();
       }
       if (localStream) {
         localStream.getTracks().forEach((track) => track.stop());
@@ -123,8 +123,11 @@ const VideoCall = ({
     if (localStream) {
       localStream.getTracks().forEach((track) => track.stop());
     }
-    if (peer) {
-      peer.destroy(); // Cleanup the peer connection
+    try {
+      peer.destroy();
+      console.log("Peer connection destroyed successfully.");
+    } catch (error) {
+      console.error("Error destroying peer connection:", error);
     }
     chatSocket.emit("call_ended", { recipientId });
   }, [setIsVideoCallActive, setIsCameraOn, localStream, peer, recipientId]);
