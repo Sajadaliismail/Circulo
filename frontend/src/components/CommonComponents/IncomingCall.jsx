@@ -90,7 +90,7 @@ export default function IncomingCallDialog() {
             variant="outlined"
             tabIndex={-1}
             sx={{
-              zIndex: 100,
+              zIndex: 500,
               position: "fixed",
               top: 65,
               right: 50,

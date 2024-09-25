@@ -7,6 +7,7 @@ import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
 import { setUnreadMessages } from "../features/chats/chatsSlice";
+const iceCandidateBuffer = [];
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
@@ -80,7 +81,6 @@ const useChatSocket = () => {
     }
   };
 
-  const iceCandidateBuffer = [];
   const handleAccept = async (e) => {
     console.log("handleAccept called", accepted);
     if (accepted) {
@@ -120,6 +120,15 @@ const useChatSocket = () => {
 
         pc.oniceconnectionstatechange = () => {
           console.log("ICE Connection State: ", pc.iceConnectionState);
+          if (
+            pc.iceConnectionState === "disconnected" ||
+            pc.iceConnectionState === "failed"
+          ) {
+            pc.restartIce();
+            console.log(
+              "Connection disconnected or failed, attempting to recover..."
+            );
+          }
         };
 
         pc.onsignalingstatechange = () => {
@@ -142,15 +151,16 @@ const useChatSocket = () => {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        iceCandidateBuffer.forEach(async (candidate) => {
+        for (const candidate of iceCandidateBuffer) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log("Buffered ICE candidate added");
+            console.log("Buffered ICE candidate added:", candidate);
           } catch (error) {
             console.error("Error adding buffered ICE candidate:", error);
           }
-        });
+        }
         iceCandidateBuffer.length = 0;
+
         setPeerConnection(pc);
 
         const data = {
@@ -162,6 +172,11 @@ const useChatSocket = () => {
       } catch (error) {
         console.error("Error during WebRTC setup:", error);
       }
+      // finally {
+      //   setTimeout(async () => {
+      //     await setIceCandidates();
+      //   }, 2000);
+      // }
     }
   };
 
@@ -206,6 +221,24 @@ const useChatSocket = () => {
       iceCandidateBuffer.push(data.candidate);
     }
   };
+
+  // const setIceCandidates = async () => {
+  //   if (peerConnection) {
+  //     for (const candidate of iceCandidateBuffer) {
+  //       try {
+  //         await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+  //         console.log("Buffered ICE candidate added:", candidate);
+  //       } catch (error) {
+  //         console.error("Error adding buffered ICE candidate:", error);
+  //       }
+  //     }
+  //     iceCandidateBuffer.length = 0; // Clear buffer after adding all candidates
+  //   } else {
+  //     console.log(peerConnection);
+
+  //     console.log("nadannilla");
+  //   }
+  // };
 
   useEffect(() => {
     if (isLoggedIn) {

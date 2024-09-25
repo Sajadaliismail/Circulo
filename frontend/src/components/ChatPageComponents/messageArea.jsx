@@ -205,7 +205,7 @@ const MessageArea = ({
           ref={messageEl}
           sx={{
             paddingX: "20px",
-            height: "60vh",
+            height: "65vh",
             overflowY: "auto",
             flexGrow: 1,
             overflowX: "hidden",

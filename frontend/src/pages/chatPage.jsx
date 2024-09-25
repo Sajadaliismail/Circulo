@@ -262,7 +262,7 @@ export default function ChatPage() {
   );
 
   const renderChatArea = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       {/* <Box
           sx={{
             p: 1,
@@ -325,13 +325,20 @@ export default function ChatPage() {
   return (
     <>
       <Header setChatMessages={setChatMessages} />
-      <Grid container sx={{ height: "91vh", flexWrap: "nowrap" }}>
+      <Grid container sx={{ flexWrap: "nowrap" }}>
         {!isMobile && (
           <Box sx={{ maxWidth: 300, borderRight: 1, borderColor: "divider" }}>
             {renderUserList()}
           </Box>
         )}
-        <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+        <Box
+          sx={{
+            height: "85vh",
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {renderChatArea()}
         </Box>
       </Grid>

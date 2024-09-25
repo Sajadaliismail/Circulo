@@ -97,7 +97,7 @@ function ChatApp({ fetchUserData, msg, setmsg }) {
   const onLoadPrevious = (conversationId) => {};
 
   return (
-    <div className="fixed bottom-0 right-80">
+    <div className="fixed bottom-0 right-80 hidden md:block">
       <Suspense fallback={<div>Loading...</div>}>
         <div
           className=" gap-3"

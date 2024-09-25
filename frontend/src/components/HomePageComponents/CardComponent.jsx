@@ -43,7 +43,7 @@ export function CardComponent({
               p: 0,
               minWidth: "auto",
               minHeight: "auto",
-              zIndex: 20,
+              // zIndex: 1,
             }}
             id="basic-button"
             aria-controls={openmenu ? "basic-menu" : undefined}
@@ -94,7 +94,7 @@ export function CardComponent({
             userId={author._id}
           />
           <div className="flex flex-col ml-3">
-            <p className="font-normal text-base text-black    dark:text-white relative z-10 ">
+            <p className="font-normal text-base text-black    dark:text-white relative  ">
               {`${author.firstName} ${author.lastName}`}
             </p>
             <p className="text-sm text-gray-800  dark:text-slate-300">
