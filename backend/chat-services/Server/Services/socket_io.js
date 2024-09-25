@@ -56,12 +56,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("ice-candidate", async (data) => {
-    const { recipientId, candidate } = data;
+    const { recipientId, candidate, type } = data;
 
     try {
       const receiverSocketId = await userClient.get(recipientId);
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit("ice-candidate", { candidate });
+        io.to(receiverSocketId).emit(`ice-candidate-${type}`, { candidate });
+      } else {
+        console.log("ayachattilla");
       }
     } catch (error) {
       console.error("Error forwarding ICE candidate:", error.message);
