@@ -17,16 +17,11 @@ import {
   Videocam,
   VideocamOff,
 } from "@mui/icons-material";
+import SimplePeer from "simple-peer/simplepeer.min.js";
+
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
 
-const configuration = {
-  iceServers: [
-    {
-      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
-    },
-  ],
-};
 const VideoCall = ({
   isVideoCallActive,
   isCameraOn,
@@ -36,39 +31,90 @@ const VideoCall = ({
 }) => {
   const { userData } = useSelector((state) => state.friends);
   const [localStream, setLocalStream] = useState(null);
-  const [peerConnection, setPeerConnection] = useState(null);
-  const [isRinging, setIsRinging] = useState("Calling...");
+  const [peer, setPeer] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const [callAnswered, setCallAnswered] = useState(false);
-  const [timerStart, setTimerStart] = useState(false);
-  const [timer, setTimer] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const remoteStreamRef = useRef(new MediaStream());
+  useEffect(() => {
+    const startVideoCall = async () => {
+      // Create a new SimplePeer instance
+      const newPeer = new SimplePeer({
+        initiator: true, // Set to true if this peer is initiating the connection
+        trickle: false, // Disable trickle ICE
+        video: true,
+        audio: true,
+      });
+
+      // Handling stream events
+      newPeer.on("stream", (stream) => {
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = stream;
+        }
+      });
+
+      // Get local media stream
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+        setLocalStream(stream);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        // Add local stream to peer
+        stream.getTracks().forEach((track) => newPeer.addTrack(track, stream));
+
+        // Handle signaling
+        newPeer.on("signal", (data) => {
+          chatSocket.emit("start-call", { recipientId, offer: data });
+        });
+      } catch (error) {
+        console.error("Error getting media stream:", error);
+      }
+
+      setPeer(newPeer);
+    };
+
+    if (isVideoCallActive) {
+      startVideoCall();
+    }
+
+    return () => {
+      if (peer) {
+        peer.destroy(); // Cleanup on unmount
+      }
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [isVideoCallActive, recipientId]);
 
   useEffect(() => {
-    let interval = null;
-    if (timerStart) {
-      interval = setInterval(() => {
-        setTimer((prevTime) => prevTime + 1);
-      }, 1000);
-    } else if (!timerStart && timer !== 0) {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [timerStart, timer]);
+    const handleAnswer = (answer) => {
+      if (peer) {
+        peer.signal(answer); // Signal the answer to the peer
+      }
+    };
 
-  const formatTime = (timeInSeconds) => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = timeInSeconds % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-      2,
-      "0"
-    )}`;
-  };
+    const handleIceCandidate = (data) => {
+      if (peer) {
+        peer.signal(data.candidate); // Signal the ICE candidate to the peer
+      }
+    };
+
+    chatSocket.on("callAnswered", handleAnswer);
+    chatSocket.on("ice-candidate-reciever", handleIceCandidate);
+
+    return () => {
+      chatSocket.off("callAnswered", handleAnswer);
+      chatSocket.off("ice-candidate-reciever", handleIceCandidate);
+    };
+  }, [peer]);
 
   const handleEndVideoCall = useCallback(() => {
     setIsVideoCallActive(false);
@@ -77,17 +123,11 @@ const VideoCall = ({
     if (localStream) {
       localStream.getTracks().forEach((track) => track.stop());
     }
-    if (peerConnection) {
-      peerConnection.close();
+    if (peer) {
+      peer.destroy(); // Cleanup the peer connection
     }
     chatSocket.emit("call_ended", { recipientId });
-  }, [
-    setIsVideoCallActive,
-    setIsCameraOn,
-    localStream,
-    peerConnection,
-    recipientId,
-  ]);
+  }, [setIsVideoCallActive, setIsCameraOn, localStream, peer, recipientId]);
 
   const toggleCamera = useCallback(() => {
     if (localStream) {
@@ -108,134 +148,6 @@ const VideoCall = ({
       }
     }
   }, [localStream, isMuted]);
-  useEffect(() => {
-    const makeCall = async () => {
-      const pc = new RTCPeerConnection(configuration);
-
-      pc.ontrack = (event) => {
-        console.log(`Received ${event.track.kind} track`);
-        remoteStreamRef.current.addTrack(event.track);
-
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStreamRef.current;
-        }
-
-        event.streams.forEach((stream, index) => {
-          console.log(`Stream ${index}:`, stream.id);
-          stream.getTracks().forEach((track) => {
-            console.log(`  Track:`, track.kind, track.id);
-          });
-        });
-      };
-
-      pc.oniceconnectionstatechange = () => {
-        console.log("ICE Connection State: ", pc.iceConnectionState);
-        if (
-          pc.iceConnectionState === "disconnected" ||
-          pc.iceConnectionState === "failed"
-        ) {
-          pc.restartIce();
-          console.log(
-            "Connection disconnected or failed, attempting to recover..."
-          );
-        }
-      };
-
-      pc.ongatheringstatechange = () => {
-        console.log("ICE Gathering State: ", pc.iceGatheringState);
-      };
-
-      pc.onsignalingstatechange = () => {
-        console.log("Signaling State: ", pc.signalingState);
-      };
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log("Sending new ICE candidate to recipient");
-          chatSocket.emit("ice-candidate", {
-            recipientId,
-            candidate: event.candidate,
-            type: "caller",
-          });
-        } else {
-          console.log("All ICE candidates have been sent");
-        }
-      };
-
-      setPeerConnection(pc);
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-        setLocalStream(stream);
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        chatSocket.emit("start-call", { recipientId, offer });
-      } catch (error) {
-        console.error("Error getting media stream:", error);
-      }
-    };
-
-    if (isVideoCallActive) {
-      makeCall();
-    }
-
-    return () => {
-      if (peerConnection) {
-        peerConnection.close();
-      }
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [isVideoCallActive, recipientId]);
-
-  useEffect(() => {
-    const handleAnswer = async (answer) => {
-      if (peerConnection) {
-        try {
-          await peerConnection.setRemoteDescription(
-            new RTCSessionDescription(answer)
-          );
-
-          console.log("Answer set as remote description");
-          setCallAnswered(true);
-          setTimerStart(true);
-        } catch (error) {
-          console.error("Error setting remote description:", error);
-        }
-      }
-    };
-
-    const handleIceCandidate = async (data) => {
-      if (peerConnection) {
-        try {
-          await peerConnection.addIceCandidate(
-            new RTCIceCandidate(data.candidate)
-          );
-          console.log("ICE candidate added");
-        } catch (error) {
-          console.error("Error adding received ice candidate", error);
-        }
-      }
-    };
-
-    chatSocket.on("callAnswered", handleAnswer);
-    chatSocket.on("ice-candidate-reciever", handleIceCandidate);
-
-    return () => {
-      chatSocket.off("callAnswered", handleAnswer);
-      chatSocket.off("ice-candidate-reciever", handleIceCandidate);
-    };
-  }, [peerConnection]);
 
   return (
     <Dialog
@@ -254,12 +166,6 @@ const VideoCall = ({
     >
       <DialogTitle style={{ color: "white" }}>
         Video Call with {userData[recipientId]?.firstName}
-        <Typography color="white">{isRinging}</Typography>
-        {timerStart && (
-          <span className="text-white font-thin text-sm">
-            In call: {formatTime(timer)}
-          </span>
-        )}
       </DialogTitle>
       <DialogContent>
         <Box
@@ -270,16 +176,7 @@ const VideoCall = ({
             position: "relative",
           }}
         >
-          <Box
-            sx={{
-              width: !callAnswered || isMobile ? "100%" : "50%",
-              height: isMobile && callAnswered ? "20%" : "100%",
-              position: isMobile && callAnswered ? "absolute" : "relative",
-              bottom: isMobile && callAnswered ? 10 : 0,
-              left: isMobile && callAnswered ? 90 : 0,
-              zIndex: isMobile && callAnswered ? 1 : "auto",
-            }}
-          >
+          <Box sx={{ width: !peer ? "100%" : "50%", height: "100%" }}>
             <video
               ref={localVideoRef}
               autoPlay
@@ -289,16 +186,11 @@ const VideoCall = ({
                 width: "100%",
                 height: "100%",
                 objectFit: "contain",
-                transform: isMobile && callAnswered ? "scaleX(-1)" : "none",
+                transform: isMobile ? "scaleX(-1)" : "none",
               }}
             />
           </Box>
-          <Box
-            sx={{
-              width: isMobile ? "100%" : "50%",
-              height: "100%",
-            }}
-          >
+          <Box sx={{ width: isMobile ? "100%" : "50%", height: "100%" }}>
             <video
               ref={remoteVideoRef}
               autoPlay
