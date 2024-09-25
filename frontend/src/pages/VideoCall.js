@@ -21,10 +21,7 @@ import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
 
 const configuration = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    // ... (keep other STUN servers)
-  ],
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
 const VideoCall = ({
@@ -139,6 +136,7 @@ const VideoCall = ({
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log("New ICE candidate:", event.candidate);
           chatSocket.emit("ice-candidate", {
             recipientId,
             candidate: event.candidate,
@@ -200,11 +198,13 @@ const VideoCall = ({
     };
 
     const handleIceCandidate = async (data) => {
+      console.log("Received ICE candidate:", data.candidate);
       if (peerConnection && peerConnection.remoteDescription) {
         try {
           await peerConnection.addIceCandidate(
             new RTCIceCandidate(data.candidate)
           );
+          console.log("ICE candidate added");
         } catch (error) {
           console.error("Error adding received ice candidate", error);
         }
