@@ -72,29 +72,24 @@ const chatsSlice = createSlice({
     //   };
     // },
     setUnreadMessages: (state, action) => {
-      console.log(action.payload);
-
       const friendId = action.payload.senderId;
       const roomId = action.payload.roomId;
 
-      // Check if the friend already exists in the chatFriends list
       const existingFriend = state.chatFriends.find(
         (friends) => friends._id === friendId
       );
 
       if (existingFriend) {
-        // Map over the array to update the unreadCount of the correct friend
         state.chatFriends = state.chatFriends.map((friends) => {
           if (friends._id === friendId) {
             return {
               ...friends,
-              unreadCount: friends.unreadCount + 1, // Increment unreadCount immutably
+              unreadCount: friends.unreadCount + 1,
             };
           }
-          return friends; // Return other friends unchanged
+          return friends;
         });
       } else {
-        // Add new friend to the list with unreadCount of 1
         state.chatFriends.unshift({
           _id: friendId,
           unreadCount: 1,
@@ -103,20 +98,19 @@ const chatsSlice = createSlice({
       }
     },
 
-    // setReadMessages: (state, action) => {
-    //   const friendId = action.payload;
-    //   const curr = state.chatFriends.map((user) => {
-    //     if (user._id === friendId) {
-    //       console.log(user, friendId);
-    //       return {
-    //         ...user,
-    //         unreadCount: 0,
-    //       };
-    //     }
-    //     return user;
-    //   });
-    //   state.chatFriends = curr;
-    // },
+    setReadMessages: (state, action) => {
+      const friendId = action.payload;
+      const curr = state.chatFriends.map((user) => {
+        if (user._id === friendId) {
+          return {
+            ...user,
+            unreadCount: 0,
+          };
+        }
+        return user;
+      });
+      state.chatFriends = curr;
+    },
     // setSentMessages: (state, action) => {
     //   const { message, timestamp, type } = action.payload;
     //   const roomId = state.roomId;
@@ -183,7 +177,7 @@ const chatsSlice = createSlice({
 export const {
   //   setChats,
   setUnreadMessages,
-  //   setReadMessages,
+  setReadMessages,
   //   setReceivedChats,
   //   setSentMessages,
   //   setEmoji,

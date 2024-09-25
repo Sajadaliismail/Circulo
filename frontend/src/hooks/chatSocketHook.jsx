@@ -1,4 +1,3 @@
-// src/hooks/useChatSocket.js
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import chatSocket from "../features/utilities/Socket-io";
@@ -292,10 +291,11 @@ const useChatSocket = () => {
 
       chatSocket.on("incomingCall", handleIncomingCall);
       chatSocket.on("ice-candidate", handleIceCandidate);
-
+      console.log("use-effect");
       chatSocket.on("newMessage", (arg) => {
+        console.log("triggeres");
+
         dispatch(setUnreadMessages(arg));
-        console.log(arg);
         enqueueSnackbar("You have one message", { variant: "success" });
       });
 
@@ -320,8 +320,8 @@ const useChatSocket = () => {
         chatSocket.disconnect();
         setSocketConnected(false);
       };
-    }
-  }, [isLoggedIn]);
+    } else return;
+  }, []);
 
   useEffect(() => {
     const handleCleanup = () => {
@@ -329,6 +329,7 @@ const useChatSocket = () => {
       chatSocket.disconnect();
       setSocketConnected(false);
 
+      chatSocket.off("newMessage");
       chatSocket.off("connect");
       chatSocket.off("disconnect");
       chatSocket.off("newMessageNotification");

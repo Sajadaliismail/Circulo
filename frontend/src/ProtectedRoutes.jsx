@@ -3,7 +3,6 @@ import SetupPage from "./pages/setupPage";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import LandingPage from "./pages/landingPage";
-import useChatSocket from "./hooks/chatSocketHook";
 import IncomingCallDialog from "./components/CommonComponents/IncomingCall";
 
 export const ProtectedRoute = ({ element }) => {

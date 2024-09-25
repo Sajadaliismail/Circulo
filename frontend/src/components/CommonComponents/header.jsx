@@ -220,7 +220,7 @@ export default function Header() {
                 ))}
 
               <MenuItem onClick={() => navigate("/chats")}>
-                See all messages
+                <span className="mx-auto font-bold">Inbox</span>
               </MenuItem>
               {/*
               <MenuItem onClick={handleClose}>My account</MenuItem>
@@ -260,7 +260,7 @@ export default function Header() {
               aria-label="show 4 new mails"
               color="inherit"
             >
-              <Badge badgeContent={4} color="error">
+              <Badge badgeContent={unreadChatsCount} color="error">
                 <MailIcon />
               </Badge>
             </IconButton>

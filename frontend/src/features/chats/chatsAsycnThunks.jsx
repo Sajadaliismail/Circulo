@@ -74,7 +74,6 @@ export const fetchChatFriends = createAsyncThunk(
         },
       });
       const data = await response.json();
-      console.log(data);
       if (!response.ok) {
         return rejectWithValue("Error fetching chats");
       }

@@ -38,7 +38,6 @@ const UserList = ({
     setFriendsData((prev) => {
       return prev.map((user) => {
         if (user._id === friend) {
-          console.log(user, friend);
           return {
             ...user,
             unreadCount: 0,

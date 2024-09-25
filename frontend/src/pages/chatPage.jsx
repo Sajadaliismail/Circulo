@@ -29,6 +29,7 @@ import { useRecoilState } from "recoil";
 import { ChatFriendsData, ChatRoomMessages } from "../atoms/chatAtoms";
 import { enqueueSnackbar } from "notistack";
 import { ArrowBack } from "@mui/icons-material";
+import { setReadMessages } from "../features/chats/chatsSlice";
 const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
 export default function ChatPage() {
@@ -95,6 +96,7 @@ export default function ChatPage() {
   }, [searchQuery, friendsData]);
 
   const handleChat = useCallback((friend, roomId) => {
+    dispatch(setReadMessages(friend));
     setDrawerOpen(false);
     setRoomId(roomId);
     setFriend(friend);
@@ -137,11 +139,16 @@ export default function ChatPage() {
   const handleSubmit = (id, room) => {
     if (message.trim()) {
       if (!chatSocket.connected) {
-        enqueueSnackbar("Error sending message. Please try again", {
-          variant: "error",
-        });
-        chatSocket.connect();
+        enqueueSnackbar(
+          "Error sending message. Please refresh the page and try again",
+          {
+            variant: "info",
+          }
+        );
+        // chatSocket.connect();
       }
+      dispatch(setReadMessages(friend));
+
       chatSocket.emit("message", {
         userId: id,
         message,
