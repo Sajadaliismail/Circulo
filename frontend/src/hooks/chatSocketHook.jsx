@@ -113,19 +113,16 @@ const useChatSocket = () => {
           }
         };
 
-        pc.oniceconnectionstatechange = () => {
-          console.log("ICE Connection State: ", pc.iceConnectionState);
-          if (pc.iceConnectionState === "connected") {
-            console.log("Peers are connected");
-          } else if (pc.iceConnectionState === "disconnected") {
-            console.log("Peers are disconnected");
-          } else if (pc.iceConnectionState === "failed") {
-            console.log("ICE connection failed");
-          }
-        };
-
         pc.ongatheringstatechange = () => {
           console.log("ICE Gathering State: ", pc.iceGatheringState);
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          console.log("ICE Connection State: ", pc.iceConnectionState);
+        };
+
+        pc.onsignalingstatechange = () => {
+          console.log("Signaling State: ", pc.signalingState);
         };
 
         pc.onicecandidate = (event) => {
@@ -186,8 +183,8 @@ const useChatSocket = () => {
   };
 
   const handleIceCandidate = async (data) => {
-    console.log("Received ICE candidate:", data.candidate);
-    if (peerConnection && peerConnection.remoteDescription) {
+    if (peerConnection) {
+      console.log("Received ICE candidate:", data.candidate);
       try {
         await peerConnection.addIceCandidate(
           new RTCIceCandidate(data.candidate)
@@ -196,6 +193,8 @@ const useChatSocket = () => {
       } catch (error) {
         console.error("Error adding received ice candidate", error);
       }
+    } else {
+      console.log("No candidates");
     }
   };
 

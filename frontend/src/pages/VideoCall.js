@@ -138,16 +138,6 @@ const VideoCall = ({
         console.log("Signaling State: ", pc.signalingState);
       };
 
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log("New ICE candidate:", event.candidate);
-          chatSocket.emit("ice-candidate", {
-            recipientId,
-            candidate: event.candidate,
-          });
-        }
-      };
-
       setPeerConnection(pc);
 
       try {
@@ -187,11 +177,21 @@ const VideoCall = ({
 
   useEffect(() => {
     const handleAnswer = async (answer) => {
-      if (peerConnection && peerConnection.signalingState !== "closed") {
+      if (peerConnection) {
         try {
           await peerConnection.setRemoteDescription(
             new RTCSessionDescription(answer)
           );
+
+          peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+              console.log("New ICE candidate:", event.candidate);
+              chatSocket.emit("ice-candidate", {
+                recipientId,
+                candidate: event.candidate,
+              });
+            }
+          };
           console.log("Answer set as remote description");
           setCallAnswered(true);
           setTimerStart(true);
@@ -202,8 +202,8 @@ const VideoCall = ({
     };
 
     const handleIceCandidate = async (data) => {
-      console.log("Received ICE candidate:", data.candidate);
-      if (peerConnection && peerConnection.remoteDescription) {
+      if (peerConnection) {
+        console.log("Received ICE candidate:", data.candidate);
         try {
           await peerConnection.addIceCandidate(
             new RTCIceCandidate(data.candidate)
