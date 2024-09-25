@@ -80,6 +80,7 @@ const useChatSocket = () => {
     }
   };
 
+  const iceCandidateBuffer = [];
   const handleAccept = async (e) => {
     console.log("handleAccept called", accepted);
     if (accepted) {
@@ -140,6 +141,16 @@ const useChatSocket = () => {
         await pc.setRemoteDescription(offerDesc);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+
+        iceCandidateBuffer.forEach(async (candidate) => {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            console.log("Buffered ICE candidate added");
+          } catch (error) {
+            console.error("Error adding buffered ICE candidate:", error);
+          }
+        });
+        iceCandidateBuffer.length = 0;
         setPeerConnection(pc);
 
         const data = {
@@ -182,21 +193,17 @@ const useChatSocket = () => {
     }
   };
 
-  const handleIceCandidate = async (data) => {
-    if (peerConnection) {
-      if (peerConnection.remoteDescription) {
-        console.log("Received ICE candidate:");
-        try {
-          await peerConnection.addIceCandidate(
-            new RTCIceCandidate(data.candidate)
-          );
-          console.log("ICE candidate added");
-        } catch (error) {
-          console.error("Error adding received ice candidate", error);
-        }
-      } else console.log("no remote setting");
+  const handleIceCandidate = (data) => {
+    if (peerConnection && peerConnection.remoteDescription) {
+      try {
+        peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        console.log("ICE candidate added");
+      } catch (error) {
+        console.error("Error adding received ICE candidate", error);
+      }
     } else {
-      console.log("No peer connection");
+      console.log("Buffering ICE candidate");
+      iceCandidateBuffer.push(data.candidate);
     }
   };
 
