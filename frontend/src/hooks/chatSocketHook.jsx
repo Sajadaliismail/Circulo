@@ -7,7 +7,8 @@ import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
 import { setUnreadMessages } from "../features/chats/chatsSlice";
-import SimplePeer from "simple-peer";
+import SimplePeer from "simple-peer/simplepeer.min.js";
+
 const iceCandidateBuffer = [];
 
 const useChatSocket = () => {

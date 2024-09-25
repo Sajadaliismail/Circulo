@@ -17,7 +17,7 @@ import {
   Videocam,
   VideocamOff,
 } from "@mui/icons-material";
-import SimplePeer from "simple-peer";
+import SimplePeer from "simple-peer/simplepeer.min.js";
 
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
