@@ -101,7 +101,7 @@ const useChatSocket = () => {
       }
     });
 
-    p.signal(offerDetails.signal); // Signal the peer with the incoming offer details
+    p.signal(offerDetails);
 
     setPeer(p);
 
@@ -211,6 +211,8 @@ const useChatSocket = () => {
   };
 
   const handleIncomingCall = async ({ offer, senderId }) => {
+    console.log(offer);
+
     if (peerConnection) {
       chatSocket.emit("call_status", {
         recipientId: caller,

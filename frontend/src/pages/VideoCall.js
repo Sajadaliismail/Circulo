@@ -40,38 +40,45 @@ const VideoCall = ({
 
   useEffect(() => {
     const startVideoCall = async () => {
-      // Create a new SimplePeer instance
+      console.log("invoked");
+
       const newPeer = new SimplePeer({
-        initiator: true, // Set to true if this peer is initiating the connection
-        trickle: false, // Disable trickle ICE
+        initiator: true,
+        trickle: false,
         video: true,
         audio: true,
       });
 
-      // Handling stream events
+      // Log when newPeer is created
+      console.log("New peer created");
+
+      newPeer.on("signal", (data) => {
+        console.log("Signal event fired:", data);
+        chatSocket.emit("start-call", { recipientId, offer: data });
+      });
+
       newPeer.on("stream", (stream) => {
+        console.log("Stream received from peer");
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = stream;
         }
       });
 
-      // Get local media stream
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
+        console.log("Media stream obtained");
+
         setLocalStream(stream);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
-        // Add local stream to peer
-        stream.getTracks().forEach((track) => newPeer.addTrack(track, stream));
-
-        // Handle signaling
-        newPeer.on("signal", (data) => {
-          chatSocket.emit("start-call", { recipientId, offer: data });
+        stream.getTracks().forEach((track) => {
+          console.log("Adding track to peer");
+          newPeer.addTrack(track, stream);
         });
       } catch (error) {
         console.error("Error getting media stream:", error);
