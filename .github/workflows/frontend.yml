@@ -28,7 +28,6 @@ jobs:
           REACT_APP_API_KEY=${{ secrets.REACT_APP_API_KEY }} \
           REACT_APP_API_SECRET=${{ secrets.REACT_APP_API_SECRET }} \
           REACT_APP_CLOUDINARY_URL=https://api.cloudinary.com/v1_1/dwlegfkli/image/upload \
-          REACT_APP_TURN_SERVERS_API=862746ded03ea5c4b3a8707f64ba5177afc8 \
           npm run build || true
           echo "React app build complete!"
 

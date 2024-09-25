@@ -7,13 +7,6 @@ import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
 import { setUnreadMessages } from "../features/chats/chatsSlice";
-const TURN_SERVERS_API = process.env.REACT_APP_TURN_SERVERS_API;
-
-const response = await fetch(
-  `https://appcirculo.metered.live/api/v1/turn/credentials?apiKey=${TURN_SERVERS_API}`
-);
-
-const iceServers = await response.json();
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
@@ -33,6 +26,18 @@ const useChatSocket = () => {
 
   const [localStream, setLocalStream] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+
+  const configuration = {
+    iceServers: [
+      {
+        urls: [
+          "stun:stun1.l.google.com:19302",
+          "stun:stun2.l.google.com:19302",
+        ],
+      },
+    ],
+    iceCandidatePoolSize: 10,
+  };
 
   const dispatch = useDispatch();
 
@@ -92,7 +97,7 @@ const useChatSocket = () => {
           video: true,
           audio: true,
         });
-        const pc = new RTCPeerConnection({ iceServers });
+        const pc = new RTCPeerConnection(configuration);
 
         setIsCameraOn(true);
         localVideoRef.current.srcObject = stream;
@@ -125,12 +130,11 @@ const useChatSocket = () => {
 
         pc.onicecandidate = (event) => {
           if (event.candidate) {
-            const data = {
+            console.log("New ICE candidate:", event.candidate);
+            chatSocket.emit("ice-candidate", {
               recipientId: caller,
               candidate: event.candidate,
-            };
-
-            chatSocket.emit("ice-candidate", data);
+            });
           }
         };
 
@@ -182,17 +186,15 @@ const useChatSocket = () => {
   };
 
   const handleIceCandidate = async (data) => {
-    const { candidate } = data;
-
-    if (peerConnection) {
-      if (peerConnection.remoteDescription) {
-        const candidateData = new RTCIceCandidate(candidate);
-        peerConnection
-          .addIceCandidate(candidateData)
-          .then(() => console.log("ICE candidate added"))
-          .catch((error) =>
-            console.error("Error adding ICE candidate:", error)
-          );
+    console.log("Received ICE candidate:", data.candidate);
+    if (peerConnection && peerConnection.remoteDescription) {
+      try {
+        await peerConnection.addIceCandidate(
+          new RTCIceCandidate(data.candidate)
+        );
+        console.log("ICE candidate added");
+      } catch (error) {
+        console.error("Error adding received ice candidate", error);
       }
     }
   };

@@ -20,14 +20,14 @@ import {
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
 
-const TURN_SERVERS_API = process.env.REACT_APP_TURN_SERVERS_API;
-
-const response = await fetch(
-  `https://appcirculo.metered.live/api/v1/turn/credentials?apiKey=${TURN_SERVERS_API}`
-);
-
-const iceServers = await response.json();
-
+const configuration = {
+  iceServers: [
+    {
+      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
 const VideoCall = ({
   isVideoCallActive,
   isCameraOn,
@@ -112,7 +112,7 @@ const VideoCall = ({
 
   useEffect(() => {
     const makeCall = async () => {
-      const pc = new RTCPeerConnection({ iceServers });
+      const pc = new RTCPeerConnection(configuration);
 
       pc.ontrack = (event) => {
         console.log(`Received ${event.track.kind} track`);
