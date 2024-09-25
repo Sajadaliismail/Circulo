@@ -7,6 +7,13 @@ import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { useSnackbar } from "notistack";
 import { setUnreadMessages } from "../features/chats/chatsSlice";
+const TURN_SERVERS_API = process.env.REACT_APP_TURN_SERVERS_API;
+
+const response = await fetch(
+  `https://appcirculo.metered.live/api/v1/turn/credentials?apiKey=${TURN_SERVERS_API}`
+);
+
+const iceServers = await response.json();
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
@@ -26,10 +33,6 @@ const useChatSocket = () => {
 
   const [localStream, setLocalStream] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
-
-  const configuration = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  };
 
   const dispatch = useDispatch();
 
@@ -89,7 +92,7 @@ const useChatSocket = () => {
           video: true,
           audio: true,
         });
-        const pc = new RTCPeerConnection(configuration);
+        const pc = new RTCPeerConnection({ iceServers });
 
         setIsCameraOn(true);
         localVideoRef.current.srcObject = stream;
