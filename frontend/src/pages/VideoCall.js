@@ -26,7 +26,6 @@ const configuration = {
       urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
     },
   ],
-  iceCandidatePoolSize: 10,
 };
 const VideoCall = ({
   isVideoCallActive,
@@ -109,7 +108,6 @@ const VideoCall = ({
       }
     }
   }, [localStream, isMuted]);
-
   useEffect(() => {
     const makeCall = async () => {
       const pc = new RTCPeerConnection(configuration);
@@ -132,10 +130,35 @@ const VideoCall = ({
 
       pc.oniceconnectionstatechange = () => {
         console.log("ICE Connection State: ", pc.iceConnectionState);
+        if (
+          pc.iceConnectionState === "disconnected" ||
+          pc.iceConnectionState === "failed"
+        ) {
+          pc.restartIce();
+          console.log(
+            "Connection disconnected or failed, attempting to recover..."
+          );
+        }
+      };
+
+      pc.ongatheringstatechange = () => {
+        console.log("ICE Gathering State: ", pc.iceGatheringState);
       };
 
       pc.onsignalingstatechange = () => {
         console.log("Signaling State: ", pc.signalingState);
+      };
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log("Sending new ICE candidate to recipient");
+          chatSocket.emit("ice-candidate", {
+            recipientId,
+            candidate: event.candidate,
+            type: "caller",
+          });
+        } else {
+          console.log("All ICE candidates have been sent");
+        }
       };
 
       setPeerConnection(pc);
@@ -183,15 +206,6 @@ const VideoCall = ({
             new RTCSessionDescription(answer)
           );
 
-          peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-              console.log("New ICE candidate:", event.candidate);
-              chatSocket.emit("ice-candidate", {
-                recipientId,
-                candidate: event.candidate,
-              });
-            }
-          };
           console.log("Answer set as remote description");
           setCallAnswered(true);
           setTimerStart(true);
@@ -203,7 +217,6 @@ const VideoCall = ({
 
     const handleIceCandidate = async (data) => {
       if (peerConnection) {
-        console.log("Received ICE candidate:", data.candidate);
         try {
           await peerConnection.addIceCandidate(
             new RTCIceCandidate(data.candidate)
@@ -216,11 +229,11 @@ const VideoCall = ({
     };
 
     chatSocket.on("callAnswered", handleAnswer);
-    chatSocket.on("ice-candidate", handleIceCandidate);
+    chatSocket.on("ice-candidate-reciever", handleIceCandidate);
 
     return () => {
       chatSocket.off("callAnswered", handleAnswer);
-      chatSocket.off("ice-candidate", handleIceCandidate);
+      chatSocket.off("ice-candidate-reciever", handleIceCandidate);
     };
   }, [peerConnection]);
 

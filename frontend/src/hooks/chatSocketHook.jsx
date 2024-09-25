@@ -127,10 +127,11 @@ const useChatSocket = () => {
 
         pc.onicecandidate = (event) => {
           if (event.candidate) {
-            console.log("New ICE candidate:", event.candidate);
+            console.log("New ICE candidate:");
             chatSocket.emit("ice-candidate", {
               recipientId: caller,
               candidate: event.candidate,
+              type: "reciever",
             });
           }
         };
@@ -145,7 +146,6 @@ const useChatSocket = () => {
           recipientId: caller,
           answer,
         };
-        console.log("emtted", data);
 
         chatSocket.emit("answer", data);
       } catch (error) {
@@ -184,17 +184,19 @@ const useChatSocket = () => {
 
   const handleIceCandidate = async (data) => {
     if (peerConnection) {
-      console.log("Received ICE candidate:", data.candidate);
-      try {
-        await peerConnection.addIceCandidate(
-          new RTCIceCandidate(data.candidate)
-        );
-        console.log("ICE candidate added");
-      } catch (error) {
-        console.error("Error adding received ice candidate", error);
-      }
+      if (peerConnection.remoteDescription) {
+        console.log("Received ICE candidate:");
+        try {
+          await peerConnection.addIceCandidate(
+            new RTCIceCandidate(data.candidate)
+          );
+          console.log("ICE candidate added");
+        } catch (error) {
+          console.error("Error adding received ice candidate", error);
+        }
+      } else console.log("no remote setting");
     } else {
-      console.log("No candidates");
+      console.log("No peer connection");
     }
   };
 
@@ -283,11 +285,8 @@ const useChatSocket = () => {
       });
 
       chatSocket.on("incomingCall", handleIncomingCall);
-      chatSocket.on("ice-candidate", handleIceCandidate);
-      console.log("use-effect");
+      chatSocket.on("ice-candidate-caller", handleIceCandidate);
       chatSocket.on("newMessage", (arg) => {
-        console.log("triggeres");
-
         dispatch(setUnreadMessages(arg));
         enqueueSnackbar("You have one message", { variant: "success" });
       });
@@ -309,7 +308,7 @@ const useChatSocket = () => {
         chatSocket.off("newMessageNotification");
         chatSocket.off("emoji_recieved");
         chatSocket.off("incomingCall", handleIncomingCall);
-        chatSocket.off("ice-candidate", handleIceCandidate);
+        chatSocket.off("ice-candidate-caller", handleIceCandidate);
         chatSocket.disconnect();
         setSocketConnected(false);
       };
