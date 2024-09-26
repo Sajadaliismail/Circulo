@@ -5,6 +5,7 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 const { Rooms } = require("../Models/mongoDb");
 const { default: mongoose } = require("mongoose");
+const { UserNotification } = require("../Models/notificationSchema");
 
 const route = express.Router();
 
@@ -178,11 +179,11 @@ route.get("/fetchAllChats", authenticateToken, async (req, res) => {
               ],
             },
           },
-          latestMessageTimestamp: { $max: "$messageDetails.timestamp" }, // Get the latest message timestamp for sorting
+          latestMessageTimestamp: { $max: "$messageDetails.timestamp" },
         },
       },
       {
-        $sort: { latestMessageTimestamp: -1 }, // Sort chat rooms by the latest message timestamp in descending order
+        $sort: { latestMessageTimestamp: -1 },
       },
       {
         $project: {
@@ -272,6 +273,29 @@ route.get("/fetchChatFriends", authenticateToken, async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(400).json({ error });
+  }
+});
+
+route.get("/notifications", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    console.log(userId);
+
+    const notification = await UserNotification.aggregate([
+      {
+        $match: { user: userId },
+      },
+      {
+        $project: {
+          _id: 1,
+        },
+      },
+    ]);
+
+    console.log(notification);
+    return res.status(200).json({ notification: notification });
+  } catch (error) {
+    console.log(error);
   }
 });
 

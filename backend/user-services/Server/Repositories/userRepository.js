@@ -72,7 +72,6 @@ const deletePost = async (data) => {
 
 const updateStatus = async (data) => {
   try {
-    console.log(data);
     const { _id, onlineStatus } = data;
     if (!_id) throw new Error("Id undefined");
     await User.findByIdAndUpdate(

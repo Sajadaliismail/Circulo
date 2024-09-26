@@ -1,3 +1,4 @@
+const { publishMessage } = require("../Services/rabbitmq");
 const {
   sendFriendRequestService,
   acceptFriendRequest,
@@ -15,6 +16,11 @@ const sendFriendRequest = async (req, res) => {
   const userId = req.userId;
   try {
     await sendFriendRequestService(userId, friendId);
+    const message = {
+      sender: userId,
+      user: friendId,
+    };
+    // publishMessage("friend_request", message);
     res.status(200).send("Friend request sent");
   } catch (error) {
     console.log(error);
@@ -28,6 +34,11 @@ const acceptRequest = async (req, res) => {
 
   try {
     await acceptFriendRequest(userId, friendId);
+    const message = {
+      sender: userId,
+      user: friendId,
+    };
+    // publishMessage("request_accepted", message);
     res.status(200).json({ message: "Friend request accepted" });
   } catch (error) {
     console.log(error);

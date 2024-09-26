@@ -102,6 +102,19 @@ io.on("connection", (socket) => {
   socket.on("logout", async () => {
     await handleLogout(socket);
   });
+
+  socket.on("handleRelation", async (data) => {
+    const { user, change } = data;
+    console.log(data);
+
+    const receiverSocketId = await userClient.get(user);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("relationChanged", {
+        change,
+        user: socket.user,
+      });
+    }
+  });
 });
 
 module.exports = { io, httpServer };

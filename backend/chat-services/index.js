@@ -5,6 +5,11 @@ const cookieParser = require("cookie-parser");
 const { httpServer } = require("./Server/Services/socket_io");
 const connectDb = require("./Server/Database/mongodb");
 const route = require("./Server/Routes/routes");
+const { subscribeMessage } = require("./Server/Services/rabbitmq");
+const {
+  handleIncomingRequestNotification,
+  handleRequestAccepetedNotification,
+} = require("./Server/Services/services");
 require("dotenv").config();
 
 const PORT = process.env.PORT;
@@ -24,7 +29,8 @@ app.use(cors(corsOption));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/chats", route);
-
+subscribeMessage("friend_request", handleIncomingRequestNotification);
+subscribeMessage("request_accepted", handleRequestAccepetedNotification);
 app.listen(PORT, () => {
   console.log(`Chat services connected to port : ${PORT}`);
 });
