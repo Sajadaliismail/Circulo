@@ -29,19 +29,23 @@ import { useRecoilState } from "recoil";
 import { ChatFriendsData, ChatRoomMessages } from "../atoms/chatAtoms";
 import { enqueueSnackbar } from "notistack";
 import { ArrowBack } from "@mui/icons-material";
-import { setReadMessages } from "../features/chats/chatsSlice";
+import {
+  setFriend,
+  setReadMessages,
+  setRoomId,
+} from "../features/chats/chatsSlice";
 const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
 export default function ChatPage() {
   const dispatch = useDispatch();
-  const { chatFriends } = useSelector((state) => state.chats);
+  const { chatFriends, friend, roomId } = useSelector((state) => state.chats);
   const { friends, userData } = useSelector((state) => state.friends);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
-  const [friend, setFriend] = useState(null);
-  const [roomId, setRoomId] = useState(null);
+  // const [friend, setFriend] = useState(null);
+  // const [roomId, setRoomId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [friendsData, setFriendsData] = useRecoilState(ChatFriendsData);
@@ -98,8 +102,10 @@ export default function ChatPage() {
   const handleChat = useCallback((friend, roomId) => {
     dispatch(setReadMessages(friend));
     setDrawerOpen(false);
-    setRoomId(roomId);
-    setFriend(friend);
+    dispatch(setRoomId(roomId));
+    // setRoomId(roomId);
+    dispatch(setFriend(friend));
+    // setFriend(friend);
     setMessage("");
     chatSocket.emit("join_room", { userId: friend });
   }, []);

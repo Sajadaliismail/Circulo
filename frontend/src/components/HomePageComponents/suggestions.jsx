@@ -13,6 +13,7 @@ import { Close, Done, PersonAdd } from "@mui/icons-material";
 import HoverComponent from "../CommonComponents/HoverComponen";
 import { AnimatedTooltip } from "../CommonComponents/AnimatedHoverComponent";
 import { useNavigate } from "react-router-dom";
+import chatSocket from "../../features/utilities/Socket-io";
 
 function Suggestions({ fetchUserData }) {
   const { suggestions, requestsPending } = useSelector(
@@ -26,30 +27,39 @@ function Suggestions({ fetchUserData }) {
     dispatch(getFriends());
   }, [dispatch]);
 
-  const updateStateAfterAction = async (action, updates = []) => {
+  const updateStateAfterAction = async (action, updates = [], activity, id) => {
     await dispatch(action);
     updates.forEach((update) => dispatch(update));
+    chatSocket.emit("handleRelation", { user: id, change: activity });
   };
 
   const handleRequest = (id) => {
-    updateStateAfterAction(sentRequest({ friendId: id }), [getSuggestions()]);
+    updateStateAfterAction(
+      sentRequest({ friendId: id }),
+      [getSuggestions()],
+      "request_sent",
+      id
+    );
   };
 
   const handleCancelRequest = (id) => {
     console.log(id);
 
-    updateStateAfterAction(cancelRequest({ friendId: id }), [
-      getSuggestions(),
-      getRequests(),
-    ]);
+    updateStateAfterAction(
+      cancelRequest({ friendId: id }),
+      [getSuggestions(), getRequests()],
+      "request_canceled",
+      id
+    );
   };
 
   const handleAcceptRequest = (id) => {
-    updateStateAfterAction(acceptRequest({ friendId: id }), [
-      getSuggestions(),
-      getFriends(),
-      getRequests(),
-    ]);
+    updateStateAfterAction(
+      acceptRequest({ friendId: id }),
+      [getSuggestions(), getFriends(), getRequests()],
+      "request_accepted",
+      id
+    );
   };
   return (
     <>

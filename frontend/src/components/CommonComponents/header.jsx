@@ -28,6 +28,11 @@ import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
 import { fetchChatFriends } from "../../features/chats/chatsAsycnThunks";
 import { useEffect } from "react";
 import { useState } from "react";
+import {
+  clearChatDefault,
+  setFriend,
+  setRoomId,
+} from "../../features/chats/chatsSlice";
 
 export default function Header() {
   const { user } = useSelector((state) => state.user);
@@ -149,7 +154,6 @@ export default function Header() {
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton
-              // onClick={() => navigate("/chats")}
               id="basic-button"
               aria-controls={open ? "basic-menu" : undefined}
               aria-haspopup="true"
@@ -172,56 +176,89 @@ export default function Header() {
                 "aria-labelledby": "basic-button",
               }}
             >
-              {chatFriends &&
-                chatFriends.map((friend, index) => (
-                  <MenuItem
-                    sx={{
-                      width: 300,
-                      height: 50,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      fontWeight: friend.unreadCount === 0 ? "100" : "bold",
-                      bgcolor:
-                        friend.unreadCount > 0
-                          ? "rgba(255,0,0,0.1)"
-                          : "transparent",
-                    }}
-                    key={index}
-                  >
-                    <Box display="flex" alignItems="center">
-                      {userData[friend._id]?.firstName}
-                    </Box>
-
-                    {friend.unreadCount === 0 && (
-                      <span
-                        className="ml-auto"
-                        style={{
-                          fontSize: 12,
-                          color: "gray",
+              <Box className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2">
+                <Box
+                  sx={{
+                    maxHeight: "200px",
+                    overflowY: "scroll",
+                    scrollbarWidth: "none",
+                  }}
+                >
+                  {chatFriends.length ? (
+                    chatFriends.map((friend, index) => (
+                      <MenuItem
+                        onClick={() => {
+                          dispatch(setFriend(friend._id));
+                          dispatch(setRoomId(friend.roomId));
+                          navigate("/chats");
                         }}
+                        sx={{
+                          width: 300,
+                          height: 50,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontWeight: friend.unreadCount === 0 ? "100" : "bold",
+                          bgcolor:
+                            friend.unreadCount > 0
+                              ? "rgba(255,0,0,0.1)"
+                              : "transparent",
+                        }}
+                        key={index}
                       >
-                        (Read)
-                      </span>
-                    )}
-                    {friend.unreadCount > 0 && (
-                      <>
-                        <span style={{ fontSize: 14 }}>
-                          {friend?.unreadCount} new messages
-                        </span>
-                        <Badge
-                          color="error"
-                          variant="dot"
-                          sx={{ marginRight: 2 }}
-                        ></Badge>
-                      </>
-                    )}
-                  </MenuItem>
-                ))}
+                        <Box display="flex" alignItems="center">
+                          {userData[friend._id]?.firstName}
+                        </Box>
 
-              <MenuItem onClick={() => navigate("/chats")}>
-                <span className="mx-auto font-bold">Inbox</span>
-              </MenuItem>
+                        {friend.unreadCount === 0 && (
+                          <span
+                            className="ml-auto"
+                            style={{
+                              fontSize: 12,
+                              color: "gray",
+                            }}
+                          >
+                            (Read)
+                          </span>
+                        )}
+                        {friend.unreadCount > 0 && (
+                          <>
+                            <span style={{ fontSize: 14 }}>
+                              {friend?.unreadCount} new messages
+                            </span>
+                            <Badge
+                              color="error"
+                              variant="dot"
+                              sx={{ marginRight: 2 }}
+                            ></Badge>
+                          </>
+                        )}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem
+                      sx={{
+                        backgroundColor: "#054b7321",
+                        width: 300,
+                        textAlign: "center",
+                        alignContent: "center",
+                        height: "100px",
+                      }}
+                    >
+                      You have no messages
+                    </MenuItem>
+                  )}
+                </Box>
+
+                <MenuItem
+                  onClick={() => {
+                    dispatch(clearChatDefault());
+                    navigate("/chats");
+                  }}
+                >
+                  <span className="mx-auto font-bold">Inbox</span>
+                </MenuItem>
+              </Box>
               {/*
               <MenuItem onClick={handleClose}>My account</MenuItem>
               <MenuItem onClick={handleClose}>Logout</MenuItem> */}

@@ -7,6 +7,7 @@ import {
 import { act } from "react";
 
 const initialState = {
+  friend: "",
   chats: {},
   roomId: "",
   unReadMessages: {},
@@ -111,6 +112,16 @@ const chatsSlice = createSlice({
       });
       state.chatFriends = curr;
     },
+    setFriend: (state, action) => {
+      state.friend = action.payload;
+    },
+    setRoomId: (state, action) => {
+      state.roomId = action.payload;
+    },
+    clearChatDefault: (state, action) => {
+      state.roomId = "";
+      state.friend = "";
+    },
     // setSentMessages: (state, action) => {
     //   const { message, timestamp, type } = action.payload;
     //   const roomId = state.roomId;
@@ -178,6 +189,9 @@ export const {
   //   setChats,
   setUnreadMessages,
   setReadMessages,
+  setFriend,
+  setRoomId,
+  clearChatDefault,
   //   setReceivedChats,
   //   setSentMessages,
   //   setEmoji,

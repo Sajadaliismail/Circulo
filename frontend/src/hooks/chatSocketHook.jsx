@@ -5,9 +5,15 @@ import { fetchUser } from "../features/user/userAsyncThunks";
 import { useRecoilState } from "recoil";
 import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
-import { useSnackbar } from "notistack";
+import { closeSnackbar, useSnackbar } from "notistack";
 import { setUnreadMessages } from "../features/chats/chatsSlice";
 import SimplePeer from "simple-peer/simplepeer.min.js";
+import {
+  getFriends,
+  getRequests,
+  getSuggestions,
+} from "../features/friends/friendsAsyncThunks";
+import { useNavigate } from "react-router-dom";
 
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
@@ -28,6 +34,7 @@ const useChatSocket = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const stopCamera = () => {
     if (localStream) {
@@ -47,7 +54,7 @@ const useChatSocket = () => {
   };
 
   const handleAccept = async (e) => {
-    console.log("handleAccept called", accepted);
+    console.log("handleAccept called");
     if (accepted) {
       return;
     }
@@ -102,6 +109,8 @@ const useChatSocket = () => {
       });
 
       console.log("Signaling offer to peer");
+      console.log(offerDetails);
+
       p.signal(offerDetails);
 
       setPeer(p);
@@ -140,9 +149,12 @@ const useChatSocket = () => {
       });
       return;
     }
-    setIncomingCall(true);
-    setOfferDetails(offer);
-    setCaller(senderId);
+    console.log(offer);
+    if (offer.type == "offer") {
+      setIncomingCall(true);
+      setOfferDetails(offer);
+      setCaller(senderId);
+    }
   };
 
   useEffect(() => {
@@ -246,12 +258,50 @@ const useChatSocket = () => {
         }));
       });
 
+      chatSocket.on("relationChanged", (data) => {
+        console.log(data);
+        const { change, user } = data;
+        const action = (snackbarId) => (
+          <>
+            <button
+              className="mr-3"
+              onClick={() => {
+                navigate(`/profile/${user}`);
+              }}
+            >
+              View profile
+            </button>
+            <button
+              onClick={() => {
+                closeSnackbar(snackbarId);
+              }}
+            >
+              Dismiss
+            </button>
+          </>
+        );
+        if (change == "request_sent" || change === "request_canceled") {
+          dispatch(getRequests());
+          dispatch(getSuggestions());
+          if (change === "request_sent")
+            enqueueSnackbar("Request recieved", { action, variant: "info" });
+          else
+            enqueueSnackbar("Request cancelled", { action, variant: "error" });
+        } else if (change === "request_accepted") {
+          dispatch(getRequests());
+          dispatch(getSuggestions());
+          dispatch(getFriends());
+          enqueueSnackbar("Request accepted", { action, variant: "success" });
+        }
+      });
+
       return () => {
         chatSocket.off("newMessage");
         chatSocket.off("connect");
         chatSocket.off("disconnect");
         chatSocket.off("newMessageNotification");
         chatSocket.off("emoji_recieved");
+        chatSocket.off("relationChanged");
         chatSocket.off("incomingCall", handleIncomingCall);
         chatSocket.disconnect();
         setSocketConnected(false);
