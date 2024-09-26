@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   Box,
@@ -18,7 +20,6 @@ import {
   VideocamOff,
 } from "@mui/icons-material";
 import SimplePeer from "simple-peer/simplepeer.min.js";
-
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
 
@@ -33,6 +34,8 @@ const VideoCall = ({
   const [localStream, setLocalStream] = useState(null);
   const [peer, setPeer] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [callStartTime, setCallStartTime] = useState(null);
+  const [callDuration, setCallDuration] = useState(0);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const theme = useTheme();
@@ -40,17 +43,21 @@ const VideoCall = ({
 
   useEffect(() => {
     const startVideoCall = async () => {
-      console.log("invoked");
+      console.log("Starting video call");
 
       const newPeer = new SimplePeer({
         initiator: true,
-        trickle: false,
+        trickle: true,
         video: true,
         audio: true,
       });
 
-      // Log when newPeer is created
       console.log("New peer created");
+
+      newPeer.on("connect", () => {
+        console.log("Connected to peer");
+        setCallStartTime(Date.now());
+      });
 
       newPeer.on("signal", (data) => {
         console.log("Signal event fired:", data);
@@ -61,7 +68,17 @@ const VideoCall = ({
         console.log("Stream received from peer");
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = stream;
+          console.log("Remote video stream added to video element");
         }
+      });
+
+      newPeer.on("error", (err) => {
+        console.error("Peer connection error:", err);
+      });
+
+      newPeer.on("close", () => {
+        console.log("Peer connection closed");
+        handleEndVideoCall();
       });
 
       try {
@@ -76,10 +93,7 @@ const VideoCall = ({
           localVideoRef.current.srcObject = stream;
         }
 
-        stream.getTracks().forEach((track) => {
-          console.log("Adding track to peer");
-          newPeer.addTrack(track, stream);
-        });
+        newPeer.addStream(stream);
       } catch (error) {
         console.error("Error getting media stream:", error);
       }
@@ -103,40 +117,62 @@ const VideoCall = ({
 
   useEffect(() => {
     const handleAnswer = (answer) => {
-      console.log(answer);
-
+      console.log("Call answered", answer);
       if (peer) {
         peer.signal(answer);
       }
     };
 
     const handleIceCandidate = (data) => {
+      console.log("ICE candidate received", data);
       if (peer) {
         peer.signal(data.candidate);
       }
     };
 
+    const handleCallEnded = () => {
+      console.log("Call ended by the other user");
+      handleEndVideoCall();
+    };
+
     chatSocket.on("callAnswered", handleAnswer);
     chatSocket.on("ice-candidate-reciever", handleIceCandidate);
+    chatSocket.on("call_ended", handleCallEnded);
 
     return () => {
       chatSocket.off("callAnswered", handleAnswer);
       chatSocket.off("ice-candidate-reciever", handleIceCandidate);
+      chatSocket.off("call_ended", handleCallEnded);
     };
   }, [peer]);
 
+  useEffect(() => {
+    let interval;
+    if (callStartTime) {
+      interval = setInterval(() => {
+        setCallDuration(Math.floor((Date.now() - callStartTime) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [callStartTime]);
+
   const handleEndVideoCall = useCallback(() => {
+    console.log("Ending video call");
     setIsVideoCallActive(false);
     setIsCameraOn(false);
     setIsMuted(false);
+    setCallStartTime(null);
+    setCallDuration(0);
     if (localStream) {
       localStream.getTracks().forEach((track) => track.stop());
     }
-    try {
-      peer.destroy();
-      console.log("Peer connection destroyed successfully.");
-    } catch (error) {
-      console.error("Error destroying peer connection:", error);
+    if (peer) {
+      try {
+        peer.destroy();
+        console.log("Peer connection destroyed successfully");
+      } catch (error) {
+        console.error("Error destroying peer connection:", error);
+      }
     }
     chatSocket.emit("call_ended", { recipientId });
   }, [setIsVideoCallActive, setIsCameraOn, localStream, peer, recipientId]);
@@ -147,6 +183,7 @@ const VideoCall = ({
       if (videoTrack) {
         videoTrack.enabled = !isCameraOn;
         setIsCameraOn(!isCameraOn);
+        console.log("Camera toggled:", !isCameraOn);
       }
     }
   }, [localStream, isCameraOn, setIsCameraOn]);
@@ -157,9 +194,18 @@ const VideoCall = ({
       if (audioTrack) {
         audioTrack.enabled = !isMuted;
         setIsMuted(!isMuted);
+        console.log("Microphone toggled:", !isMuted);
       }
     }
   }, [localStream, isMuted]);
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   return (
     <Dialog
@@ -178,6 +224,11 @@ const VideoCall = ({
     >
       <DialogTitle style={{ color: "white" }}>
         Video Call with {userData[recipientId]?.firstName}
+        {callStartTime && (
+          <Typography variant="subtitle1" style={{ color: "white" }}>
+            Call Duration: {formatDuration(callDuration)}
+          </Typography>
+        )}
       </DialogTitle>
       <DialogContent>
         <Box

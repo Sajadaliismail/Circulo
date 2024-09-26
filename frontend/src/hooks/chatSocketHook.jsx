@@ -9,8 +9,6 @@ import { useSnackbar } from "notistack";
 import { setUnreadMessages } from "../features/chats/chatsSlice";
 import SimplePeer from "simple-peer/simplepeer.min.js";
 
-const iceCandidateBuffer = [];
-
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
   const { user } = useSelector((state) => state.user);
@@ -21,31 +19,15 @@ const useChatSocket = () => {
   const [callAccepted, setCallAccepted] = useState(false);
   const [callRejected, setCallRejected] = useState(false);
   const [offerDetails, setOfferDetails] = useState(null);
-  const [peerConnection, setPeerConnection] = useState(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [caller, setCaller] = useState(null);
   const remoteVideoRef = useRef(null);
   const localVideoRef = useRef(null);
   const [accepted, setAccepted] = useState(false);
-
   const [localStream, setLocalStream] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
-  const configuration = {
-    iceServers: [
-      {
-        urls: [
-          "stun:stun1.l.google.com:19302",
-          "stun:stun2.l.google.com:19302",
-        ],
-      },
-    ],
-    iceCandidatePoolSize: 10,
-  };
-
   const dispatch = useDispatch();
-
-  let isCallAccepted = false;
 
   const stopCamera = () => {
     if (localStream) {
@@ -61,6 +43,7 @@ const useChatSocket = () => {
     }
     setLocalStream(null);
     setCallAccepted(false);
+    setIsCameraOn(false);
   };
 
   const handleAccept = async (e) => {
@@ -69,194 +52,98 @@ const useChatSocket = () => {
       return;
     }
 
-    setAccepted(true);
-    e.preventDefault();
-    setCallAccepted(true);
-    setIncomingCall(false);
+    try {
+      setAccepted(true);
+      e.preventDefault();
+      setCallAccepted(true);
+      setIncomingCall(false);
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-    localVideoRef.current.srcObject = stream;
-
-    setLocalStream(stream);
-    const p = new SimplePeer({
-      initiator: false, // We are answering the call, not initiating
-      stream,
-      trickle: false,
-    });
-
-    p.on("signal", (answerSignal) => {
-      const data = {
-        recipientId: caller,
-        answer: answerSignal,
-      };
-      chatSocket.emit("answer", data);
-    });
-
-    p.on("stream", (remoteStream) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remoteStream;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      setLocalStream(stream);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
       }
-    });
 
-    p.signal(offerDetails);
+      const p = new SimplePeer({
+        initiator: false,
+        trickle: true,
+        stream: stream,
+      });
 
-    setPeer(p);
+      p.on("error", (err) => {
+        console.error("SimplePeer error:", err);
+        enqueueSnackbar("An error occurred during the call", {
+          variant: "error",
+        });
+        handleReject();
+      });
 
-    // if (!peerConnection) {
-    //   try {
-    //     const stream = await navigator.mediaDevices.getUserMedia({
-    //       video: true,
-    //       audio: true,
-    //     });
-    //     const pc = new RTCPeerConnection(configuration);
+      p.on("signal", (answerSignal) => {
+        console.log("Sending answer signal");
+        chatSocket.emit("answer", {
+          recipientId: caller,
+          answer: answerSignal,
+        });
+      });
 
-    //     setIsCameraOn(true);
-    //     localVideoRef.current.srcObject = stream;
-    //     stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      p.on("stream", (remoteStream) => {
+        console.log("Received remote stream");
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteStream;
+        }
+      });
 
-    //     setLocalStream(stream);
-    //     pc.ontrack = (event) => {
-    //       const remoteStream = event.streams[0];
-    //       if (remoteVideoRef.current && remoteStream) {
-    //         remoteVideoRef.current.srcObject = remoteStream;
-    //       } else {
-    //         console.log("setting remote video failed");
-    //       }
-    //     };
+      p.on("close", () => {
+        console.log("Peer connection closed");
+        handleReject();
+      });
 
-    //     pc.ongatheringstatechange = () => {
-    //       console.log("ICE Gathering State: ", pc.iceGatheringState);
-    //     };
+      console.log("Signaling offer to peer");
+      p.signal(offerDetails);
 
-    //     pc.oniceconnectionstatechange = () => {
-    //       console.log("ICE Connection State: ", pc.iceConnectionState);
-    //       if (
-    //         pc.iceConnectionState === "disconnected" ||
-    //         pc.iceConnectionState === "failed"
-    //       ) {
-    //         pc.restartIce();
-    //         console.log(
-    //           "Connection disconnected or failed, attempting to recover..."
-    //         );
-    //       }
-    //     };
-
-    //     pc.onsignalingstatechange = () => {
-    //       console.log("Signaling State: ", pc.signalingState);
-    //     };
-
-    //     pc.onicecandidate = (event) => {
-    //       if (event.candidate) {
-    //         console.log("New ICE candidate:");
-    //         chatSocket.emit("ice-candidate", {
-    //           recipientId: caller,
-    //           candidate: event.candidate,
-    //           type: "reciever",
-    //         });
-    //       }
-    //     };
-
-    //     const offerDesc = new RTCSessionDescription(offerDetails);
-    //     await pc.setRemoteDescription(offerDesc);
-    //     const answer = await pc.createAnswer();
-    //     await pc.setLocalDescription(answer);
-
-    //     for (const candidate of iceCandidateBuffer) {
-    //       try {
-    //         await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    //         console.log("Buffered ICE candidate added:", candidate);
-    //       } catch (error) {
-    //         console.error("Error adding buffered ICE candidate:", error);
-    //       }
-    //     }
-    //     iceCandidateBuffer.length = 0;
-
-    //     setPeerConnection(pc);
-
-    //     const data = {
-    //       recipientId: caller,
-    //       answer,
-    //     };
-
-    //     chatSocket.emit("answer", data);
-    //   } catch (error) {
-    //     console.error("Error during WebRTC setup:", error);
-    //   }
-    //   // finally {
-    //   //   setTimeout(async () => {
-    //   //     await setIceCandidates();
-    //   //   }, 2000);
-    //   // }
-    // }
+      setPeer(p);
+      setIsCameraOn(true);
+    } catch (error) {
+      console.error("Error in handleAccept:", error);
+      enqueueSnackbar("Failed to start video call", { variant: "error" });
+      handleReject();
+    }
   };
 
-  const handleReject = async () => {
+  const handleReject = () => {
+    console.log("Rejecting call");
     chatSocket.emit("call_status", {
       recipientId: caller,
       message: "Call rejected",
     });
-    if (peer) peer.destroy();
+    if (peer) {
+      peer.destroy();
+    }
     setPeer(null);
     stopCamera();
     setCallRejected(true);
-    setPeerConnection(null);
-    localVideoRef.current = null;
-    remoteVideoRef.current = null;
     setLocalStream(null);
     setIncomingCall(false);
     setCallAccepted(false);
+    setAccepted(false);
   };
 
-  const handleIncomingCall = async ({ offer, senderId }) => {
-    console.log(offer);
-
-    if (peerConnection) {
+  const handleIncomingCall = ({ offer, senderId }) => {
+    console.log("Incoming call from:", senderId);
+    if (peer) {
       chatSocket.emit("call_status", {
-        recipientId: caller,
+        recipientId: senderId,
         message: "on another call",
       });
       return;
-    } else {
-      setIncomingCall(true);
-      setOfferDetails(offer);
-      setCaller(senderId);
     }
+    setIncomingCall(true);
+    setOfferDetails(offer);
+    setCaller(senderId);
   };
-
-  const handleIceCandidate = (data) => {
-    if (peerConnection && peerConnection.remoteDescription) {
-      try {
-        peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        console.log("ICE candidate added");
-      } catch (error) {
-        console.error("Error adding received ICE candidate", error);
-      }
-    } else {
-      console.log("Buffering ICE candidate");
-      iceCandidateBuffer.push(data.candidate);
-    }
-  };
-
-  // const setIceCandidates = async () => {
-  //   if (peerConnection) {
-  //     for (const candidate of iceCandidateBuffer) {
-  //       try {
-  //         await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-  //         console.log("Buffered ICE candidate added:", candidate);
-  //       } catch (error) {
-  //         console.error("Error adding buffered ICE candidate:", error);
-  //       }
-  //     }
-  //     iceCandidateBuffer.length = 0; // Clear buffer after adding all candidates
-  //   } else {
-  //     console.log(peerConnection);
-
-  //     console.log("nadannilla");
-  //   }
-  // };
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -330,6 +217,7 @@ const useChatSocket = () => {
           return prevChats;
         });
       });
+
       chatSocket.on("emoji_recieved", ({ id, emoji, roomId }) => {
         setChatMessages((prevChats) => ({
           ...prevChats,
@@ -343,7 +231,6 @@ const useChatSocket = () => {
       });
 
       chatSocket.on("incomingCall", handleIncomingCall);
-      chatSocket.on("ice-candidate-caller", handleIceCandidate);
       chatSocket.on("newMessage", (arg) => {
         dispatch(setUnreadMessages(arg));
         enqueueSnackbar("You have one message", { variant: "success" });
@@ -366,12 +253,11 @@ const useChatSocket = () => {
         chatSocket.off("newMessageNotification");
         chatSocket.off("emoji_recieved");
         chatSocket.off("incomingCall", handleIncomingCall);
-        chatSocket.off("ice-candidate-caller", handleIceCandidate);
         chatSocket.disconnect();
         setSocketConnected(false);
       };
-    } else return;
-  }, []);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const handleCleanup = () => {
@@ -407,9 +293,7 @@ const useChatSocket = () => {
     handleReject,
     callAccepted,
     localVideoRef,
-    peerConnection,
     stopCamera,
-    setPeerConnection,
     localStream,
     isCameraOn,
     setIsCameraOn,
