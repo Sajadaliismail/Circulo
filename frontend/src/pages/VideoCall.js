@@ -85,9 +85,21 @@ export default function VideoCall({
           }
         });
 
-        newPeer.on("error", (err) =>
-          console.error("Peer connection error:", err)
-        );
+        newPeer.on("error", (err) => {
+          console.error("Peer connection error:", err);
+
+          // If the error object has more specific properties, log those too
+          if (err.message) {
+            console.error("Error message:", err.message);
+          }
+          if (err.code) {
+            console.error("Error code:", err.code);
+          }
+          if (err.stack) {
+            console.error("Error stack:", err.stack);
+          }
+        });
+
         newPeer.on("close", handleEndVideoCall);
 
         setPeer(newPeer);
@@ -114,7 +126,10 @@ export default function VideoCall({
     };
 
     const handleIceCandidate = (data) => {
-      if (peer) peer.signal(data.candidate);
+      if (peer) {
+        const candidate = new RTCIceCandidate(data.candidate);
+        peer.signal({ candidate });
+      }
     };
 
     chatSocket.on("callAnswered", handleAnswer);
@@ -205,17 +220,17 @@ export default function VideoCall({
         <Box
           sx={{
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
             height: "calc(100vh - 200px)",
             position: "relative",
           }}
         >
           <Box
             sx={{
-              position: "absolute",
+              position: isMobile ? "absolute" : "relative",
               top: 0,
               left: 0,
-              width: "100%",
+              width: !isMobile ? "50%" : "100%",
               height: "100%",
               zIndex: answered ? 1 : 2,
             }}
@@ -228,6 +243,7 @@ export default function VideoCall({
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
+                borderRadius: "8px",
               }}
             />
           </Box>
@@ -236,7 +252,7 @@ export default function VideoCall({
               position: isMobile && answered ? "absolute" : "relative",
               right: isMobile && answered ? 16 : null,
               bottom: isMobile && answered ? 16 : null,
-              width: isMobile && answered ? "30%" : "100%",
+              width: isMobile && answered ? "30%" : isMobile ? "100%" : "50%",
               aspectRatio: "9/16",
               zIndex: 3,
             }}
@@ -249,7 +265,7 @@ export default function VideoCall({
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
+                objectFit: isMobile ? "cover" : "none",
                 borderRadius: "8px",
                 transform: "scaleX(-1)",
               }}

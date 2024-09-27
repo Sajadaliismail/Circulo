@@ -157,38 +157,19 @@ export default function IncomingCallDialog() {
           <Box
             sx={{
               display: "flex",
-              flexDirection: isMobile ? "column" : "row",
-              height: isMobile ? "calc(100vh - 200px)" : "60vh",
+              flexDirection: "row",
+              height: "calc(100vh - 200px)",
               position: "relative",
             }}
           >
             <Box
               sx={{
-                width: isMobile ? "50%" : "50%",
-                height: isMobile ? "20%" : "100%",
-                position: isMobile ? "absolute" : "relative",
-                bottom: isMobile ? 10 : 0,
-                right: isMobile ? 90 : 0,
-                zIndex: isMobile ? 1 : "auto",
-              }}
-            >
-              <video
-                ref={localVideoRef}
-                autoPlay
-                muted
-                playsInline
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                  transform: isMobile ? "scaleX(-1)" : "none",
-                }}
-              />
-            </Box>
-            <Box
-              sx={{
-                width: isMobile ? "100%" : "50%",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
                 height: "100%",
+                zIndex: 2,
               }}
             >
               <video
@@ -199,6 +180,30 @@ export default function IncomingCallDialog() {
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                position: isMobile ? "absolute" : "relative",
+                right: isMobile ? 16 : null,
+                bottom: isMobile ? 16 : null,
+                width: isMobile ? "30%" : "100%",
+                aspectRatio: "9/16",
+                zIndex: 3,
+              }}
+            >
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                  transform: "scaleX(-1)",
                 }}
               />
             </Box>
