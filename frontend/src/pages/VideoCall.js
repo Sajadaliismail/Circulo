@@ -19,17 +19,19 @@ import {
   Videocam,
   VideocamOff,
 } from "@mui/icons-material";
+// import SimplePeer from "simple-peer";
 import SimplePeer from "simple-peer/simplepeer.min.js";
+
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
 
-const VideoCall = ({
+export default function VideoCall({
   isVideoCallActive,
   isCameraOn,
   setIsVideoCallActive,
   setIsCameraOn,
   recipientId,
-}) => {
+}) {
   const { userData } = useSelector((state) => state.friends);
   const [localStream, setLocalStream] = useState(null);
   const [peer, setPeer] = useState(null);
@@ -44,75 +46,54 @@ const VideoCall = ({
 
   useEffect(() => {
     const startVideoCall = async () => {
-      console.log("Starting video call");
-
-      const newPeer = new SimplePeer({
-        initiator: true,
-        trickle: true,
-        video: true,
-        audio: true,
-        config: {
-          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-        },
-      });
-
-      console.log("New peer created");
-
-      newPeer.on("connect", () => {
-        console.log("Connected to peer");
-        setCallStartTime(Date.now());
-      });
-
-      newPeer.on("signal", (data) => {
-        console.log("datatype", data.type);
-
-        console.log("Signal event fired:", data);
-        if (data.type === "offer" || data.type === "answer") {
-          chatSocket.emit("start-call", { recipientId, offer: data });
-        } else {
-          chatSocket.emit("ice-candidate", {
-            recipientId,
-            candidate: data,
-            type: "toReciever",
-          });
-        }
-      });
-
-      newPeer.on("stream", (stream) => {
-        console.log("Stream received from peer");
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = stream;
-          console.log("Remote video stream added to video element");
-        }
-      });
-
-      newPeer.on("error", (err) => {
-        console.error("Peer connection error:", err);
-      });
-
-      newPeer.on("close", () => {
-        console.log("Peer connection closed");
-        handleEndVideoCall();
-      });
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
-        console.log("Media stream obtained");
-
         setLocalStream(stream);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
-        newPeer.addStream(stream);
-      } catch (error) {
-        console.error("Error getting media stream:", error);
-      }
+        const newPeer = new SimplePeer({
+          initiator: true,
+          trickle: true,
+          stream,
+          config: {
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          },
+        });
 
-      setPeer(newPeer);
+        newPeer.on("signal", (data) => {
+          if (data.type === "offer" || data.type === "answer") {
+            chatSocket.emit("start-call", { recipientId, offer: data });
+          } else {
+            chatSocket.emit("ice-candidate", {
+              recipientId,
+              candidate: data,
+              type: "toReciever",
+            });
+          }
+        });
+
+        newPeer.on("stream", (remoteStream) => {
+          console.log("stream recieved");
+
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+          }
+        });
+
+        newPeer.on("error", (err) =>
+          console.error("Peer connection error:", err)
+        );
+        newPeer.on("close", handleEndVideoCall);
+
+        setPeer(newPeer);
+      } catch (error) {
+        console.error("Error starting video call:", error);
+      }
     };
 
     if (isVideoCallActive) {
@@ -120,44 +101,30 @@ const VideoCall = ({
     }
 
     return () => {
-      if (peer) {
-        peer.destroy();
-      }
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
+      if (peer) peer.destroy();
+      if (localStream) localStream.getTracks().forEach((track) => track.stop());
     };
   }, [isVideoCallActive, recipientId]);
 
   useEffect(() => {
     const handleAnswer = (answer) => {
-      console.log("Call answered", answer);
       setAnswered(true);
-      if (peer) {
-        peer.signal(answer);
-      }
+      setCallStartTime(Date.now());
+      if (peer) peer.signal(answer);
     };
 
     const handleIceCandidate = (data) => {
-      console.log("ICE candidate received", data);
-      if (peer) {
-        peer.signal(data.candidate);
-      }
-    };
-
-    const handleCallEnded = () => {
-      console.log("Call ended by the other user");
-      handleEndVideoCall();
+      if (peer) peer.signal(data.candidate);
     };
 
     chatSocket.on("callAnswered", handleAnswer);
     chatSocket.on("ice-candidate-toCaller", handleIceCandidate);
-    chatSocket.on("call_ended", handleCallEnded);
+    chatSocket.on("call_ended", handleEndVideoCall);
 
     return () => {
       chatSocket.off("callAnswered", handleAnswer);
-      chatSocket.off("ice-candidate-reciever", handleIceCandidate);
-      chatSocket.off("call_ended", handleCallEnded);
+      chatSocket.off("ice-candidate-toCaller", handleIceCandidate);
+      chatSocket.off("call_ended", handleEndVideoCall);
     };
   }, [peer]);
 
@@ -172,23 +139,14 @@ const VideoCall = ({
   }, [callStartTime]);
 
   const handleEndVideoCall = useCallback(() => {
-    console.log("Ending video call");
     setIsVideoCallActive(false);
     setIsCameraOn(false);
     setIsMuted(false);
     setCallStartTime(null);
     setCallDuration(0);
-    if (localStream) {
-      localStream.getTracks().forEach((track) => track.stop());
-    }
-    if (peer) {
-      try {
-        peer.destroy();
-        console.log("Peer connection destroyed successfully");
-      } catch (error) {
-        console.error("Error destroying peer connection:", error);
-      }
-    }
+    setAnswered(false);
+    if (localStream) localStream.getTracks().forEach((track) => track.stop());
+    if (peer) peer.destroy();
     chatSocket.emit("call_ended", { recipientId });
   }, [setIsVideoCallActive, setIsCameraOn, localStream, peer, recipientId]);
 
@@ -198,7 +156,6 @@ const VideoCall = ({
       if (videoTrack) {
         videoTrack.enabled = !isCameraOn;
         setIsCameraOn(!isCameraOn);
-        console.log("Camera toggled:", !isCameraOn);
       }
     }
   }, [localStream, isCameraOn, setIsCameraOn]);
@@ -209,7 +166,6 @@ const VideoCall = ({
       if (audioTrack) {
         audioTrack.enabled = !isMuted;
         setIsMuted(!isMuted);
-        console.log("Microphone toggled:", !isMuted);
       }
     }
   }, [localStream, isMuted]);
@@ -226,14 +182,14 @@ const VideoCall = ({
     <Dialog
       open={isVideoCallActive}
       fullWidth
+      maxWidth={false}
       PaperProps={{
         style: {
           backgroundColor: "black",
-          height: isMobile ? "100%" : "auto",
-          maxHeight: isMobile ? "100%" : "80vh",
-          margin: isMobile ? "0px" : "0px",
-          width: isMobile ? "100%" : 1200,
-          maxWidth: isMobile ? "100%" : 1200,
+          height: "100%",
+          width: "100%",
+          margin: 0,
+          maxWidth: "none",
         },
       }}
     >
@@ -249,26 +205,21 @@ const VideoCall = ({
         <Box
           sx={{
             display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            height: isMobile ? "calc(100vh - 200px)" : "60vh",
+            flexDirection: "column",
+            height: "calc(100vh - 200px)",
             position: "relative",
           }}
         >
-          <Box sx={{ width: !answered ? "100%" : "50%", height: "100%" }}>
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                transform: isMobile ? "scaleX(-1)" : "none",
-              }}
-            />
-          </Box>
-          <Box sx={{ width: "50%", height: !answered ? "1%" : "100%" }}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: answered ? 1 : 2,
+            }}
+          >
             <video
               ref={remoteVideoRef}
               autoPlay
@@ -277,6 +228,30 @@ const VideoCall = ({
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
+              }}
+            />
+          </Box>
+          <Box
+            sx={{
+              position: isMobile && answered ? "absolute" : "relative",
+              right: isMobile && answered ? 16 : null,
+              bottom: isMobile && answered ? 16 : null,
+              width: isMobile && answered ? "30%" : "100%",
+              aspectRatio: "9/16",
+              zIndex: 3,
+            }}
+          >
+            <video
+              ref={localVideoRef}
+              autoPlay
+              muted
+              playsInline
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: "8px",
+                transform: "scaleX(-1)",
               }}
             />
           </Box>
@@ -305,6 +280,4 @@ const VideoCall = ({
       </DialogActions>
     </Dialog>
   );
-};
-
-export default VideoCall;
+}

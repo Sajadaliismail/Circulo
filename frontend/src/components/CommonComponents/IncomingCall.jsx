@@ -84,7 +84,7 @@ export default function IncomingCallDialog() {
       <TrapFocus open disableAutoFocus disableEnforceFocus>
         <Fade appear={false} in={incomingCall}>
           <Box
-            className="bg-slate-300 shadow-md dark:bg-slate-800 dark:text-white "
+            className="bg-slate-300 shadow-md dark:bg-slate-800 dark:text-white"
             role="dialog"
             aria-modal="false"
             variant="outlined"
@@ -106,12 +106,7 @@ export default function IncomingCallDialog() {
               direction={{ xs: "column", sm: "row" }}
               sx={{ justifyContent: "space-around", gap: 2 }}
             >
-              <Box
-                sx={{
-                  flexShrink: 1,
-                  alignSelf: "center",
-                }}
-              >
+              <Box sx={{ flexShrink: 1, alignSelf: "center" }}>
                 <Typography sx={{ fontWeight: "bold" }}>
                   Incoming call from {userData[caller]?.firstName}
                 </Typography>

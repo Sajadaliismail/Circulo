@@ -92,8 +92,16 @@ const useChatSocket = () => {
         handleReject();
       });
 
+      p.addStream(stream);
+
       p.on("signal", (answerSignal) => {
-        if (answerSignal.type === "candidate") {
+        if (answerSignal.type === "answer") {
+          console.log(answerSignal);
+          chatSocket.emit("answer", {
+            recipientId: caller,
+            answer: answerSignal,
+          });
+        } else if (answerSignal.type === "candidate") {
           console.log("Emitting ICE candidate:", answerSignal);
           chatSocket.emit("ice-candidate", {
             recipientId: caller,
@@ -108,8 +116,6 @@ const useChatSocket = () => {
           });
         }
       });
-
-      p.addStream(stream);
 
       p.on("stream", (remoteStream) => {
         console.log("Received remote stream");

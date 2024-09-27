@@ -131,11 +131,12 @@ const MessageArea = ({
 
   if (!userDetails) {
     return (
-      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-        <Typography variant="h4" sx={{ marginX: "auto" }}>
-          Click on any of the chats
-        </Typography>
-      </Box>
+      <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+        <p className="text-2xl   font-semibold">Start a conversation</p>
+        <p className="text-lg mt-2">
+          No messages yet. Say hi to begin chatting!
+        </p>
+      </div>
     );
   }
 
