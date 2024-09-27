@@ -69,6 +69,14 @@ export default function Header() {
     }
   };
 
+  const handleClearNotifications = async () => {};
+
+  const handleNotificationClick = async (notification) => {
+    if (notification?.type == "request_accepted") {
+      navigate(`/profile/${notification.sender[0]}`);
+    }
+  };
+
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
@@ -193,32 +201,35 @@ export default function Header() {
   );
 
   const RenderNotificatons = (
-    <Box className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md ">
+    <Box className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md  ">
       {notifications && notifications?.length ? (
         <>
-          {notifications.map((noti) => (
-            <MenuItem
-              className="mx-auto "
-              sx={{
-                backgroundColor: "#97bbe57d",
-                fontSize: 14,
-                width: 300,
-                height: 50,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderRadius: 1,
-                marginBottom: "5px",
-              }}
-              key={noti.notificationId}
-            >
-              {userData[noti.sender[0]]?.firstName} {noti?.message}
-            </MenuItem>
-          ))}
+          <div className="max-h-52 overflow-scroll">
+            {notifications.map((noti) => (
+              <MenuItem
+                className="mx-auto "
+                onClick={() => handleNotificationClick(noti)}
+                sx={{
+                  backgroundColor: "#97bbe57d",
+                  fontSize: 14,
+                  height: 50,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderRadius: 1,
+                  marginBottom: "5px",
+                }}
+                key={noti.notificationId}
+              >
+                {userData[noti.sender[0]]?.firstName} {noti?.message}
+              </MenuItem>
+            ))}
+          </div>
           <MenuItem
+            onClick={handleClearNotifications}
             sx={{
+              width: "100%",
               fontSize: 14,
-              width: 300,
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -463,7 +474,6 @@ export default function Header() {
                 sx={{
                   overflowY: "scroll",
                   scrollbarWidth: "none",
-                  maxHeight: "500px",
                 }}
               >
                 {RenderNotificatons}
@@ -500,7 +510,7 @@ export default function Header() {
             </IconButton>
             <IconButton
               size="large"
-              aria-label="show 17 new notifications"
+              aria-label="show notifications"
               color="inherit"
               onClick={() => setNotificationDisplay(true)}
             >
@@ -513,7 +523,10 @@ export default function Header() {
                 onClose={() => setNotificationDisplay(false)}
                 onOpen={() => setNotificationDisplay(true)}
               >
-                {RenderNotificatons}
+                <div className="relative w-full h-full">
+                  <div className="w-12 h-1.5 bg-gray-400 rounded-full mx-auto my-2"></div>
+                  {RenderNotificatons}
+                </div>
               </SwipeableDrawer>
             </IconButton>
             <IconButton

@@ -309,18 +309,12 @@ export default function ChatPage() {
               {renderUserList()}
             </Box>
           ) : (
-            <Typography
-              variant="h6"
-              sx={{
-                margin: "auto",
-                padding: "20px",
-                textAlign: "center",
-                color: "#999",
-                fontStyle: "italic",
-              }}
-            >
-              `Click on any user to start chatting!`
-            </Typography>
+            <div className="flex flex-col items-center justify-center h-96 text-center my-auto text-gray-500">
+              <p className="text-3xl font-semibold">No chat selected</p>
+              <p className="text-2xl mt-2">
+                Choose a conversation from the list to start chatting!
+              </p>
+            </div>
           )}
         </>
       )}

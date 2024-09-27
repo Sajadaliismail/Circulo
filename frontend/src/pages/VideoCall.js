@@ -36,6 +36,7 @@ const VideoCall = ({
   const [isMuted, setIsMuted] = useState(false);
   const [callStartTime, setCallStartTime] = useState(null);
   const [callDuration, setCallDuration] = useState(0);
+  const [answered, setAnswered] = useState(false);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const theme = useTheme();
@@ -50,6 +51,9 @@ const VideoCall = ({
         trickle: true,
         video: true,
         audio: true,
+        config: {
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        },
       });
 
       console.log("New peer created");
@@ -60,8 +64,18 @@ const VideoCall = ({
       });
 
       newPeer.on("signal", (data) => {
+        console.log("datatype", data.type);
+
         console.log("Signal event fired:", data);
-        chatSocket.emit("start-call", { recipientId, offer: data });
+        if (data.type === "offer" || data.type === "answer") {
+          chatSocket.emit("start-call", { recipientId, offer: data });
+        } else {
+          chatSocket.emit("ice-candidate", {
+            recipientId,
+            candidate: data,
+            type: "toReciever",
+          });
+        }
       });
 
       newPeer.on("stream", (stream) => {
@@ -118,6 +132,7 @@ const VideoCall = ({
   useEffect(() => {
     const handleAnswer = (answer) => {
       console.log("Call answered", answer);
+      setAnswered(true);
       if (peer) {
         peer.signal(answer);
       }
@@ -136,7 +151,7 @@ const VideoCall = ({
     };
 
     chatSocket.on("callAnswered", handleAnswer);
-    chatSocket.on("ice-candidate-reciever", handleIceCandidate);
+    chatSocket.on("ice-candidate-toCaller", handleIceCandidate);
     chatSocket.on("call_ended", handleCallEnded);
 
     return () => {
@@ -224,12 +239,12 @@ const VideoCall = ({
     >
       <DialogTitle style={{ color: "white" }}>
         Video Call with {userData[recipientId]?.firstName}
-        {callStartTime && (
-          <Typography variant="subtitle1" style={{ color: "white" }}>
-            Call Duration: {formatDuration(callDuration)}
-          </Typography>
-        )}
       </DialogTitle>
+      {callStartTime && (
+        <Typography variant="subtitle1" style={{ color: "white" }}>
+          Call Duration: {formatDuration(callDuration)}
+        </Typography>
+      )}
       <DialogContent>
         <Box
           sx={{
@@ -239,7 +254,7 @@ const VideoCall = ({
             position: "relative",
           }}
         >
-          <Box sx={{ width: !peer ? "100%" : "50%", height: "100%" }}>
+          <Box sx={{ width: !answered ? "100%" : "50%", height: "100%" }}>
             <video
               ref={localVideoRef}
               autoPlay
@@ -253,7 +268,7 @@ const VideoCall = ({
               }}
             />
           </Box>
-          <Box sx={{ width: isMobile ? "100%" : "50%", height: "100%" }}>
+          <Box sx={{ width: "50%", height: !answered ? "1%" : "100%" }}>
             <video
               ref={remoteVideoRef}
               autoPlay

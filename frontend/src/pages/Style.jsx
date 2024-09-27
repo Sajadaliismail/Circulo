@@ -14,10 +14,11 @@ export const landingPageStyles = {
     paddingTop: "20px",
   },
   typography: {
-    fontFamily: "'Roboto', sans-serif",
-    textShadow: "4px 4px 4px rgba(0, 0, 0, 0.8)",
+    fontFamily: "'Averia Libre', sans-serif",
+    textShadow: "2px 2px 4px rgba(0, 0, 0, 0.6)",
     color: "white",
     display: { md: "block" },
+    fontWeight: 300,
   },
 };
 

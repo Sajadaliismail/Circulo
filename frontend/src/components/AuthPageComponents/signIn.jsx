@@ -133,10 +133,10 @@ export default function SignInSide({ signup, resetpassword, VerifyOtp }) {
               helperText={errors.password}
               onChange={handleInput}
             />
-            <FormControlLabel
+            {/* <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
-            />
+            /> */}
             <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

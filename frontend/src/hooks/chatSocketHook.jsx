@@ -77,7 +77,11 @@ const useChatSocket = () => {
       const p = new SimplePeer({
         initiator: false,
         trickle: true,
-        stream: stream,
+        audio: true,
+        video: true,
+        config: {
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        },
       });
 
       p.on("error", (err) => {
@@ -89,12 +93,23 @@ const useChatSocket = () => {
       });
 
       p.on("signal", (answerSignal) => {
-        console.log("Sending answer signal");
-        chatSocket.emit("answer", {
-          recipientId: caller,
-          answer: answerSignal,
-        });
+        if (answerSignal.type === "candidate") {
+          console.log("Emitting ICE candidate:", answerSignal);
+          chatSocket.emit("ice-candidate", {
+            recipientId: caller,
+            candidate: answerSignal.candidate,
+            type: "toCaller",
+          });
+        } else if (answerSignal.type === "transceiverRequest") {
+          console.log("Emitting transceiver request:", answerSignal);
+          chatSocket.emit("transceiver-request", {
+            recipientId: caller,
+            transceiverRequest: answerSignal.transceiverRequest,
+          });
+        }
       });
+
+      p.addStream(stream);
 
       p.on("stream", (remoteStream) => {
         console.log("Received remote stream");
@@ -139,6 +154,13 @@ const useChatSocket = () => {
     setAccepted(false);
   };
 
+  const handleIceCandidate = (data) => {
+    console.log("ICE candidate received", data);
+    if (peer) {
+      peer.signal(data.candidate);
+    }
+  };
+
   const handleIncomingCall = ({ offer, senderId }) => {
     console.log("Incoming call from:", senderId);
     if (peer) {
@@ -177,7 +199,7 @@ const useChatSocket = () => {
         setSocketConnected(true);
         enqueueSnackbar("Connection successfull", {
           variant: "success",
-          autoHideDuration: 3000,
+          autoHideDuration: 1000,
         });
       };
 
@@ -187,17 +209,17 @@ const useChatSocket = () => {
         setSocketConnected(false);
         enqueueSnackbar("Connection lost. Attempting to reconnect...", {
           variant: "warning",
-          persist: true,
-          key: "connection-lost",
         });
 
         connectionTimeout = setTimeout(() => {
           chatSocket.connect();
-        }, 5000);
+        }, 1000);
       };
 
       chatSocket.on("connect", handleConnect);
       chatSocket.on("disconnect", handleDisconnect);
+
+      chatSocket.on("ice-candidate-toReciever", handleIceCandidate);
 
       // if (!socketConnected) {
       //   connectionTimeout = setTimeout(() => {

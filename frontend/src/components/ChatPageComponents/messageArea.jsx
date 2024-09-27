@@ -22,11 +22,6 @@ import {
   useMediaQuery,
   useTheme,
   InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Button,
-  DialogActions,
 } from "@mui/material";
 import Webcam from "react-webcam";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -227,9 +222,12 @@ const MessageArea = ({
               )
             )
           ) : (
-            <Typography variant="h4" sx={{ textAlign: "center" }}>
-              No messages
-            </Typography>
+            <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+              <p className="text-2xl   font-semibold">Start a conversation</p>
+              <p className="text-lg mt-2">
+                No messages yet. Say hi to begin chatting!
+              </p>
+            </div>
           )}
         </List>
         <Divider />
