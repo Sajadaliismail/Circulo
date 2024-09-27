@@ -11,6 +11,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Button,
+  SwipeableDrawer,
 } from "@mui/material";
 import { Menu, MenuItem, Fade } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -87,6 +88,7 @@ export default function Header() {
   const open = Boolean(anchorElMessage);
   const openNotification = Boolean(anchorElNotifcation);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationDisplay, setNotificationDisplay] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen((prevState) => !prevState);
@@ -190,6 +192,59 @@ export default function Header() {
     </Box>
   );
 
+  const RenderNotificatons = (
+    <Box className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md ">
+      {notifications && notifications?.length ? (
+        <>
+          {notifications.map((noti) => (
+            <MenuItem
+              className="mx-auto "
+              sx={{
+                backgroundColor: "#97bbe57d",
+                fontSize: 14,
+                width: 300,
+                height: 50,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderRadius: 1,
+                marginBottom: "5px",
+              }}
+              key={noti.notificationId}
+            >
+              {userData[noti.sender[0]]?.firstName} {noti?.message}
+            </MenuItem>
+          ))}
+          <MenuItem
+            sx={{
+              fontSize: 14,
+              width: 300,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderRadius: 1,
+              marginBottom: "5px",
+            }}
+          >
+            <span className="mx-auto font-bold">Clear notifications</span>
+          </MenuItem>
+        </>
+      ) : (
+        <MenuItem
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            height: 100,
+            width: 300,
+
+            textAlign: "center",
+          }}
+        >
+          <span className="mx-auto ">No notification</span>
+        </MenuItem>
+      )}
+    </Box>
+  );
   const menuId = "primary-search-account-menu";
   const mobileMenuId = "primary-search-account-menu-mobile";
   const renderMobileMenu = (
@@ -411,53 +466,7 @@ export default function Header() {
                   maxHeight: "500px",
                 }}
               >
-                <Box className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md ">
-                  {notifications && notifications?.length ? (
-                    notifications.map((noti) => (
-                      <MenuItem
-                        className="mx-auto "
-                        sx={{
-                          backgroundColor: "#97bbe57d",
-                          fontSize: 14,
-                          width: 300,
-                          height: 50,
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          borderRadius: 1,
-                          marginBottom: "5px",
-                        }}
-                        key={noti.notificationId}
-                      >
-                        {userData[noti.sender[0]]?.firstName} {noti?.message}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        height: 100,
-                        textAlign: "center",
-                      }}
-                    >
-                      <span className="mx-auto ">No notification</span>
-                    </MenuItem>
-                  )}
-                </Box>
-                <MenuItem
-                  sx={{
-                    fontSize: 14,
-                    width: 300,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderRadius: 1,
-                    marginBottom: "5px",
-                  }}
-                >
-                  <span className="mx-auto font-bold">Clear notifications</span>
-                </MenuItem>
+                {RenderNotificatons}
               </Box>
             </Menu>
             <IconButton
@@ -493,10 +502,19 @@ export default function Header() {
               size="large"
               aria-label="show 17 new notifications"
               color="inherit"
+              onClick={() => setNotificationDisplay(true)}
             >
-              <Badge badgeContent={17} color="error">
+              <Badge badgeContent={notifications?.length} color="error">
                 <NotificationsIcon />
               </Badge>
+              <SwipeableDrawer
+                anchor={"bottom"}
+                open={notificationDisplay}
+                onClose={() => setNotificationDisplay(false)}
+                onOpen={() => setNotificationDisplay(true)}
+              >
+                {RenderNotificatons}
+              </SwipeableDrawer>
             </IconButton>
             <IconButton
               size="large"
