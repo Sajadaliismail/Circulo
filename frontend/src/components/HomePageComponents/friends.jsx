@@ -38,7 +38,7 @@ function Friends() {
     };
 
     fetchFriendsAndUserData();
-  }, [dispatch, friends]);
+  }, []);
 
   return (
     <>

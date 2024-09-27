@@ -123,7 +123,6 @@ const useChatSocket = () => {
   };
 
   const handleReject = () => {
-    console.log("Rejecting call");
     chatSocket.emit("call_status", {
       recipientId: caller,
       message: "Call rejected",
@@ -157,11 +156,12 @@ const useChatSocket = () => {
     }
   };
 
+  let connectionTimeout;
   useEffect(() => {
     if (isLoggedIn) {
       dispatch(fetchUser());
     }
-    if (isLoggedIn && user?._id && !socketConnected) {
+    if (isLoggedIn && !socketConnected) {
       chatSocket.connect();
       const id = user._id;
       chatSocket.emit("authenticate", id, (response) => {
@@ -172,17 +172,53 @@ const useChatSocket = () => {
         }
       });
 
-      setSocketConnected(true);
-
-      chatSocket.on("disconnect", () => {
-        console.log("Socket disconnected");
-        setSocketConnected(false);
-      });
-
-      chatSocket.on("connect", () => {
+      const handleConnect = () => {
         console.log("Socket connected");
         setSocketConnected(true);
-      });
+        enqueueSnackbar("Connection successfull", {
+          variant: "success",
+          autoHideDuration: 3000,
+        });
+      };
+
+      setSocketConnected(true);
+      const handleDisconnect = () => {
+        console.log("Socket disconnected");
+        setSocketConnected(false);
+        enqueueSnackbar("Connection lost. Attempting to reconnect...", {
+          variant: "warning",
+          persist: true,
+          key: "connection-lost",
+        });
+
+        connectionTimeout = setTimeout(() => {
+          chatSocket.connect();
+        }, 5000);
+      };
+
+      chatSocket.on("connect", handleConnect);
+      chatSocket.on("disconnect", handleDisconnect);
+
+      // if (!socketConnected) {
+      //   connectionTimeout = setTimeout(() => {
+      //     if (!socketConnected) {
+      //       enqueueSnackbar("Unable to connect to chat server", {
+      //         variant: "error",
+      //         autoHideDuration: 5000,
+      //       });
+      //     }
+      //   }, 10000);
+      // }
+
+      // chatSocket.on("disconnect", () => {
+      //   console.log("Socket disconnected");
+      //   setSocketConnected(false);
+      // });
+
+      // chatSocket.on("connect", () => {
+      //   console.log("Socket connected");
+      //   setSocketConnected(true);
+      // });
 
       chatSocket.on("newMessageNotification", (arg) => {
         const { roomId, senderId, message, type, _id } = arg;
@@ -245,7 +281,7 @@ const useChatSocket = () => {
       chatSocket.on("incomingCall", handleIncomingCall);
       chatSocket.on("newMessage", (arg) => {
         dispatch(setUnreadMessages(arg));
-        enqueueSnackbar("You have one message", { variant: "success" });
+        // enqueueSnackbar("You have one message", { variant: "success" });
       });
 
       chatSocket.on("typingAlert", ({ roomId, userIsTyping }) => {
@@ -259,7 +295,6 @@ const useChatSocket = () => {
       });
 
       chatSocket.on("relationChanged", (data) => {
-        console.log(data);
         const { change, user } = data;
         const action = (snackbarId) => (
           <>

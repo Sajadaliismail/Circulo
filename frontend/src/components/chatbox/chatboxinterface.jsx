@@ -14,6 +14,7 @@ const ChatBox = ({
   onLoadPrevious,
   onRemove,
   data,
+  isTyping,
 }) => {
   const messagesEndRef = useRef(null);
   const { user } = useSelector((state) => state.user);
@@ -56,7 +57,7 @@ const ChatBox = ({
   };
 
   const onSubmitMessage = (message) => {
-    onSubmit(friendId, message);
+    onSubmit(friendId, message, roomId);
     scrollToBottom();
   };
 
@@ -94,7 +95,12 @@ const ChatBox = ({
           ))}
         <div ref={messagesEndRef} />
       </div>
-      <ChatBoxFooter onSubmit={onSubmitMessage} />
+      <ChatBoxFooter
+        onSubmit={onSubmitMessage}
+        roomId={roomId}
+        friend={friendId}
+        isTyping={isTyping}
+      />
     </Card>
   );
 };

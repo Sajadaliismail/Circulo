@@ -151,7 +151,6 @@ export default function ChatPage() {
             variant: "info",
           }
         );
-        // chatSocket.connect();
       }
       dispatch(setReadMessages(friend));
 

@@ -1,5 +1,4 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { setOpen } from "./chatsSlice";
 const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
 export const fetchchats = createAsyncThunk(
@@ -25,7 +24,7 @@ export const fetchchats = createAsyncThunk(
         throw new Error("Invalid data format received from server.");
       }
 
-      const roomId = data.chat.roomId;
+      // const roomId = data.chat.roomId;
       // dispatch(setOpen(roomId));
 
       return data.chat;
@@ -105,3 +104,24 @@ export const refreshAccessToken = async () => {
     return null;
   }
 };
+
+export const getNotifications = createAsyncThunk(
+  "chats/fetchNotifications",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${CHAT_BACKEND}/chats/notifications`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        return rejectWithValue("Error fetching notificatoins");
+      }
+      return data;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue("Error fetching notificatoins");
+    }
+  }
+);

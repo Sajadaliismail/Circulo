@@ -1,15 +1,16 @@
-import * as React from "react";
-import { styled, alpha } from "@mui/material/styles";
 import {
   AppBar,
   Box,
   Toolbar,
   IconButton,
   Badge,
+  Typography,
+  Divider,
+  Drawer,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
 } from "@mui/material";
 import { Menu, MenuItem, Fade } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -17,7 +18,14 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import { Brightness2Rounded, LogoutRounded } from "@mui/icons-material";
+import Profile from "../HomePageComponents/profile";
+
+import {
+  Brightness2Rounded,
+  Close,
+  ExpandMore,
+  LogoutRounded,
+} from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { setLogout } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
@@ -25,7 +33,10 @@ import chatSocket from "../../features/utilities/Socket-io";
 import { useResetRecoilState } from "recoil";
 import { postsAtom } from "../../atoms/postAtoms";
 import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
-import { fetchChatFriends } from "../../features/chats/chatsAsycnThunks";
+import {
+  fetchChatFriends,
+  getNotifications,
+} from "../../features/chats/chatsAsycnThunks";
 import { useEffect } from "react";
 import { useState } from "react";
 import {
@@ -33,31 +44,65 @@ import {
   setFriend,
   setRoomId,
 } from "../../features/chats/chatsSlice";
+import Suggestions from "../HomePageComponents/suggestions";
+import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
 
 export default function Header() {
   const { user } = useSelector((state) => state.user);
-  const { chatFriends } = useSelector((state) => state.chats);
+  const { chatFriends, notifications } = useSelector((state) => state.chats);
   const { userData } = useSelector((state) => state.friends);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
+  // const [anchorEl, setAnchorEl] = useState(null);
+  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
   const postReset = useResetRecoilState(postsAtom);
   const chatfriendsReset = useResetRecoilState(ChatFriendsData);
   const chatmessageReset = useResetRecoilState(ChatRoomMessages);
   const [unreadChatsCount, setUreadChatsCount] = useState(0);
+  const [expanded, setExpanded] = useState("panel1");
+
+  const fetchUserData = (id) => {
+    if (!userData[id]) {
+      dispatch(fetchUserDetails(id));
+    }
+  };
+
+  const handleChange = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
+
+  useEffect(() => {
+    dispatch(getNotifications());
+  }, []);
+
   useEffect(() => {
     const unread =
       chatFriends?.filter((friend) => friend.unreadCount > 0).length || 0;
     setUreadChatsCount(unread);
   }, [chatFriends]);
 
-  const [anchorElMessage, setAnchorElMessage] = React.useState(null);
+  const [anchorElMessage, setAnchorElMessage] = useState(null);
+  const [anchorElNotifcation, setAnchorElNotification] = useState(null);
   const open = Boolean(anchorElMessage);
+  const openNotification = Boolean(anchorElNotifcation);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen((prevState) => !prevState);
+  };
+
+  const handleClickNotification = async (event) => {
+    setAnchorElNotification(event.currentTarget);
+    await dispatch(getNotifications());
+  };
   const handleClick = async (event) => {
     setAnchorElMessage(event.currentTarget);
     await dispatch(fetchChatFriends());
+  };
+
+  const handleCloseNotifications = () => {
+    setAnchorElNotification(null);
   };
   const handleClose = () => {
     setAnchorElMessage(null);
@@ -71,7 +116,7 @@ export default function Header() {
     dispatch(setLogout());
   };
 
-  const isMenuOpen = Boolean(anchorEl);
+  // const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark");
@@ -84,6 +129,66 @@ export default function Header() {
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
   };
+
+  const drawer = (
+    <Box sx={{ textAlign: "center", position: "relative" }}>
+      <Button
+        onClick={handleDrawerToggle}
+        sx={{ padding: 0, position: "absolute", right: -20 }}
+      >
+        <Close />
+      </Button>
+
+      <img
+        className="dark:bg-gray-400 dark:rounded-lg mx-auto py-2"
+        onClick={() => navigate("/")}
+        style={{ height: "60px" }}
+        alt="Logo"
+        src="/circulo.png"
+      />
+      <Divider />
+      <div>
+        <Accordion
+          expanded={expanded === "panel1"}
+          onChange={handleChange("panel1")}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMore />}
+            aria-controls="panel1bh-content"
+            id="panel1bh-header"
+          >
+            <Typography
+              sx={{ width: "100%", textAlign: "left", flexShrink: 0 }}
+            >
+              Profile
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ padding: 0 }}>
+            <Profile fetchUserData={fetchUserData} />
+          </AccordionDetails>
+        </Accordion>
+        <Accordion
+          expanded={expanded === "panel2"}
+          onChange={handleChange("panel2")}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMore />}
+            aria-controls="panel2bh-content"
+            id="panel2bh-header"
+          >
+            <Typography
+              sx={{ width: "100%", textAlign: "left", flexShrink: 0 }}
+            >
+              Requests and suggestions
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ padding: 0 }}>
+            <Suggestions fetchUserData={fetchUserData} />
+          </AccordionDetails>
+        </Accordion>
+      </div>
+    </Box>
+  );
 
   const menuId = "primary-search-account-menu";
   const mobileMenuId = "primary-search-account-menu-mobile";
@@ -98,7 +203,7 @@ export default function Header() {
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
       TransitionComponent={Fade}
-      sx={{ "& .MuiPaper-root": { backgroundColor: "slategray" } }}
+      sx={{ "& .MuiPaper-root": { backgroundColor: "#c0c5d4ba" } }}
     >
       <MenuItem
         onClick={() => {
@@ -136,11 +241,11 @@ export default function Header() {
       <AppBar position="static">
         <Toolbar className="bg-cyan-700 dark:bg-slate-700">
           <IconButton
-            size="large"
-            edge="start"
             color="inherit"
             aria-label="open drawer"
-            sx={{ mr: 2 }}
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: "none" } }}
           >
             <MenuIcon />
           </IconButton>
@@ -172,12 +277,19 @@ export default function Header() {
               anchorEl={anchorElMessage}
               open={open}
               onClose={handleClose}
+              slotProps={{
+                paper: {
+                  sx: { borderRadius: 3 },
+                },
+              }}
               MenuListProps={{
+                sx: { margin: 0, padding: 0 },
                 "aria-labelledby": "basic-button",
               }}
             >
-              <Box className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2">
+              <Box className="bg-slate-200 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2">
                 <Box
+                  className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md "
                   sx={{
                     maxHeight: "200px",
                     overflowY: "scroll",
@@ -264,14 +376,90 @@ export default function Header() {
               <MenuItem onClick={handleClose}>Logout</MenuItem> */}
             </Menu>
             <IconButton
+              id="notification-button"
+              aria-controls={openNotification ? "notifications" : undefined}
+              aria-haspopup="true"
+              aria-expanded={openNotification ? "true" : undefined}
               size="large"
-              aria-label="show 17 new notifications"
               color="inherit"
+              onClick={handleClickNotification}
             >
-              <Badge badgeContent={17} color="error">
+              <Badge badgeContent={notifications?.length} color="error">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
+            <Menu
+              id="notifications"
+              anchorEl={anchorElNotifcation}
+              open={openNotification}
+              onClose={handleCloseNotifications}
+              slotProps={{
+                paper: {
+                  sx: { borderRadius: 3 },
+                },
+              }}
+              MenuListProps={{
+                sx: { margin: 0, padding: 0 },
+                "aria-labelledby": "notification-button",
+              }}
+            >
+              <Box
+                className="bg-slate-200 m-0  dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2 rounded-lg "
+                sx={{
+                  overflowY: "scroll",
+                  scrollbarWidth: "none",
+                  maxHeight: "500px",
+                }}
+              >
+                <Box className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md ">
+                  {notifications && notifications?.length ? (
+                    notifications.map((noti) => (
+                      <MenuItem
+                        className="mx-auto "
+                        sx={{
+                          backgroundColor: "#97bbe57d",
+                          fontSize: 14,
+                          width: 300,
+                          height: 50,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          borderRadius: 1,
+                          marginBottom: "5px",
+                        }}
+                        key={noti.notificationId}
+                      >
+                        {userData[noti.sender[0]]?.firstName} {noti?.message}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        height: 100,
+                        textAlign: "center",
+                      }}
+                    >
+                      <span className="mx-auto ">No notification</span>
+                    </MenuItem>
+                  )}
+                </Box>
+                <MenuItem
+                  sx={{
+                    fontSize: 14,
+                    width: 300,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderRadius: 1,
+                    marginBottom: "5px",
+                  }}
+                >
+                  <span className="mx-auto font-bold">Clear notifications</span>
+                </MenuItem>
+              </Box>
+            </Menu>
             <IconButton
               size="large"
               edge="end"
@@ -323,6 +511,25 @@ export default function Header() {
           </Box>
         </Toolbar>
       </AppBar>
+      <nav>
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true,
+          }}
+          sx={{
+            display: { xs: "block", sm: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: 300,
+            },
+          }}
+        >
+          {drawer}
+        </Drawer>
+      </nav>
       {renderMobileMenu}
       <Box sx={{ padding: 2 }}></Box>
     </Box>

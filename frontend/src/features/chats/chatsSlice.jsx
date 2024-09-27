@@ -3,6 +3,7 @@ import {
   fetchAllChats,
   fetchChatFriends,
   fetchchats,
+  getNotifications,
 } from "./chatsAsycnThunks";
 import { act } from "react";
 
@@ -12,6 +13,7 @@ const initialState = {
   roomId: "",
   unReadMessages: {},
   chatFriends: [],
+  notifications: [],
 };
 
 // const updateChatMessages = (
@@ -181,6 +183,12 @@ const chatsSlice = createSlice({
       })
       .addCase(fetchChatFriends.fulfilled, (state, action) => {
         state.chatFriends = action.payload.chatFriends;
+      })
+      .addCase(getNotifications.pending, (state, action) => {
+        state.loading = true;
+      })
+      .addCase(getNotifications.fulfilled, (state, action) => {
+        state.notifications = action.payload.notification;
       });
   },
 });

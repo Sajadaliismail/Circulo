@@ -36,7 +36,7 @@ export default function Homepage({ msg, setmsg }) {
 
   return (
     <>
-      <Header setmsg={setmsg} />
+      <Header fetchUserData={fetchUserData} />
       <Box sx={{ flexGrow: 1 }}>
         <Grid container rowGap={10} spacing={0}>
           <Grid

@@ -29,9 +29,6 @@ function ChatApp({ fetchUserData, msg, setmsg }) {
   }, [chats]);
 
   const handleChat = async (id, roomId) => {
-    console.log(roomId, chatMessages);
-
-    console.log(id);
     const fetchChatmsg = async (id) => {
       const response = await fetch(`${CHAT_BACKEND}/chats/fetchchat?id=${id}`, {
         method: "GET",
@@ -66,8 +63,6 @@ function ChatApp({ fetchUserData, msg, setmsg }) {
 
   const handleClose = (id) => {
     setChatMessages((prevChats) => {
-      console.log(prevChats);
-
       const curr = { ...prevChats[id] };
       curr.chatBoxOpen = false;
       return { ...prevChats, [id]: curr };
@@ -76,17 +71,20 @@ function ChatApp({ fetchUserData, msg, setmsg }) {
 
   const handleMinimize = (id) => {
     setChatMessages((prevChats) => {
-      console.log(prevChats);
-
       const curr = { ...prevChats[id] };
       curr.minimize = !curr.minimize;
       return { ...prevChats, [id]: curr };
     });
   };
 
-  const onSubmit = (id, message) => {
+  const onSubmit = (id, message, room) => {
     if (message.trim()) {
-      chatSocket.emit("message", { userId: id, message, type: "text" });
+      chatSocket.emit("message", {
+        userId: id,
+        message,
+        type: "text",
+        roomId: room,
+      });
 
       setMessage("");
     }
@@ -124,6 +122,7 @@ function ChatApp({ fetchUserData, msg, setmsg }) {
                   roomId={roomId}
                   title={chat.name}
                   data={chat}
+                  isTyping={chat?.isTyping}
                   conversations={chat.messages}
                   chatBoxOpen={chat.chatBoxOpen}
                   onClose={() => handleClose(roomId)}

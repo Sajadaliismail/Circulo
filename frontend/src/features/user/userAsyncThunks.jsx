@@ -36,7 +36,7 @@ export const uploadImage = createAsyncThunk(
         body: imageData,
       });
       const data = await response.json();
-      console.log(response);
+      // console.log(response);
       if (response.ok) return data;
       else return rejectWithValue("Error uploading image");
     } catch (error) {

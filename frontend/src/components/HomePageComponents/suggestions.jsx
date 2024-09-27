@@ -43,8 +43,6 @@ function Suggestions({ fetchUserData }) {
   };
 
   const handleCancelRequest = (id) => {
-    console.log(id);
-
     updateStateAfterAction(
       cancelRequest({ friendId: id }),
       [getSuggestions(), getRequests()],

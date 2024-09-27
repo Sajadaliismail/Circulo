@@ -143,6 +143,7 @@ export const sentRequest = createAsyncThunk(
         body: JSON.stringify(id),
       });
       const data = await response.json();
+
       return data;
     } catch (error) {
       console.log(error);
@@ -185,7 +186,6 @@ export const fetchUserStatus = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue("User Not found");
       }
-      console.log("vannu");
 
       return data;
     } catch (error) {
@@ -199,8 +199,6 @@ export const removeFriend = createAsyncThunk(
   "friends/removeFriend",
   async (id, { rejectWithValue, getState }) => {
     try {
-      console.log(id);
-
       const response = await fetch(`${FRIENDS_BACKEND}/friends/removeFriend`, {
         method: "POST",
         credentials: "include",

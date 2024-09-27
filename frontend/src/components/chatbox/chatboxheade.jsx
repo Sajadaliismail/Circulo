@@ -18,7 +18,7 @@ const ChatBoxHeader = ({ onClose, onMinimize, data }) => {
   return (
     <div
       onClick={onMinimize}
-      className="flex justify-between items-center text-white p-1 rounded-lg ps-2 w-[350px] bg-blue-600 hover:bg-blue-700 cursor-pointer"
+      className="flex justify-between items-center text-white p-1 rounded-lg ps-2  w-[350px] bg-blue-600 hover:bg-blue-700 cursor-pointer"
     >
       <Box className="flex items-center">
         <AvatarWithUsername
