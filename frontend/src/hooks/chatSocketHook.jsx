@@ -33,6 +33,20 @@ const useChatSocket = () => {
   const [localStream, setLocalStream] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
+  const audioRef = useRef(null);
+
+  const playAudio = () => {
+    audioRef.current.play().catch((error) => {
+      console.error("Error playing audio:", error);
+    });
+  };
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -54,6 +68,7 @@ const useChatSocket = () => {
   };
 
   const handleAccept = async (e) => {
+    stopAudio();
     console.log("handleAccept called");
     if (accepted) {
       return;
@@ -168,6 +183,7 @@ const useChatSocket = () => {
   };
 
   const handleIncomingCall = ({ offer, senderId }) => {
+    playAudio();
     console.log("Incoming call from:", senderId);
     if (peer) {
       chatSocket.emit("call_status", {
@@ -411,6 +427,7 @@ const useChatSocket = () => {
     isCameraOn,
     setIsCameraOn,
     setAccepted,
+    audioRef,
   };
 };
 

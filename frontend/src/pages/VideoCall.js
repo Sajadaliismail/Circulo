@@ -197,12 +197,14 @@ export default function VideoCall({
     <Dialog
       open={isVideoCallActive}
       fullWidth
-      maxWidth={false}
+      // maxWidth={false}
       PaperProps={{
         style: {
           backgroundColor: "black",
-          height: "100%",
-          width: "100%",
+          height: isMobile ? "100%" : "auto",
+          maxHeight: isMobile ? "100%" : "80vh",
+          margin: "0px",
+          width: isMobile ? "100%" : 1200,
           margin: 0,
           maxWidth: "none",
         },
@@ -210,13 +212,14 @@ export default function VideoCall({
     >
       <DialogTitle style={{ color: "white" }}>
         Video Call with {userData[recipientId]?.firstName}
+        {callStartTime && (
+          <span className="text-white ml-auto text-sm block">
+            Call Duration: {formatDuration(callDuration)}
+          </span>
+        )}
       </DialogTitle>
-      {callStartTime && (
-        <Typography variant="subtitle1" style={{ color: "white" }}>
-          Call Duration: {formatDuration(callDuration)}
-        </Typography>
-      )}
-      <DialogContent>
+
+      <DialogContent className="scrollbar-none">
         <Box
           sx={{
             display: "flex",
@@ -265,7 +268,7 @@ export default function VideoCall({
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: isMobile ? "cover" : "none",
+                objectFit: "cover",
                 borderRadius: "8px",
                 transform: "scaleX(-1)",
               }}

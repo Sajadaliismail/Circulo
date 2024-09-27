@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+// import "./ringtone.wav";
 import {
   Dialog,
   DialogTitle,
@@ -41,11 +42,32 @@ export default function IncomingCallDialog() {
     isCameraOn,
     setIsCameraOn,
     setAccepted,
+    audioRef,
   } = useChatSocket();
   const { userData } = useSelector((state) => state.friends);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [isMuted, setIsMuted] = useState(false);
+  const [callStartTime, setCallStartTime] = useState(null);
+  const [callDuration, setCallDuration] = useState(0);
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  useEffect(() => {
+    let interval;
+    if (callStartTime) {
+      interval = setInterval(() => {
+        setCallDuration(Math.floor((Date.now() - callStartTime) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [callStartTime]);
 
   const handleEndVideoCall = () => {
     setIsMuted(false);
@@ -81,6 +103,11 @@ export default function IncomingCallDialog() {
 
   return (
     <>
+      <audio
+        ref={audioRef}
+        src="https://assets.mixkit.co/active_storage/sfx/2976/2976.wav"
+        loop
+      />
       <TrapFocus open disableAutoFocus disableEnforceFocus>
         <Fade appear={false} in={incomingCall}>
           <Box
@@ -122,7 +149,10 @@ export default function IncomingCallDialog() {
                 <Button
                   color="success"
                   variant="contained"
-                  onClick={handleAccept}
+                  onClick={(e) => {
+                    setCallStartTime(Date.now());
+                    handleAccept(e);
+                  }}
                 >
                   Accept
                 </Button>
@@ -145,15 +175,22 @@ export default function IncomingCallDialog() {
             backgroundColor: "black",
             height: isMobile ? "100%" : "auto",
             maxHeight: isMobile ? "100%" : "80vh",
-            margin: isMobile ? "0px" : "0px",
+            margin: 0,
             width: isMobile ? "100%" : 1200,
             maxWidth: isMobile ? "100%" : 1200,
           },
         }}
         fullWidth
       >
-        <DialogTitle>In call with {userData[caller]?.firstName}</DialogTitle>
-        <DialogContent>
+        <DialogTitle style={{ color: "white" }}>
+          In call with {userData[caller]?.firstName}
+          {callStartTime && (
+            <span className="text-white ml-auto text-sm block">
+              Call Duration: {formatDuration(callDuration)}
+            </span>
+          )}
+        </DialogTitle>
+        <DialogContent className="scrollbar-none">
           <Box
             sx={{
               display: "flex",
@@ -164,10 +201,11 @@ export default function IncomingCallDialog() {
           >
             <Box
               sx={{
-                position: "absolute",
+                position: isMobile ? "absolute" : "relative",
                 top: 0,
                 left: 0,
-                width: "100%",
+                width: !isMobile ? "50%" : "100%",
+                height: "100%",
                 height: "100%",
                 zIndex: 2,
               }}
@@ -188,7 +226,7 @@ export default function IncomingCallDialog() {
                 position: isMobile ? "absolute" : "relative",
                 right: isMobile ? 16 : null,
                 bottom: isMobile ? 16 : null,
-                width: isMobile ? "30%" : "100%",
+                width: isMobile ? "30%" : "50%",
                 aspectRatio: "9/16",
                 zIndex: 3,
               }}
