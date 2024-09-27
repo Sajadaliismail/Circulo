@@ -228,11 +228,14 @@ const getFriendsServiceApi = async (userId) => {
 };
 const getSuggestions = async (userId, { postalCode }) => {
   const session = driver.session();
+  const uniqueUsers = new Set();
+  const suggestions = [];
+
   try {
     if (!postalCode) {
       const userResult = await session.run(
         `MATCH (u:User {id: $userId})
-       RETURN u.postalCode AS postalCode`,
+         RETURN u.postalCode AS postalCode`,
         { userId }
       );
 
@@ -240,8 +243,9 @@ const getSuggestions = async (userId, { postalCode }) => {
         throw new Error("User not found");
       }
 
-      const postalCode = userResult.records[0].get("postalCode");
+      postalCode = userResult.records[0].get("postalCode");
     }
+
     // Function to run query and map results
     const runQuery = async (query, params) => {
       const result = await session.run(query, params);
@@ -251,25 +255,23 @@ const getSuggestions = async (userId, { postalCode }) => {
       }));
     };
 
+    // Get outgoing friend requests
     const outgoingRequestsResult = await session.run(
       `MATCH (u:User {id: $userId})-[:FRIEND_REQUEST]->(requestee:User)
-   RETURN requestee AS requestee,
-          EXISTS((u)-[:FRIEND_REQUEST]->(requestee)) AS hasRequested`,
+       RETURN requestee AS requestee,
+              EXISTS((u)-[:FRIEND_REQUEST]->(requestee)) AS hasRequested`,
       { userId }
     );
 
-    // Process the result to include full details and the hasRequested field
     const outgoingRequestsWithDetails = outgoingRequestsResult.records.map(
       (record) => {
         const requestee = record.get("requestee").properties;
         const hasRequested = record.get("hasRequested");
-        return {
-          ...requestee,
-          hasRequested,
-        };
+        return { ...requestee, hasRequested };
       }
     );
-    // Get users who have sent requests to the current user
+
+    // Get incoming friend requests
     const incomingRequestsResult = await session.run(
       `MATCH (u:User {id: $userId})<-[:FRIEND_REQUEST]-(requester:User)
        RETURN requester.id AS requesterId`,
@@ -291,8 +293,15 @@ const getSuggestions = async (userId, { postalCode }) => {
       { userId, incomingRequestIds: Array.from(incomingRequestIds) }
     );
 
-    if (friendsOfFriends.length >= 20) {
-      return friendsOfFriends.slice(0, 20);
+    for (const user of friendsOfFriends) {
+      if (!uniqueUsers.has(user.id)) {
+        uniqueUsers.add(user.id);
+        suggestions.push(user);
+      }
+    }
+
+    if (suggestions.length >= 20) {
+      return suggestions.slice(0, 20);
     }
 
     // Get nearby people
@@ -307,10 +316,15 @@ const getSuggestions = async (userId, { postalCode }) => {
       { userId, postalCode, incomingRequestIds: Array.from(incomingRequestIds) }
     );
 
-    friendsOfFriends.push(...nearbyPeople);
+    for (const user of nearbyPeople) {
+      if (!uniqueUsers.has(user.id)) {
+        uniqueUsers.add(user.id);
+        suggestions.push(user);
+      }
+    }
 
-    if (friendsOfFriends.length >= 20) {
-      return friendsOfFriends.slice(0, 20);
+    if (suggestions.length >= 20) {
+      return suggestions.slice(0, 20);
     }
 
     // Get other users
@@ -326,27 +340,33 @@ const getSuggestions = async (userId, { postalCode }) => {
       { userId, incomingRequestIds: Array.from(incomingRequestIds) }
     );
 
-    friendsOfFriends.push(...otherUsers);
-
-    const uniqueSuggestions = Array.from(
-      new Map(friendsOfFriends.map((item) => [item.id, item])).values()
-    );
-    const Users = await session.run(
-      `MATCH(u:User {postalCode:$postalCode}) RETURN u`,
-      {
-        postalCode,
+    for (const user of otherUsers) {
+      if (!uniqueUsers.has(user.id)) {
+        uniqueUsers.add(user.id);
+        suggestions.push(user);
       }
-    );
-    if (!uniqueSuggestions.length) {
+    }
+
+    // Ensure the final list is unique and limited to 20
+    const uniqueSuggestions = Array.from(uniqueUsers).slice(0, 20);
+
+    // If no unique suggestions found, look for users with the same postal code
+    if (suggestions.length === 0) {
+      const Users = await session.run(
+        `MATCH (u:User {postalCode: $postalCode}) RETURN u`,
+        { postalCode }
+      );
       const usersData = Users.records.map(
         (record) => record.get("u").properties
       );
-      return usersData;
+      return Array.from(new Set(usersData.map((user) => user.id))).slice(0, 20);
     }
-    if (uniqueSuggestions.length < 20)
-      return uniqueSuggestions.concat(outgoingRequestsWithDetails).slice(0, 20);
 
-    return;
+    return suggestions.length < 20
+      ? Array.from(
+          new Set([...suggestions, ...outgoingRequestsWithDetails])
+        ).slice(0, 20)
+      : suggestions;
   } catch (error) {
     console.error("Error getting suggestions:", error);
     throw error;

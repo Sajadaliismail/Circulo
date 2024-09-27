@@ -21,7 +21,7 @@ const sendFriendRequest = async (req, res) => {
       user: friendId,
     };
     // publishMessage("friend_request", message);
-    res.status(200).send("Friend request sent");
+    res.status(200).json({ success: "Friend request sent" });
   } catch (error) {
     console.log(error);
     res.status(402).json({ err: error.message });
@@ -38,7 +38,7 @@ const acceptRequest = async (req, res) => {
       sender: userId,
       user: friendId,
     };
-    // publishMessage("request_accepted", message);
+    publishMessage("request_accepted", message);
     res.status(200).json({ message: "Friend request accepted" });
   } catch (error) {
     console.log(error);
@@ -70,7 +70,7 @@ const suggestions = async (req, res) => {
   } catch (error) {
     console.log(error);
 
-    res.status(500).send("Server error");
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -81,7 +81,7 @@ const getRequests = async (req, res) => {
 
     res.status(200).json({ requests: result });
   } catch (error) {
-    res.status(500).send("Server error");
+    res.status(500).json({ error: "Server error" });
   }
 };
 const getFriends = async (req, res) => {
@@ -91,7 +91,7 @@ const getFriends = async (req, res) => {
 
     res.status(200).json({ friends: result });
   } catch (error) {
-    res.status(500).send("Server error");
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -103,7 +103,7 @@ const getFriendsApi = async (req, res) => {
 
     res.status(200).json({ friends: result });
   } catch (error) {
-    res.status(500).send("Server error");
+    res.status(500).json({ error: "Server error" });
   }
 };
 

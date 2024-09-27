@@ -77,8 +77,6 @@ io.on("connection", (socket) => {
       console.log(recipientId, socket.user);
 
       if (receiverSocketId) {
-        console.log("emitted");
-
         io.to(receiverSocketId).emit("callAnswered", answer);
       } else {
         console.log("not found");
@@ -105,7 +103,6 @@ io.on("connection", (socket) => {
 
   socket.on("handleRelation", async (data) => {
     const { user, change } = data;
-    console.log(data);
 
     const receiverSocketId = await userClient.get(user);
     if (receiverSocketId) {

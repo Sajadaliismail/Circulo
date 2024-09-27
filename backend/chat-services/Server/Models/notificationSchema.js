@@ -4,7 +4,7 @@ const notificationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   type: {
     type: String,
-    enum: ["friend_request", "request_accepted", "comment", "like"],
+    enum: ["request_accepted", "comment", "like"],
     required: true,
   },
   sender: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -27,7 +27,9 @@ const userNotificationSchema = new mongoose.Schema({
 
 notificationSchema.pre("save", async function (next) {
   const notification = this;
-
+  if (notification.type === "request_accepted") {
+    return next();
+  }
   const existingNotification = await mongoose.model("Notification").findOne({
     user: notification.user,
     contentId: notification.contentId,
@@ -40,7 +42,7 @@ notificationSchema.pre("save", async function (next) {
     );
 
     if (!isSenderExists) {
-      existingNotification.sender.push(notification.sender[0]);
+      existingNotification.sender.unshift(notification.sender[0]);
       await existingNotification.save();
 
       await mongoose
@@ -52,9 +54,7 @@ notificationSchema.pre("save", async function (next) {
         );
     }
 
-    return next(
-      new Error("Duplicate notification found, updating existing notification.")
-    );
+    return next(new Error("Duplicate notification detected"));
   } else {
     next();
   }

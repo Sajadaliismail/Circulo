@@ -281,21 +281,50 @@ route.get("/notifications", authenticateToken, async (req, res) => {
     const userId = req.userId;
     console.log(userId);
 
+    const id = new mongoose.Types.ObjectId(userId);
     const notification = await UserNotification.aggregate([
       {
-        $match: { user: userId },
+        $match: { user: id },
+      },
+      {
+        $unwind: "$notifications",
+      },
+      {
+        $lookup: {
+          from: "notifications",
+          localField: "notifications",
+          foreignField: "_id",
+          as: "notificationDetails",
+        },
+      },
+      {
+        $unwind: "$notificationDetails",
+      },
+      {
+        $match: { "notificationDetails.isRead": false },
+      },
+      {
+        $sort: { "notificationDetails.createdAt": -1 },
       },
       {
         $project: {
-          _id: 1,
+          _id: 0,
+          notificationId: "$notificationDetails._id",
+          type: "$notificationDetails.type",
+          sender: "$notificationDetails.sender",
+          contentId: "$notificationDetails.contentId",
+          contentType: "$notificationDetails.contentType",
+          message: "$notificationDetails.message",
+          isRead: "$notificationDetails.isRead",
+          createdAt: "$notificationDetails.createdAt",
         },
       },
     ]);
 
-    console.log(notification);
     return res.status(200).json({ notification: notification });
   } catch (error) {
     console.log(error);
+    return res.status(400).json({ error: "Error fetching notifications" });
   }
 });
 

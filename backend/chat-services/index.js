@@ -29,7 +29,6 @@ app.use(cors(corsOption));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/chats", route);
-subscribeMessage("friend_request", handleIncomingRequestNotification);
 subscribeMessage("request_accepted", handleRequestAccepetedNotification);
 app.listen(PORT, () => {
   console.log(`Chat services connected to port : ${PORT}`);
