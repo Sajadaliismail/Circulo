@@ -86,6 +86,13 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("call_ended", async ({ recipientId }) => {
+    const receiverSocketId = await userClient.get(recipientId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("call_hangup", recipientId);
+    }
+  });
+
   socket.on("call_status", async ({ recipientId, message }) => {
     console.log(recipientId, socket.user);
 
