@@ -100,7 +100,7 @@ const useChatSocket = () => {
 
   const handleAccept = async (e) => {
     stopAudio();
-    console.log("handleAccept called");
+    // console.log("handleAccept called");
     if (accepted) {
       return;
     }
@@ -129,9 +129,11 @@ const useChatSocket = () => {
       });
 
       p.on("error", (err) => {
-        console.error("SimplePeer error:", err);
+        // console.error("SimplePeer error:", err);
+        // console.log(err.message.includes("User-Initiated Abort"));
+
         if (err.message.includes("User-Initiated Abort")) {
-          console.log("User closed the peer connection.");
+          // console.log("User closed the peer connection.");
           handleReject();
         }
       });
@@ -140,20 +142,20 @@ const useChatSocket = () => {
 
       p.on("signal", (answerSignal) => {
         if (answerSignal.type === "answer") {
-          console.log(answerSignal);
+          // console.log(answerSignal);
           chatSocket.emit("answer", {
             recipientId: caller,
             answer: answerSignal,
           });
         } else if (answerSignal.type === "candidate") {
-          console.log("Emitting ICE candidate:", answerSignal);
+          // console.log("Emitting ICE candidate:", answerSignal);
           chatSocket.emit("ice-candidate", {
             recipientId: caller,
             candidate: answerSignal.candidate,
             type: "toCaller",
           });
         } else if (answerSignal.type === "transceiverRequest") {
-          console.log("Emitting transceiver request:", answerSignal);
+          // console.log("Emitting transceiver request:", answerSignal);
           chatSocket.emit("transceiver-request", {
             recipientId: caller,
             transceiverRequest: answerSignal.transceiverRequest,
@@ -162,19 +164,19 @@ const useChatSocket = () => {
       });
 
       p.on("stream", (remoteStream) => {
-        console.log("Received remote stream");
+        // console.log("Received remote stream");
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = remoteStream;
         }
       });
 
       p.on("close", () => {
-        console.log("Peer connection closed");
+        // console.log("Peer connection closed");
         handleReject();
       });
 
-      console.log("Signaling offer to peer");
-      console.log(offerDetails);
+      // console.log("Signaling offer to peer");
+      // console.log(offerDetails);
 
       p.signal(offerDetails);
 
@@ -187,25 +189,25 @@ const useChatSocket = () => {
     }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     chatSocket.emit("call_status", {
       recipientId: caller,
       message: "Call rejected",
     });
+    await stopCamera();
     if (peer) {
       peer.destroy();
     }
+
     setPeer(null);
-    stopCamera();
     setCallRejected(true);
-    setLocalStream(null);
     setIncomingCall(false);
     setCallAccepted(false);
     setAccepted(false);
   };
 
   const handleIceCandidate = (data) => {
-    console.log("ICE candidate received", data);
+    // console.log("ICE candidate received", data);
     if (peer) {
       peer.signal(data.candidate);
     }
@@ -213,7 +215,7 @@ const useChatSocket = () => {
 
   const handleIncomingCall = ({ offer, senderId }) => {
     playAudio();
-    console.log("Incoming call from:", senderId);
+    // console.log("Incoming call from:", senderId);
     if (peer) {
       chatSocket.emit("call_status", {
         recipientId: senderId,
@@ -221,7 +223,7 @@ const useChatSocket = () => {
       });
       return;
     }
-    console.log(offer);
+    // console.log(offer);
     if (offer.type == "offer") {
       setIncomingCall(true);
       setOfferDetails(offer);
@@ -239,9 +241,9 @@ const useChatSocket = () => {
       const id = user._id;
       chatSocket.emit("authenticate", id, (response) => {
         if (response.status === "ok") {
-          console.log("Authentication acknowledged by server.");
+          // console.log("Authentication acknowledged by server.");
         } else {
-          console.log("Authentication failed:", response.error);
+          // console.log("Authentication failed:", response.error);
         }
       });
 
