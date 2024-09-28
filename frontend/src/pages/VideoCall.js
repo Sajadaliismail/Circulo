@@ -87,7 +87,7 @@ export default function VideoCall({
 
         const newPeer = new SimplePeer({
           initiator: true,
-          trickle: true,
+          trickle: false,
           stream,
           config,
         });
@@ -105,7 +105,7 @@ export default function VideoCall({
         });
 
         newPeer.on("stream", (remoteStream) => {
-          console.log("stream recieved");
+          // console.log("stream recieved");
 
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
@@ -113,7 +113,7 @@ export default function VideoCall({
         });
 
         newPeer.on("error", (err) => {
-          // console.error("SimplePeer error:", err);
+          console.error("SimplePeer error:", err);
           if (err.message.includes("User-Initiated Abort")) {
             // console.log("User closed the peer connection.");
             handleEndVideoCall();
@@ -147,8 +147,10 @@ export default function VideoCall({
 
     const handleIceCandidate = (data) => {
       if (peer) {
-        const candidate = new RTCIceCandidate(data.candidate);
-        peer.signal({ candidate });
+        if (data.candidate) {
+          const candidate = new RTCIceCandidate(data.candidate);
+          peer.signal({ candidate });
+        }
       }
     };
 

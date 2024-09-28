@@ -81,7 +81,7 @@ const useChatSocket = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const stopCamera = () => {
+  const stopCamera = async () => {
     if (localStream) {
       localStream.getTracks().forEach((track) => {
         track.stop();
@@ -122,14 +122,14 @@ const useChatSocket = () => {
 
       const p = new SimplePeer({
         initiator: false,
-        trickle: true,
+        trickle: false,
         audio: true,
         video: true,
         config,
       });
 
       p.on("error", (err) => {
-        // console.error("SimplePeer error:", err);
+        console.error("SimplePeer error:", err);
         // console.log(err.message.includes("User-Initiated Abort"));
 
         if (err.message.includes("User-Initiated Abort")) {
@@ -190,6 +190,7 @@ const useChatSocket = () => {
   };
 
   const handleReject = async () => {
+    stopAudio();
     chatSocket.emit("call_status", {
       recipientId: caller,
       message: "Call rejected",
@@ -209,12 +210,12 @@ const useChatSocket = () => {
   const handleIceCandidate = (data) => {
     // console.log("ICE candidate received", data);
     if (peer) {
-      peer.signal(data.candidate);
+      const candidate = new RTCIceCandidate(data.candidate);
+      peer.signal({ candidate });
     }
   };
 
   const handleIncomingCall = ({ offer, senderId }) => {
-    playAudio();
     // console.log("Incoming call from:", senderId);
     if (peer) {
       chatSocket.emit("call_status", {
@@ -223,6 +224,7 @@ const useChatSocket = () => {
       });
       return;
     }
+    playAudio();
     // console.log(offer);
     if (offer.type == "offer") {
       setIncomingCall(true);
@@ -239,13 +241,7 @@ const useChatSocket = () => {
     if (isLoggedIn && !socketConnected) {
       chatSocket.connect();
       const id = user._id;
-      chatSocket.emit("authenticate", id, (response) => {
-        if (response.status === "ok") {
-          // console.log("Authentication acknowledged by server.");
-        } else {
-          // console.log("Authentication failed:", response.error);
-        }
-      });
+      chatSocket.emit("authenticate", id);
 
       const handleConnect = () => {
         console.log("Socket connected");

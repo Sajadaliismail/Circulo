@@ -76,7 +76,7 @@ export default function IncomingCallDialog() {
     if (peer) {
       peer.destroy();
       setPeer(null);
-      console.log("Closed the WebRTC peer connection");
+      // console.log("Closed the WebRTC peer connection");
     }
     chatSocket.emit("call-ended", { caller });
   };
