@@ -128,7 +128,7 @@ const useChatSocket = () => {
         config,
       });
 
-      peer.on("error", (err) => {
+      p.on("error", (err) => {
         console.error("SimplePeer error:", err);
         if (err.message.includes("User-Initiated Abort")) {
           console.log("User closed the peer connection.");
