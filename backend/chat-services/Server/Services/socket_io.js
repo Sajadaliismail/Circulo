@@ -86,10 +86,17 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("call_ended", async ({ recipientId }) => {
-    const receiverSocketId = await userClient.get(recipientId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("call_hangup", recipientId);
+  socket.on("call_ended", async (data) => {
+    console.log(data);
+
+    try {
+      const { recipientId } = data;
+      const receiverSocketId = await userClient.get(recipientId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("call_hangup", recipientId);
+      }
+    } catch (error) {
+      console.log(error.message);
     }
   });
 
