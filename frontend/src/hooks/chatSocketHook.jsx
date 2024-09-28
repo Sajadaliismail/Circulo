@@ -122,7 +122,7 @@ const useChatSocket = () => {
 
       const p = new SimplePeer({
         initiator: false,
-        trickle: false,
+        trickle: true,
         audio: true,
         video: true,
         config,
