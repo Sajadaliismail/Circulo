@@ -71,6 +71,7 @@ export default function IncomingCallDialog() {
   }, [callStartTime]);
 
   const handleEndVideoCall = () => {
+    chatSocket.emit("call_ended", { recipientId: caller });
     setIsMuted(false);
     setAccepted(false);
     stopCamera();
@@ -79,7 +80,6 @@ export default function IncomingCallDialog() {
       peer.destroy();
       setPeer(null);
     }
-    chatSocket.emit("call_ended", { recipientId: caller });
   };
 
   const toggleCamera = async () => {
