@@ -15,6 +15,37 @@ import {
 } from "../features/friends/friendsAsyncThunks";
 import { useNavigate } from "react-router-dom";
 
+const config = {
+  iceServers: [
+    {
+      urls: "stun:stun.l.google.com:19302",
+    },
+    {
+      urls: "stun:stun.relay.metered.ca:80",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+  ],
+};
+
 const useChatSocket = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
   const { user } = useSelector((state) => state.user);
@@ -94,9 +125,7 @@ const useChatSocket = () => {
         trickle: true,
         audio: true,
         video: true,
-        config: {
-          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-        },
+        config,
       });
 
       p.on("error", (err) => {

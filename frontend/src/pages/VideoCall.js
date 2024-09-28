@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   Box,
@@ -24,6 +22,37 @@ import SimplePeer from "simple-peer/simplepeer.min.js";
 
 import chatSocket from "../features/utilities/Socket-io";
 import { useSelector } from "react-redux";
+
+const config = {
+  iceServers: [
+    {
+      urls: "stun:stun.l.google.com:19302",
+    },
+    {
+      urls: "stun:stun.relay.metered.ca:80",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: process.env.REACT_APP_TURN_SERVERS_USERNAME,
+      credential: process.env.REACT_APP_TURN_SERVERS_PASSWORD,
+    },
+  ],
+};
 
 export default function VideoCall({
   isVideoCallActive,
@@ -60,9 +89,7 @@ export default function VideoCall({
           initiator: true,
           trickle: true,
           stream,
-          config: {
-            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-          },
+          config,
         });
 
         newPeer.on("signal", (data) => {
@@ -88,7 +115,6 @@ export default function VideoCall({
         newPeer.on("error", (err) => {
           console.error("Peer connection error:", err);
 
-          // If the error object has more specific properties, log those too
           if (err.message) {
             console.error("Error message:", err.message);
           }
