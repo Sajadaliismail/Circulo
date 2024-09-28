@@ -72,9 +72,24 @@ export default function VideoCall({
   const remoteVideoRef = useRef(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const audioRef = useRef(null);
+
+  const playAudio = () => {
+    audioRef.current.play().catch((error) => {
+      console.error("Error playing audio:", error);
+    });
+  };
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
 
   useEffect(() => {
     const startVideoCall = async () => {
+      playAudio();
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
@@ -140,6 +155,7 @@ export default function VideoCall({
 
   useEffect(() => {
     const handleAnswer = (answer) => {
+      stopAudio();
       setAnswered(true);
       setCallStartTime(Date.now());
       if (peer) peer.signal(answer);
@@ -156,12 +172,12 @@ export default function VideoCall({
 
     chatSocket.on("callAnswered", handleAnswer);
     chatSocket.on("ice-candidate-toCaller", handleIceCandidate);
-    chatSocket.on("call_ended", handleEndVideoCall);
+    chatSocket.on("call_hangup", handleEndVideoCall);
 
     return () => {
       chatSocket.off("callAnswered", handleAnswer);
       chatSocket.off("ice-candidate-toCaller", handleIceCandidate);
-      chatSocket.off("call_ended", handleEndVideoCall);
+      chatSocket.off("call_hangup", handleEndVideoCall);
     };
   }, [peer]);
 
@@ -176,6 +192,7 @@ export default function VideoCall({
   }, [callStartTime]);
 
   const handleEndVideoCall = useCallback(() => {
+    stopAudio();
     setIsVideoCallActive(false);
     setIsCameraOn(false);
     setIsMuted(false);
@@ -216,109 +233,116 @@ export default function VideoCall({
   };
 
   return (
-    <Dialog
-      open={isVideoCallActive}
-      fullWidth
-      // maxWidth={false}
-      PaperProps={{
-        style: {
-          backgroundColor: "black",
-          height: isMobile ? "100%" : "auto",
-          maxHeight: isMobile ? "100%" : "80vh",
-          margin: "0px",
-          width: isMobile ? "100%" : 1200,
-          margin: 0,
-          maxWidth: "none",
-        },
-      }}
-    >
-      <DialogTitle style={{ color: "white" }}>
-        Video Call with {userData[recipientId]?.firstName}
-        {callStartTime && (
-          <span className="text-white ml-auto text-sm block">
-            Call Duration: {formatDuration(callDuration)}
-          </span>
-        )}
-      </DialogTitle>
+    <>
+      <audio ref={audioRef} src="./callTune.mp3" loop />
+      <Dialog
+        open={isVideoCallActive}
+        fullWidth
+        // maxWidth={false}
+        PaperProps={{
+          style: {
+            backgroundColor: "black",
+            height: isMobile ? "100%" : "auto",
+            maxHeight: isMobile ? "100%" : "80vh",
+            margin: "0px",
+            width: isMobile ? "100%" : 1200,
+            margin: 0,
+            maxWidth: "none",
+          },
+        }}
+      >
+        <DialogTitle style={{ color: "white" }}>
+          Video Call with {userData[recipientId]?.firstName}
+          {callStartTime && (
+            <span className="text-white ml-auto text-sm block">
+              Call Duration: {formatDuration(callDuration)}
+            </span>
+          )}
+        </DialogTitle>
 
-      <DialogContent className="scrollbar-none">
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            height: "calc(100vh - 200px)",
-            position: "relative",
-          }}
-        >
+        <DialogContent className="scrollbar-none">
           <Box
             sx={{
-              position: isMobile ? "absolute" : "relative",
-              top: 0,
-              left: 0,
-              width: !isMobile ? "50%" : "100%",
-              height: "100%",
-              zIndex: answered ? 1 : 2,
+              display: "flex",
+              flexDirection: "row",
+              height: "calc(100vh - 200px)",
+              position: "relative",
             }}
           >
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              style={{
-                width: "100%",
+            <Box
+              sx={{
+                position: isMobile ? "absolute" : "relative",
+                top: 0,
+                left: 0,
+                width: !isMobile ? "50%" : "100%",
                 height: "100%",
-                objectFit: "cover",
-                borderRadius: "8px",
+                zIndex: answered ? 1 : 2,
               }}
-            />
+            >
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                position: isMobile && answered ? "absolute" : "relative",
+                right: isMobile && answered ? 16 : null,
+                bottom: isMobile && answered ? 16 : null,
+                width: isMobile && answered ? "30%" : isMobile ? "100%" : "50%",
+                aspectRatio: "9/16",
+                zIndex: 3,
+              }}
+            >
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                  transform: "scaleX(-1)",
+                }}
+              />
+            </Box>
           </Box>
-          <Box
-            sx={{
-              position: isMobile && answered ? "absolute" : "relative",
-              right: isMobile && answered ? 16 : null,
-              bottom: isMobile && answered ? 16 : null,
-              width: isMobile && answered ? "30%" : isMobile ? "100%" : "50%",
-              aspectRatio: "9/16",
-              zIndex: 3,
-            }}
+        </DialogContent>
+        <DialogActions style={{ justifyContent: "center" }}>
+          <Button
+            onClick={toggleCamera}
+            variant="contained"
+            color={isCameraOn ? "primary" : "error"}
+            sx={{ mr: 2 }}
           >
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                borderRadius: "8px",
-                transform: "scaleX(-1)",
-              }}
-            />
-          </Box>
-        </Box>
-      </DialogContent>
-      <DialogActions style={{ justifyContent: "center" }}>
-        <Button
-          onClick={toggleCamera}
-          variant="contained"
-          color={isCameraOn ? "primary" : "error"}
-          sx={{ mr: 2 }}
-        >
-          {isCameraOn ? <Videocam /> : <VideocamOff />}
-        </Button>
-        <Button
-          onClick={toggleMute}
-          variant="contained"
-          color={isMuted ? "error" : "primary"}
-          sx={{ mr: 2 }}
-        >
-          {isMuted ? <MicOff /> : <Mic />}
-        </Button>
-        <Button onClick={handleEndVideoCall} color="error" variant="contained">
-          <CallEnd />
-        </Button>
-      </DialogActions>
-    </Dialog>
+            {isCameraOn ? <Videocam /> : <VideocamOff />}
+          </Button>
+          <Button
+            onClick={toggleMute}
+            variant="contained"
+            color={isMuted ? "error" : "primary"}
+            sx={{ mr: 2 }}
+          >
+            {isMuted ? <MicOff /> : <Mic />}
+          </Button>
+          <Button
+            onClick={handleEndVideoCall}
+            color="error"
+            variant="contained"
+          >
+            <CallEnd />
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

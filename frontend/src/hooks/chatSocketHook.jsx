@@ -82,6 +82,9 @@ const useChatSocket = () => {
   const navigate = useNavigate();
 
   const stopCamera = async () => {
+    chatSocket.emit("call_ended", {
+      recipientId: caller,
+    });
     if (localStream) {
       localStream.getTracks().forEach((track) => {
         track.stop();
@@ -191,10 +194,7 @@ const useChatSocket = () => {
 
   const handleReject = async () => {
     stopAudio();
-    chatSocket.emit("call_status", {
-      recipientId: caller,
-      message: "Call rejected",
-    });
+
     await stopCamera();
     if (peer) {
       peer.destroy();
@@ -261,7 +261,7 @@ const useChatSocket = () => {
         });
 
         connectionTimeout = setTimeout(() => {
-          chatSocket.connect();
+          window.location.reload();
         }, 1000);
       };
 
@@ -348,7 +348,7 @@ const useChatSocket = () => {
           },
         }));
       });
-
+      chatSocket.on("call_hangup", stopCamera);
       chatSocket.on("incomingCall", handleIncomingCall);
       chatSocket.on("newMessage", (arg) => {
         dispatch(setUnreadMessages(arg));
@@ -457,6 +457,7 @@ const useChatSocket = () => {
     audioRef,
     peer,
     setPeer,
+    stopAudio,
   };
 };
 

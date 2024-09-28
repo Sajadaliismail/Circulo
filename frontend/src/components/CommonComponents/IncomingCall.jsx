@@ -43,6 +43,7 @@ export default function IncomingCallDialog() {
     setIsCameraOn,
     setAccepted,
     audioRef,
+    stopAudio,
   } = useChatSocket();
   const { userData } = useSelector((state) => state.friends);
   const theme = useTheme();
@@ -73,10 +74,10 @@ export default function IncomingCallDialog() {
     setIsMuted(false);
     setAccepted(false);
     stopCamera();
+    stopAudio();
     if (peer) {
       peer.destroy();
       setPeer(null);
-      // console.log("Closed the WebRTC peer connection");
     }
     chatSocket.emit("call-ended", { caller });
   };
@@ -103,11 +104,7 @@ export default function IncomingCallDialog() {
 
   return (
     <>
-      <audio
-        ref={audioRef}
-        src="https://assets.mixkit.co/active_storage/sfx/2976/2976.wav"
-        loop
-      />
+      <audio ref={audioRef} src="./ring.mp3" loop />
       <TrapFocus open disableAutoFocus disableEnforceFocus>
         <Fade appear={false} in={incomingCall}>
           <Box
