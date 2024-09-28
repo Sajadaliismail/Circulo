@@ -17,7 +17,7 @@ const handleRequestAccepetedNotification = async (data) => {
     type: "request_accepted",
     user: user,
     sender: [sender],
-    message: "You are now friends with",
+    message: "have accepted your friend request",
   });
   await notification.save();
 };
