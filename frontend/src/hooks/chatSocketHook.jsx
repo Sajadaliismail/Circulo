@@ -261,7 +261,8 @@ const useChatSocket = () => {
         });
 
         connectionTimeout = setTimeout(() => {
-          window.location.reload();
+          // window.location.reload();
+          chatSocket.connect();
         }, 1000);
       };
 
