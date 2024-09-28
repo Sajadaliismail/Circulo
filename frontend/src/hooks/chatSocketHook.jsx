@@ -128,12 +128,12 @@ const useChatSocket = () => {
         config,
       });
 
-      p.on("error", (err) => {
+      peer.on("error", (err) => {
         console.error("SimplePeer error:", err);
-        enqueueSnackbar("An error occurred during the call", {
-          variant: "error",
-        });
-        handleReject();
+        if (err.message.includes("User-Initiated Abort")) {
+          console.log("User closed the peer connection.");
+          handleReject();
+        }
       });
 
       p.addStream(stream);
@@ -457,6 +457,8 @@ const useChatSocket = () => {
     setIsCameraOn,
     setAccepted,
     audioRef,
+    peer,
+    setPeer,
   };
 };
 

@@ -34,9 +34,9 @@ export default function IncomingCallDialog() {
     handleReject,
     callAccepted,
     localVideoRef,
-    peerConnection,
+    peer,
     stopCamera,
-    setPeerConnection,
+    setPeer,
     chatSocket,
     localStream,
     isCameraOn,
@@ -73,9 +73,9 @@ export default function IncomingCallDialog() {
     setIsMuted(false);
     setAccepted(false);
     stopCamera();
-    if (peerConnection) {
-      peerConnection.close();
-      setPeerConnection(null);
+    if (peer) {
+      peer.destroy();
+      setPeer(null);
       console.log("Closed the WebRTC peer connection");
     }
     chatSocket.emit("call-ended", { caller });

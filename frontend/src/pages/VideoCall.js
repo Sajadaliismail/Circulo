@@ -112,17 +112,13 @@ export default function VideoCall({
           }
         });
 
-        newPeer.on("error", (err) => {
-          console.error("Peer connection error:", err);
+        const peer = new SimplePeer({ initiator: true, trickle: false });
 
-          if (err.message) {
-            console.error("Error message:", err.message);
-          }
-          if (err.code) {
-            console.error("Error code:", err.code);
-          }
-          if (err.stack) {
-            console.error("Error stack:", err.stack);
+        peer.on("error", (err) => {
+          console.error("SimplePeer error:", err);
+          if (err.message.includes("User-Initiated Abort")) {
+            console.log("User closed the peer connection.");
+            handleEndVideoCall();
           }
         });
 
