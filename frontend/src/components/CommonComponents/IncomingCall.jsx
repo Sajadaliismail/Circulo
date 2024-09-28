@@ -79,7 +79,7 @@ export default function IncomingCallDialog() {
       peer.destroy();
       setPeer(null);
     }
-    chatSocket.emit("call-ended", { caller });
+    chatSocket.emit("call_ended", { recipientId: caller });
   };
 
   const toggleCamera = async () => {

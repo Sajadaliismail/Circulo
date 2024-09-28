@@ -201,7 +201,7 @@ export default function VideoCall({
     setAnswered(false);
     if (localStream) localStream.getTracks().forEach((track) => track.stop());
     if (peer) peer.destroy();
-    chatSocket.emit("call_ended", { recipientId });
+    chatSocket.emit("call_ended", { recipientId: recipientId });
   }, [setIsVideoCallActive, setIsCameraOn, localStream, peer, recipientId]);
 
   const toggleCamera = useCallback(() => {
