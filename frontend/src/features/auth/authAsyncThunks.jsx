@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { setAccessToken } from "./authSlice";
+import { fetchUser } from "../user/userAsyncThunks";
 const BACKEND = process.env.REACT_APP_USER_BACKEND;
 
 export const signup = createAsyncThunk(
@@ -48,7 +49,8 @@ export const signin = createAsyncThunk(
         await dispatch(sendOtp({ email: data.email }));
         return { email: data.email, isEmailVerified: false };
       }
-      dispatch(setAccessToken(data.token));
+      dispatch(fetchUser());
+      // dispatch(setAccessToken(data.token));
       return data;
     } catch (error) {
       console.log(error);

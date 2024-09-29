@@ -1,3 +1,4 @@
+import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
 import {
   AppBar,
   Box,
@@ -19,7 +20,7 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import Profile from "../HomePageComponents/profile";
+// import Profile from "../HomePageComponents/profile";
 
 import {
   Brightness2Rounded,
@@ -38,15 +39,16 @@ import {
   fetchChatFriends,
   getNotifications,
 } from "../../features/chats/chatsAsycnThunks";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useState } from "react";
 import {
   clearChatDefault,
   setFriend,
   setRoomId,
 } from "../../features/chats/chatsSlice";
-import Suggestions from "../HomePageComponents/suggestions";
-import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+// import Suggestions from "../HomePageComponents/suggestions";
+const Profile = lazy(() => import("../HomePageComponents/profile"));
+const Suggestions = lazy(() => import("../HomePageComponents/suggestions"));
 
 export default function Header() {
   const { user } = useSelector((state) => state.user);
@@ -141,63 +143,65 @@ export default function Header() {
   };
 
   const drawer = (
-    <Box sx={{ textAlign: "center", position: "relative" }}>
-      <Button
-        onClick={handleDrawerToggle}
-        sx={{ padding: 0, position: "absolute", right: -20 }}
-      >
-        <Close />
-      </Button>
+    <Suspense>
+      <Box sx={{ textAlign: "center", position: "relative" }}>
+        <Button
+          onClick={handleDrawerToggle}
+          sx={{ padding: 0, position: "absolute", right: -20 }}
+        >
+          <Close />
+        </Button>
 
-      <img
-        className="dark:bg-gray-400 dark:rounded-lg mx-auto py-2"
-        onClick={() => navigate("/")}
-        style={{ height: "60px" }}
-        alt="Logo"
-        src="/circulo.png"
-      />
-      <Divider />
-      <div>
-        <Accordion
-          expanded={expanded === "panel1"}
-          onChange={handleChange("panel1")}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMore />}
-            aria-controls="panel1bh-content"
-            id="panel1bh-header"
+        <img
+          className="dark:bg-gray-400 dark:rounded-lg mx-auto py-2"
+          onClick={() => navigate("/")}
+          style={{ height: "60px" }}
+          alt="Logo"
+          src="/circulo.png"
+        />
+        <Divider />
+        <div>
+          <Accordion
+            expanded={expanded === "panel1"}
+            onChange={handleChange("panel1")}
           >
-            <Typography
-              sx={{ width: "100%", textAlign: "left", flexShrink: 0 }}
+            <AccordionSummary
+              expandIcon={<ExpandMore />}
+              aria-controls="panel1bh-content"
+              id="panel1bh-header"
             >
-              Profile
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ padding: 0 }}>
-            <Profile fetchUserData={fetchUserData} />
-          </AccordionDetails>
-        </Accordion>
-        <Accordion
-          expanded={expanded === "panel2"}
-          onChange={handleChange("panel2")}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMore />}
-            aria-controls="panel2bh-content"
-            id="panel2bh-header"
+              <Typography
+                sx={{ width: "100%", textAlign: "left", flexShrink: 0 }}
+              >
+                Profile
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ padding: 0 }}>
+              <Profile fetchUserData={fetchUserData} />
+            </AccordionDetails>
+          </Accordion>
+          <Accordion
+            expanded={expanded === "panel2"}
+            onChange={handleChange("panel2")}
           >
-            <Typography
-              sx={{ width: "100%", textAlign: "left", flexShrink: 0 }}
+            <AccordionSummary
+              expandIcon={<ExpandMore />}
+              aria-controls="panel2bh-content"
+              id="panel2bh-header"
             >
-              Requests and suggestions
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ padding: 0 }}>
-            <Suggestions fetchUserData={fetchUserData} />
-          </AccordionDetails>
-        </Accordion>
-      </div>
-    </Box>
+              <Typography
+                sx={{ width: "100%", textAlign: "left", flexShrink: 0 }}
+              >
+                Requests and suggestions
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ padding: 0 }}>
+              <Suggestions fetchUserData={fetchUserData} />
+            </AccordionDetails>
+          </Accordion>
+        </div>
+      </Box>
+    </Suspense>
   );
 
   const RenderNotificatons = (

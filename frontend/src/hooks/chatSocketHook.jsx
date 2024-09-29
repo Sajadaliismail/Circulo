@@ -226,7 +226,7 @@ const useChatSocket = () => {
     }
     playAudio();
     // console.log(offer);
-    if (offer.type == "offer") {
+    if (offer.type === "offer") {
       setIncomingCall(true);
       setOfferDetails(offer);
       setCaller(senderId);
@@ -240,10 +240,9 @@ const useChatSocket = () => {
     }
     if (isLoggedIn && !socketConnected) {
       chatSocket.connect();
-      const id = user._id;
-      chatSocket.emit("authenticate", id);
-
       const handleConnect = () => {
+        const id = user._id;
+        chatSocket.emit("authenticate", id);
         console.log("Socket connected");
         setSocketConnected(true);
         enqueueSnackbar("Connection successfull", {
@@ -261,7 +260,7 @@ const useChatSocket = () => {
         });
 
         connectionTimeout = setTimeout(() => {
-          // window.location.reload();
+          window.location.reload();
           chatSocket.connect();
         }, 1000);
       };
@@ -387,7 +386,7 @@ const useChatSocket = () => {
             </button>
           </>
         );
-        if (change == "request_sent" || change === "request_canceled") {
+        if (change === "request_sent" || change === "request_canceled") {
           dispatch(getRequests());
           dispatch(getSuggestions());
           if (change === "request_sent")

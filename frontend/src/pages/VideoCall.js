@@ -89,6 +89,8 @@ export default function VideoCall({
 
   useEffect(() => {
     const startVideoCall = async () => {
+      console.log(chatSocket.active, "socketactive");
+
       playAudio();
       try {
         const stream = await navigator.mediaDevices.getUserMedia({

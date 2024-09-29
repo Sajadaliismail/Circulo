@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 // import "./ringtone.wav";
 import {
   Dialog,
@@ -6,7 +6,6 @@ import {
   DialogContent,
   Button,
   Fade,
-  Paper,
   Stack,
   Box,
   Typography,
@@ -202,7 +201,6 @@ export default function IncomingCallDialog() {
                 top: 0,
                 left: 0,
                 width: !isMobile ? "50%" : "100%",
-                height: "100%",
                 height: "100%",
                 zIndex: 2,
               }}
