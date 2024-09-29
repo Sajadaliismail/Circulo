@@ -46,6 +46,7 @@ import {
   setFriend,
   setRoomId,
 } from "../../features/chats/chatsSlice";
+import PostNotification from "./postCardNotifcation";
 // import Suggestions from "../HomePageComponents/suggestions";
 const Profile = lazy(() => import("../HomePageComponents/profile"));
 const Suggestions = lazy(() => import("../HomePageComponents/suggestions"));
@@ -64,6 +65,7 @@ export default function Header() {
   const chatmessageReset = useResetRecoilState(ChatRoomMessages);
   const [unreadChatsCount, setUreadChatsCount] = useState(0);
   const [expanded, setExpanded] = useState("panel1");
+  const [postId, setPostId] = useState(null);
 
   const fetchUserData = (id) => {
     if (!userData[id]) {
@@ -76,6 +78,8 @@ export default function Header() {
   const handleNotificationClick = async (notification) => {
     if (notification?.type == "request_accepted") {
       navigate(`/profile/${notification.sender[0]}`);
+    } else if (notification?.type == "comment") {
+      console.log("ethy");
     }
   };
 
@@ -209,25 +213,61 @@ export default function Header() {
       {notifications && notifications?.length ? (
         <>
           <div className="max-h-52 overflow-scroll">
-            {notifications.map((noti) => (
-              <MenuItem
-                className="mx-auto "
-                onClick={() => handleNotificationClick(noti)}
-                sx={{
-                  backgroundColor: "#97bbe57d",
-                  fontSize: 14,
-                  height: 50,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  borderRadius: 1,
-                  marginBottom: "5px",
-                }}
-                key={noti.notificationId}
-              >
-                {userData[noti.sender[0]]?.firstName} {noti?.message}
-              </MenuItem>
-            ))}
+            {notifications.map((noti) => {
+              switch (noti.type) {
+                case "comment":
+                  return (
+                    <PostNotification
+                      postId={noti?.contentId}
+                      fetchUserData={fetchUserData}
+                      key={noti.notificationId}
+                      notification={noti}
+                    />
+                  );
+
+                case "request_accepted":
+                  return (
+                    <MenuItem
+                      key={noti.notificationId}
+                      className="mx-auto"
+                      onClick={() => handleNotificationClick(noti)}
+                      sx={{
+                        backgroundColor: "#e57d7d",
+                        fontSize: 14,
+                        height: 50,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        borderRadius: 1,
+                        marginBottom: "5px",
+                      }}
+                    >
+                      {userData[noti.sender[0]]?.firstName} {noti.message}
+                    </MenuItem>
+                  );
+
+                // default:
+                //   return (
+                //     <MenuItem
+                //       key={noti.notificationId}
+                //       className="mx-auto"
+                //       onClick={() => handleNotificationClick(noti)}
+                //       sx={{
+                //         backgroundColor: "#bbb",
+                //         fontSize: 14,
+                //         height: 50,
+                //         display: "flex",
+                //         justifyContent: "space-between",
+                //         alignItems: "center",
+                //         borderRadius: 1,
+                //         marginBottom: "5px",
+                //       }}
+                //     >
+                //       {userData[noti.sender[0]]?.firstName} {noti?.message}
+                //     </MenuItem>
+                //   );
+              }
+            })}
           </div>
           <MenuItem
             onClick={handleClearNotifications}

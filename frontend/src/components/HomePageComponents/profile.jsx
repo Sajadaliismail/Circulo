@@ -25,7 +25,7 @@ function Profile({ fetchUserData }) {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
 
-  fetchUserData(user._id);
+  fetchUserData(user?._id);
 
   const handleClose = async () => {
     setOpen(false);
@@ -94,6 +94,7 @@ function Profile({ fetchUserData }) {
       console.error(error);
     }
   };
+  if (!userData[user?._id]) return null;
 
   return (
     <>
@@ -179,7 +180,8 @@ function Profile({ fetchUserData }) {
                 <ModeEdit />
               </label>
             </Box>
-            {userData[user?._id].firstName[0].toUpperCase()}
+            {userData[user?._id] &&
+              userData[user?._id]?.firstName[0].toUpperCase()}
           </Avatar>
 
           <Typography>

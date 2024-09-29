@@ -235,13 +235,12 @@ const useChatSocket = () => {
 
   let connectionTimeout;
   useEffect(() => {
-    if (isLoggedIn) {
-      dispatch(fetchUser());
-    }
+    dispatch(fetchUser());
+
     if (isLoggedIn && !socketConnected) {
       chatSocket.connect();
       const handleConnect = () => {
-        const id = user._id;
+        const id = user?._id;
         chatSocket.emit("authenticate", id);
         console.log("Socket connected");
         setSocketConnected(true);

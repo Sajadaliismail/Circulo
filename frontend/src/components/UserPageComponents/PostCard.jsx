@@ -45,7 +45,6 @@ const PostCard = ({ postId, fetchUserData }) => {
   }, [postId, postDetails, fetchUserData]);
 
   const handleOpen = () => setOpen(true);
-  // const handleClose = () => setOpen(false);
 
   if (loading) {
     return null;
