@@ -212,7 +212,7 @@ export default function Header() {
     <Box className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md  ">
       {notifications && notifications?.length ? (
         <>
-          <div className="max-h-52 overflow-scroll">
+          <div className="max-h-52 overflow-scroll scrollbar-none">
             {notifications.map((noti) => {
               switch (noti.type) {
                 case "comment":

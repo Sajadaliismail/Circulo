@@ -238,9 +238,17 @@ const useChatSocket = () => {
     dispatch(fetchUser());
 
     if (isLoggedIn && !socketConnected) {
-      chatSocket.connect();
+      const connectSocket = async () => {
+        setTimeout(() => {
+          chatSocket.connect();
+        }, 4000);
+      };
+
+      connectSocket();
       const handleConnect = () => {
         const id = user?._id;
+        console.log("id sent", id, user);
+
         chatSocket.emit("authenticate", id);
         console.log("Socket connected");
         setSocketConnected(true);

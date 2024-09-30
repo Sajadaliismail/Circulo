@@ -49,7 +49,7 @@ export const signin = createAsyncThunk(
         await dispatch(sendOtp({ email: data.email }));
         return { email: data.email, isEmailVerified: false };
       }
-      dispatch(fetchUser());
+      await dispatch(fetchUser());
       // dispatch(setAccessToken(data.token));
       return data;
     } catch (error) {

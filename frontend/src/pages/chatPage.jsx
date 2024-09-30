@@ -211,6 +211,7 @@ export default function ChatPage() {
           "&::-webkit-scrollbar": {
             display: "none",
           },
+          maxHeight: "64vh",
           padding: 2,
         }}
       >

@@ -90,7 +90,10 @@ const PostNotification = ({ postId, fetchUserData, notification }) => {
                     marginBottom: "5px",
                   }}
                 >
-                  {userData[notification.sender[0]]?.firstName}{" "}
+                  {userData[notification.sender[0]]
+                    ? userData[notification.sender[0]].firstName
+                    : "Someone"}{" "}
+                  {notification.sender.length > 1 ? "and others " : ""}
                   {notification.message}
                 </MenuItem>
               </ModalTrigger>
