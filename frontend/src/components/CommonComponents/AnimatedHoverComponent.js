@@ -87,6 +87,9 @@ export const AnimatedTooltip = ({ userId, size = 45, fontS = 20 }) => {
               {userData[userId]?.city}, {userData[userId]?.state},{" "}
               {userData[userId]?.country}
             </div>
+            <div className="text-white text-xs">
+              {userData[userId]?.distance.toFixed(2)} {"km"}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

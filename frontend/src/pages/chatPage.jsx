@@ -172,7 +172,7 @@ export default function ChatPage() {
   }
 
   const renderUserList = () => (
-    <Grid item style={{ padding: "10px", width: "100%" }}>
+    <Grid item style={{ padding: "10px", width: "300px" }}>
       <Typography
         variant="h5"
         sx={{
@@ -180,7 +180,7 @@ export default function ChatPage() {
           mb: 2,
           fontWeight: 700,
           textAlign: "center",
-          padding: "12px 12px",
+          padding: "12px",
           // width: "100%",
           alignItems: "center",
           borderRadius: "12px",

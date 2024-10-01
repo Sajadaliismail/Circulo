@@ -1,6 +1,7 @@
 import {
   Avatar,
   Badge,
+  Box,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -58,10 +59,12 @@ const UserList = ({
           onClick={handleClick}
           sx={{
             fontWeight: 700,
-            padding: "10px 20px",
+            padding: "5px",
             borderRadius: "12px",
             letterSpacing: "0.5px",
             mb: "2px",
+            textWrap: "nowrap",
+
             backgroundColor:
               unreadCount && unreadCount > 0 ? "#6178b54f" : null,
             transition: "transform 0.3s ease, box-shadow 0.3s ease",
@@ -74,7 +77,9 @@ const UserList = ({
           }}
           key={friend?.id}
         >
-          <ListItemIcon>
+          <ListItemIcon
+            sx={{ maxWidth: "40px", minWidth: "20px", marginRight: "5px" }}
+          >
             <Badge
               badgeContent={unreadCount}
               color="error"
@@ -89,20 +94,20 @@ const UserList = ({
               </Avatar>
             </Badge>
           </ListItemIcon>
-          <ListItemText
-            primary={`${userDetails?.firstName} ${userDetails?.lastName}`}
-          />
-          <ListItemText
-            secondary={userDetails?.onlineStatus ? "Online" : timeAgo}
-            align="right"
-            secondaryTypographyProps={{
-              sx: {
-                fontSize: "0.70rem",
-                textWrap: "nowrap",
-                textAlign: "right",
-              }, // Adjust the size as needed
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 0,
+              width: "100%",
             }}
-          />
+          >
+            <span className="font-normal">{`${userDetails?.firstName} ${userDetails?.lastName}`}</span>
+
+            <span className="font-thin text-xs">
+              {userDetails?.onlineStatus ? "Online" : timeAgo}
+            </span>
+          </Box>
         </ListItemButton>
       )}
     </>

@@ -1,6 +1,14 @@
 import { useDispatch, useSelector } from "react-redux";
 import UserPosts from "../components/UserPageComponents/userPosts";
-import { Avatar, Box, Divider, Typography } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Avatar,
+  Box,
+  Divider,
+  Typography,
+} from "@mui/material";
 import {
   acceptRequest,
   addFriend,
@@ -9,25 +17,35 @@ import {
   removeFriend,
 } from "../features/friends/friendsAsyncThunks";
 import { useCallback, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 
 import Header from "../components/CommonComponents/header";
 import { SyncLoader } from "react-spinners";
 
-import { Close, Done, Lock } from "@mui/icons-material";
+import { Close, Done, ExpandMore, Lock } from "@mui/icons-material";
 import useFetchPosts from "../hooks/fetchPostHook";
 import { fetchPosts } from "../features/posts/postsAsyncThunks";
+import { AnimatedTooltip } from "../components/CommonComponents/AnimatedHoverComponent";
+import { setFriend, setRoomId } from "../features/chats/chatsSlice";
 
 const UserPage = () => {
   const { userData } = useSelector((state) => state.friends);
 
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { userId } = useParams();
 
   const { enqueueSnackbar } = useSnackbar();
-  const { postsId, count, relation, friendsCount, loading, setRelation } =
-    useFetchPosts(userId);
+  const {
+    postsId,
+    count,
+    relation,
+    friendsCount,
+    loading,
+    setRelation,
+    friendsId,
+  } = useFetchPosts(userId);
 
   const fetchFriendsList = async (id) => {
     if (relation !== "FRIENDS" && relation !== "SELF") {
@@ -56,6 +74,12 @@ const UserPage = () => {
     fetchPosts(userId);
     setRelation("FRIENDS");
   };
+
+  const handleChat = (id, roomId) => {
+    dispatch(setFriend(id));
+    dispatch(setRoomId(roomId));
+    navigate("/chats");
+  };
   const fetchUserData = useCallback(
     (id) => {
       if (!userData[id]) {
@@ -67,6 +91,12 @@ const UserPage = () => {
   useEffect(() => {
     fetchUserData(userId);
   }, []);
+
+  useEffect(() => {
+    friendsId?.forEach(async (id) => {
+      await fetchUserData(id);
+    });
+  }, [friendsId]);
 
   return (
     <>
@@ -120,15 +150,28 @@ const UserPage = () => {
                 </button>
               )}
               {relation && relation === "FRIENDS" && (
-                <button
-                  onClick={handleRemoveFriend}
-                  className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
-                >
-                  <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                  <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-red-800 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
-                    Remove Friend
-                  </span>
-                </button>
+                <div className="btn-group ">
+                  <button
+                    onClick={() => {
+                      handleChat(userId, userData[userId].roomId);
+                    }}
+                    className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
+                  >
+                    <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                    <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-red-800 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
+                      Message
+                    </span>
+                  </button>
+                  <button
+                    onClick={handleRemoveFriend}
+                    className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
+                  >
+                    <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                    <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-red-800 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
+                      Remove Friend
+                    </span>
+                  </button>
+                </div>
               )}
               {relation && relation === "SELF" && (
                 <button className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
@@ -186,7 +229,52 @@ const UserPage = () => {
             </Box>
             <Divider />
             <Box>
-              <Typography>About</Typography>
+              <Accordion variant="outlined" sx={{ backgroundColor: "inherit" }}>
+                <AccordionSummary
+                  expandIcon={<ExpandMore />}
+                  aria-controls="panel1-content"
+                  id="panel1-header"
+                  className="font-bold text-lg"
+                >
+                  Friends
+                </AccordionSummary>
+                <AccordionDetails>
+                  {friendsId?.map(
+                    (friend) =>
+                      userData[friend] && (
+                        <Box
+                          key={`friends${userData[friend]?._id}`}
+                          display={"flex"}
+                          alignItems={"center"}
+                          gap={2}
+                          position="relative"
+                          sx={{
+                            padding: 1,
+                            borderRadius: "12px",
+                            letterSpacing: "0.5px",
+                            transition:
+                              "transform 0.3s ease, box-shadow 0.3s ease",
+                            "&:hover": {
+                              transform: "scale(1.05)",
+                              boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.3)",
+                              backgroundColor: "#c4c9d4",
+                              color: "black",
+                            },
+                            cursor: "pointer",
+                          }}
+                          onClick={() => navigate(`profile/${friend}`)}
+                        >
+                          <AnimatedTooltip
+                            key={`friends-${friend}`}
+                            userId={friend}
+                          />
+                          {userData[friend]?.firstName}{" "}
+                          {userData[friend]?.lastName}
+                        </Box>
+                      )
+                  )}
+                </AccordionDetails>
+              </Accordion>
             </Box>
           </Box>
           <Box

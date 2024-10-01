@@ -82,8 +82,6 @@ export default function Header() {
   const handleNotificationClick = async (notification) => {
     if (notification?.type == "request_accepted") {
       navigate(`/profile/${notification.sender[0]}`);
-    } else if (notification?.type == "comment") {
-      console.log("ethy");
     }
   };
 
