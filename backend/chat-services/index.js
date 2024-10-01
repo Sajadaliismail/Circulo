@@ -9,6 +9,9 @@ const { subscribeMessage } = require("./Server/Services/rabbitmq");
 const {
   handleIncomingRequestNotification,
   handleRequestAccepetedNotification,
+  newCommentNotification,
+  newReplyNotification,
+  newLikeNotification,
 } = require("./Server/Services/services");
 require("dotenv").config();
 
@@ -30,6 +33,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/chats", route);
 subscribeMessage("request_accepted", handleRequestAccepetedNotification);
+subscribeMessage("newComment", newCommentNotification);
+subscribeMessage("newReply", newReplyNotification);
+subscribeMessage("newLike", newLikeNotification);
 app.listen(PORT, () => {
   console.log(`Chat services connected to port : ${PORT}`);
 });

@@ -188,7 +188,7 @@ const handleLikes = async (postId, userId) => {
       post.likes.push(userId);
     }
     await post.save();
-    return post;
+    return { post, isLiked: isLiked };
   } catch (error) {
     console.error(error);
     throw new Error("Failed to update like status");

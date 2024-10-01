@@ -8,7 +8,7 @@ const createcomment = async (data) => {
   const post = await Post.findById({ _id: data.post });
   post.comments.push(comment._id);
   await post.save();
-  return comment;
+  return { comment, postAuthor: post.author };
 };
 
 const deleteComments = async (id, userId) => {

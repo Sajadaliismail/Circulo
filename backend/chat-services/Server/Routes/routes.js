@@ -5,7 +5,10 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 const { Rooms } = require("../Models/mongoDb");
 const { default: mongoose } = require("mongoose");
-const { UserNotification } = require("../Models/notificationSchema");
+const {
+  UserNotification,
+  Notification,
+} = require("../Models/notificationSchema");
 
 const route = express.Router();
 
@@ -279,7 +282,7 @@ route.get("/fetchChatFriends", authenticateToken, async (req, res) => {
 route.get("/notifications", authenticateToken, async (req, res) => {
   try {
     const userId = req.userId;
-    console.log(userId);
+    // console.log(userId);
 
     const id = new mongoose.Types.ObjectId(userId);
     const notification = await UserNotification.aggregate([
@@ -325,6 +328,17 @@ route.get("/notifications", authenticateToken, async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(400).json({ error: "Error fetching notifications" });
+  }
+});
+
+route.get("/clearNotifications", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    await Notification.updateMany({ user: userId }, { isRead: true });
+    return res.status(200).json({ notification: {} });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "Error clear notifications" });
   }
 });
 

@@ -135,6 +135,7 @@ const fetchPostData = async (req, res) => {
     return res.status(200).json({ data });
   } catch (error) {
     console.log(error.message);
+    return res.status(401).json({ error: "error fetching data" });
   }
 };
 
@@ -143,7 +144,18 @@ const handleLike = async (req, res) => {
     const userId = req.userId;
     const { _id } = req.body;
     const post = await postsInteractor.handleLikeInteractor(_id, userId);
-    return res.status(200).json({ post });
+    if (!post.isLiked) {
+      const message = {
+        post: post.post._id,
+        postAuthor: post.post.author,
+        likedBy: userId,
+        activity: "has liked your post.",
+      };
+      if (post.post.author.toString() !== userId.toString()) {
+        publishMessage("newLike", message);
+      }
+    }
+    return res.status(200).json({ post: post.post });
   } catch (error) {
     console.log(error);
     return res.status(400).json({ success: false });

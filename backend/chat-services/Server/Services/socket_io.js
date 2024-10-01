@@ -12,6 +12,7 @@ const {
   handleCallStart,
   handleTyping,
 } = require("./socket_Io_Services");
+const { publishMessage } = require("./rabbitmq");
 require("dotenv").config();
 
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
@@ -62,8 +63,6 @@ io.on("connection", (socket) => {
       const receiverSocketId = await userClient.get(recipientId);
       if (receiverSocketId) {
         io.to(receiverSocketId).emit(`ice-candidate-${type}`, { candidate });
-      } else {
-        console.log("ayachattilla");
       }
     } catch (error) {
       console.error("Error forwarding ICE candidate:", error.message);
@@ -74,12 +73,9 @@ io.on("connection", (socket) => {
     const { recipientId, answer } = data;
     try {
       const receiverSocketId = await userClient.get(recipientId);
-      console.log(recipientId, socket.user);
 
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("callAnswered", answer);
-      } else {
-        console.log("not found");
       }
     } catch (error) {
       console.error("Error forwarding answer:", error.message);
@@ -87,8 +83,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("call_ended", async (data) => {
-    console.log(data);
-
     try {
       const { recipientId } = data;
       const receiverSocketId = await userClient.get(recipientId);
@@ -101,18 +95,23 @@ io.on("connection", (socket) => {
   });
 
   socket.on("call_status", async ({ recipientId, message }) => {
-    console.log(recipientId, socket.user);
-
     const receiverSocketId = await userClient.get(recipientId);
     if (receiverSocketId) {
       const data = { recipientId, message };
       io.to(receiverSocketId).emit("user_status", data);
-      console.log("emitted");
     }
   });
 
   socket.on("logout", async () => {
     await handleLogout(socket);
+  });
+
+  socket.on("sentNotification", async (data) => {
+    const { postId, author } = data;
+    const receiverSocketId = await userClient.get(author);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("notification", postId);
+    }
   });
 
   socket.on("handleRelation", async (data) => {
@@ -126,6 +125,22 @@ io.on("connection", (socket) => {
       });
     }
   });
+
+  // socket.on("disconnect", async (reason) => {
+  //   try {
+  //     console.log(`User ${socket.id} disconnected due to: ${reason}`);
+
+  //     if (socket.user) {
+  //       const { userId } = socket.user;
+  //       await userClient.del(userId);
+
+  //       const message = { _id: userId, onlineStatus: false };
+  //       await publishMessage("userStatus", message);
+  //     }
+  //   } catch (error) {
+  //     console.log(error.message);
+  //   }
+  // });
 });
 
 module.exports = { io, httpServer };

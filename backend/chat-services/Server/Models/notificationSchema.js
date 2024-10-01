@@ -1,14 +1,14 @@
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  user: { type: String },
   type: {
     type: String,
-    enum: ["request_accepted", "comment", "like"],
+    enum: ["request_accepted", "comment", "like", "reply"],
     required: true,
   },
-  sender: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  contentId: { type: mongoose.Schema.Types.ObjectId, refPath: "contentType" },
+  sender: [{ type: String }],
+  contentId: { type: String },
   contentType: {
     type: String,
     enum: ["Post", "Comment"],
@@ -27,9 +27,17 @@ const userNotificationSchema = new mongoose.Schema({
 
 notificationSchema.pre("save", async function (next) {
   const notification = this;
+
+  if (notification.skipMiddleware) {
+    return next();
+  }
+
+  console.log("notification triggered");
+
   if (notification.type === "request_accepted") {
     return next();
   }
+
   const existingNotification = await mongoose.model("Notification").findOne({
     user: notification.user,
     contentId: notification.contentId,
@@ -37,35 +45,49 @@ notificationSchema.pre("save", async function (next) {
   });
 
   if (existingNotification) {
-    const isSenderExists = existingNotification.sender.includes(
+    const senderIndex = existingNotification.sender.indexOf(
       notification.sender[0]
     );
 
-    if (!isSenderExists) {
-      existingNotification.sender.unshift(notification.sender[0]);
+    if (senderIndex === 0) {
+      existingNotification.createdAt = new Date();
+      existingNotification.isRead = false;
+      existingNotification.skipMiddleware = true;
       await existingNotification.save();
-
-      await mongoose
-        .model("UserNotification")
-        .findOneAndUpdate(
-          { user: notification.user },
-          { $push: { notifications: existingNotification._id } },
-          { new: true, upsert: true }
-        );
+      const err = new Error("Duplicate notification");
+      err.name = "DuplicateNotificationError";
+      return next(err);
     }
 
-    return next(new Error("Duplicate notification detected"));
-  } else {
-    next();
+    if (senderIndex !== -1) {
+      existingNotification.sender.splice(senderIndex, 1);
+    }
+
+    existingNotification.createdAt = new Date();
+
+    existingNotification.sender.unshift(notification.sender[0]);
+    existingNotification.isRead = false;
+
+    existingNotification.skipMiddleware = true;
+    await existingNotification.save();
+
+    const err = new Error("Duplicate notification");
+    err.name = "DuplicateNotificationError";
+    return next(err);
   }
+
+  next();
 });
 
 notificationSchema.post("save", async function (doc) {
+  console.log(doc, "postsave");
+  console.log("saved");
+
   await mongoose
     .model("UserNotification")
     .findOneAndUpdate(
       { user: doc.user },
-      { $push: { notifications: doc._id } },
+      { $addToSet: { notifications: doc._id } },
       { new: true, upsert: true }
     );
 });

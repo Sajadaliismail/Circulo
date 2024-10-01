@@ -9,7 +9,12 @@ const createReply = async (data) => {
   comments.replies.push(comments._id);
   await comments.save();
   const reply = comment.toObject();
-  return { ...reply, hasLiked: false };
+  const replyDetails = { ...reply, hasLiked: false };
+  return {
+    replyDetails,
+    commentAuthor: comments.user,
+    postId: comments.post,
+  };
 };
 
 const fetchReplies = async (userId, commentId) => {

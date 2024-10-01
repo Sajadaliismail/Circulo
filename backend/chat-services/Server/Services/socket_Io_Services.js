@@ -9,8 +9,7 @@ const authorize = async (user, socket) => {
     await userClient.setEx(user, USER_TTL, socket.id);
     console.log("User autherized", user);
     const message = { _id: user, onlineStatus: true };
-
-    await publishMessage("userStatus", message);
+    if (user) await publishMessage("userStatus", message);
   } catch (error) {
     console.log(error);
   }
@@ -130,7 +129,7 @@ const handleLogout = async (socket) => {
   }
   console.log(`Socket ${socket.id} disconnected`);
   const message = { _id: userId, onlineStatus: false };
-  await publishMessage("userStatus", message);
+  if (userId) await publishMessage("userStatus", message);
 };
 
 const handleTyping = async (socket, io, id, roomId, userIsTyping) => {
