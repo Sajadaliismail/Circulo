@@ -1,4 +1,5 @@
 const User = require("../Models/userModel");
+const haversineDistance = require("../Utilities/distanceCalculator");
 
 const createUser = async (userData) => {
   const user = new User(userData);
@@ -18,6 +19,27 @@ const findUser = async (id) => {
   }
   return user;
 };
+
+async function getDistanceBetweenUsers(userId1, userId2) {
+  try {
+    if (!userId1 || !userId2) throw new Error("invalid userId");
+    const user1 = await User.findById(userId1);
+    const user2 = await User.findById(userId2);
+
+    if (!user1 || !user2) {
+      throw new Error("One or both users not found");
+    }
+
+    const distance = haversineDistance(
+      user1.location.coordinates,
+      user2.location.coordinates
+    );
+
+    return distance;
+  } catch (error) {
+    console.error("Error calculating distance:", error.message);
+  }
+}
 
 const findAndUpdate = async (id, updateData) => {
   const user = await User.findById(id);
@@ -92,4 +114,5 @@ module.exports = {
   updatePost,
   deletePost,
   updateStatus,
+  getDistanceBetweenUsers,
 };

@@ -11,8 +11,9 @@ const userUpdateInteractor = async (id, userData) => {
 
 const fetchUserInteractor = async (id, userId) => {
   const result = await userRepository.findUser(id);
+  const distance = await userRepository.getDistanceBetweenUsers(userId, id);
   const filteredUserData = filterUserData(result, userId);
-  return filteredUserData;
+  return { ...filteredUserData, distance: distance };
 };
 
 const fetchUserStatusInteractor = async (id) => {

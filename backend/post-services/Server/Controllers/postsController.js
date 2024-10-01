@@ -105,7 +105,11 @@ const fetchUserPosts = async (req, res) => {
       return res.status(400).json({ error: "Invalid User" });
     }
 
-    const { relation: relationShip, friendsCount } = relation.relation;
+    const {
+      relation: relationShip,
+      friendsCount,
+      friendsId,
+    } = relation.relation;
     const data = await postsInteractor.fetchUserPostInteractor(id);
 
     let responseBody = {
@@ -116,6 +120,10 @@ const fetchUserPosts = async (req, res) => {
       count: data.count,
       relation: relationShip,
       friendsCount,
+      friendsId:
+        relationShip === "FRIENDS" || relationShip === "SELF"
+          ? friendsId
+          : null,
     };
 
     return res.status(200).json(responseBody);

@@ -175,7 +175,8 @@ RETURN
     WHEN type(relation) = 'FRIEND_REQUEST' AND endNode(relation).id = $id THEN 'REQUESTSENT'
     ELSE 'not friends'
   END AS relationshipStatus,
-  COUNT(DISTINCT friend) AS friendsCount
+  COUNT(DISTINCT friend) AS friendsCount,
+  COLLECT(DISTINCT friend.id) AS friendIds
 `,
       { id, userId }
     );
@@ -183,9 +184,12 @@ RETURN
     const relation = result.records.map((record) => {
       const res = record.get("relationshipStatus");
       const res1 = record.get("friendsCount").toNumber();
+      const res2 = record.get("friendIds");
+
       return {
         relation: res,
         friendsCount: res1,
+        friendsId: res2,
       };
     });
 

@@ -41,6 +41,7 @@ const fetchUserDetails = async (req, res) => {
     const user = req.userId;
 
     const result = await userInteractor.fetchUserInteractor(userId, user);
+
     return res.status(200).json(result);
   } catch (error) {
     console.log(error.message);
