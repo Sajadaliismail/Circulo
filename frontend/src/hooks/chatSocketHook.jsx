@@ -6,7 +6,10 @@ import { useRecoilState } from "recoil";
 import { ChatRoomMessages } from "../atoms/chatAtoms";
 import { setStatus } from "../features/friends/friendsSlice";
 import { closeSnackbar, useSnackbar } from "notistack";
-import { setUnreadMessages } from "../features/chats/chatsSlice";
+import {
+  setNewNotification,
+  setUnreadMessages,
+} from "../features/chats/chatsSlice";
 import SimplePeer from "simple-peer/simplepeer.min.js";
 import {
   getFriends,
@@ -247,7 +250,6 @@ const useChatSocket = () => {
       connectSocket();
       const handleConnect = () => {
         const id = user?._id;
-        console.log("id sent", id, user);
 
         chatSocket.emit("authenticate", id);
         console.log("Socket connected");
@@ -267,7 +269,7 @@ const useChatSocket = () => {
         });
 
         connectionTimeout = setTimeout(() => {
-          window.location.reload();
+          // window.location.reload();
           chatSocket.connect();
         }, 1000);
       };
@@ -396,18 +398,24 @@ const useChatSocket = () => {
         if (change === "request_sent" || change === "request_canceled") {
           dispatch(getRequests());
           dispatch(getSuggestions());
-          if (change === "request_sent")
-            enqueueSnackbar("Request recieved", { action, variant: "info" });
-          else
-            enqueueSnackbar("Request cancelled", { action, variant: "error" });
-        } else if (change === "request_accepted") {
+        }
+        //   if (change === "request_sent")
+        //     enqueueSnackbar("Request recieved", { action, variant: "info" });
+        //   else
+        //     // enqueueSnackbar("Request cancelled", { action, variant: "error" });
+        // } else
+        else if (change === "request_accepted") {
           dispatch(getRequests());
           dispatch(getSuggestions());
           dispatch(getFriends());
-          enqueueSnackbar("Request accepted", { action, variant: "success" });
+          // enqueueSnackbar("Request accepted", { action, variant: "success" });
         }
       });
 
+      chatSocket.on("notification", async (data) => {
+        console.log(data);
+        await dispatch(setNewNotification(data));
+      });
       return () => {
         chatSocket.off("newMessage");
         chatSocket.off("connect");
@@ -416,6 +424,7 @@ const useChatSocket = () => {
         chatSocket.off("emoji_recieved");
         chatSocket.off("relationChanged");
         chatSocket.off("incomingCall", handleIncomingCall);
+        chatSocket.off("notification");
         chatSocket.disconnect();
         setSocketConnected(false);
       };

@@ -30,6 +30,7 @@ import {
   handleLikeApi,
 } from "../../api/commentsApi";
 import { enqueueSnackbar } from "notistack";
+import chatSocket from "../../features/utilities/Socket-io";
 
 const Post = React.memo(({ postId, fetchUserData }) => {
   const [postDetails, setPostDetails] = useRecoilState(
@@ -63,6 +64,11 @@ const Post = React.memo(({ postId, fetchUserData }) => {
       addComment({ comment: commentContent, postId: postDetails._id })
     );
     if (addComment.fulfilled.match(result)) {
+      chatSocket.emit("sentNotification", {
+        postId: postDetails._id,
+        author: postDetails.author,
+      });
+
       setPostDetails((prev) => {
         const newState = { ...prev };
         newState.commentsCount++;
@@ -79,6 +85,12 @@ const Post = React.memo(({ postId, fetchUserData }) => {
 
   const toggleLike = (post) => {
     const alreadyLiked = post.hasLiked;
+    if (!alreadyLiked) {
+      chatSocket.emit("sentNotification", {
+        postId: postDetails?._id,
+        author: postDetails?.author,
+      });
+    }
     let count = post.likesCount;
     const updatedLikes = alreadyLiked
       ? post.likes.filter((id) => id !== user._id)
@@ -157,13 +169,17 @@ const Post = React.memo(({ postId, fetchUserData }) => {
     }
   };
 
-  const handleLikeComment = async (_id) => {
+  const handleLikeComment = async (_id, user) => {
     try {
       const response = await handleLikeApi(_id);
 
       const data = await response.json();
 
       if (response.ok) {
+        chatSocket.emit("sentNotification", {
+          postId: postDetails?._id,
+          author: user,
+        });
         setComments((comments) => {
           return comments.map((comment) =>
             comment._id === data._id ? data : comment

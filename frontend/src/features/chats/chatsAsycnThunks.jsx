@@ -115,6 +115,29 @@ export const getNotifications = createAsyncThunk(
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue("Error fetching notificatoins");
+      }
+      return data;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue("Error fetching notificatoins");
+    }
+  }
+);
+
+export const clearNotifications = createAsyncThunk(
+  "chats/clearNotifications",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${CHAT_BACKEND}/chats/clearNotifications`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
       if (!response.ok) {
         return rejectWithValue("Error fetching notificatoins");
       }

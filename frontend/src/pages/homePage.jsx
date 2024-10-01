@@ -6,13 +6,13 @@ import "cropperjs/dist/cropper.css";
 import { fetchChatFriends } from "../features/chats/chatsAsycnThunks";
 import { lazy } from "react";
 import { Suspense } from "react";
-
-const Header = lazy(() => import("../components/CommonComponents/header"));
+import Header from "../components/CommonComponents/header";
+import NewPost from "../components/HomePageComponents/newPost";
+import { DotLoader } from "react-spinners";
 const Profile = lazy(() => import("../components/HomePageComponents/profile"));
 const Suggestions = lazy(() =>
   import("../components/HomePageComponents/suggestions")
 );
-const NewPost = lazy(() => import("../components/HomePageComponents/newPost"));
 const Posts = lazy(() => import("../components/HomePageComponents/posts"));
 const ChatApp = lazy(() => import("../components/chatbox/chatbox"));
 
@@ -39,7 +39,11 @@ export default function Homepage({ msg, setmsg }) {
 
   if (!user?.firstName) return null;
 
-  const Loader = () => <div>Loading...</div>;
+  const Loader = () => (
+    <div className="flex align-middle justify-center items-center my-auto">
+      <DotLoader color="blue" />
+    </div>
+  );
 
   return (
     <>

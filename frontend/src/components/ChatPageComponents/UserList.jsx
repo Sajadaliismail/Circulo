@@ -8,6 +8,8 @@ import {
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserDetails } from "../../features/friends/friendsAsyncThunks";
+// import { useTimeAgo } from "../../hooks/useTimeAgo";
+import { convertUTCToIST } from "../../pages/Utilitis";
 
 const UserList = ({
   friend,
@@ -17,35 +19,35 @@ const UserList = ({
   setFriendsData,
 }) => {
   const { userData } = useSelector((state) => state.friends);
-  // const [chatMessages, setChatMessages] = useRecoilState(ChatRoomMessages);
-
   const dispatch = useDispatch();
-
   const [userDetails, setUserDetails] = useState(null);
+  const [timeAgo, setTimeAgo] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
-      await dispatch(fetchUserDetails(friend));
+      if (!userData[friend]) {
+        await dispatch(fetchUserDetails(friend));
+      } else {
+        setUserDetails(userData[friend]);
+      }
     };
 
-    if (userData[friend]) {
-      setUserDetails(userData[friend]);
-    } else {
-      fetchData().then(() => setUserDetails(userData[friend]));
-    }
+    fetchData();
   }, [userData, friend, dispatch]);
+
+  useEffect(() => {
+    if (userDetails?.onlineTime) {
+      const time = convertUTCToIST(userDetails?.onlineTime);
+      if (time !== null) setTimeAgo(time);
+    }
+  }, [userDetails]);
+
   const handleClick = async (e) => {
-    setFriendsData((prev) => {
-      return prev.map((user) => {
-        if (user._id === friend) {
-          return {
-            ...user,
-            unreadCount: 0,
-          };
-        }
-        return user;
-      });
-    });
+    setFriendsData((prev) =>
+      prev.map((user) =>
+        user._id === friend ? { ...user, unreadCount: 0 } : user
+      )
+    );
     handleChat(friend, roomId, e);
   };
 
@@ -90,7 +92,17 @@ const UserList = ({
           <ListItemText
             primary={`${userDetails?.firstName} ${userDetails?.lastName}`}
           />
-          <ListItemText secondary="" align="right" />
+          <ListItemText
+            secondary={userDetails?.onlineStatus ? "Online" : timeAgo}
+            align="right"
+            secondaryTypographyProps={{
+              sx: {
+                fontSize: "0.70rem",
+                textWrap: "nowrap",
+                textAlign: "right",
+              }, // Adjust the size as needed
+            }}
+          />
         </ListItemButton>
       )}
     </>

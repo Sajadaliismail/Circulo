@@ -22,6 +22,7 @@ import { convertUTCToIST } from "../../pages/Utilitis";
 import { addReply } from "../../features/posts/postsAsyncThunks";
 import { AnimatedTooltip } from "../CommonComponents/AnimatedHoverComponent";
 import { useTimeAgo } from "../../hooks/useTimeAgo";
+import chatSocket from "../../features/utilities/Socket-io";
 const POST_BACKEND = process.env.REACT_APP_POST_BACKEND;
 
 const CommentComponent = React.memo(
@@ -74,27 +75,32 @@ const CommentComponent = React.memo(
         setIsLoading(true);
         try {
           const response = await fetch(
-            `${POST_BACKEND}/fetchReplies?commentId=${id}`,
+            `${POST_BACKEND}/posts/fetchReplies?commentId=${id}`,
             {
               method: "GET",
               credentials: "include",
             }
           );
           const data = await response.json();
-          setReply(data.Replies);
+
+          if (response.ok) {
+            setReply(data.Replies);
+            return;
+          }
         } catch (error) {
-          console.error(error);
+          console.error(error.message);
         } finally {
           setIsLoading(false);
         }
       }
     };
 
-    const submitreply = (id, postId) => {
+    const submitreply = (id, postId, user) => {
       dispatch(
         addReply({ reply: replyContent, commentId: id, postId: postId })
       ).then((action) => {
         if (action.payload) {
+          chatSocket.emit("sentNotification", { postId: postId, author: user });
           comment.replyCount++;
           setreplyContent("");
           setReply((reply) => {
@@ -116,6 +122,7 @@ const CommentComponent = React.memo(
 
       const data = await response.json();
       if (response.ok) {
+        chatSocket.emit("sentNotification", { postId: _id, author: "user" });
         setReply((replies) => {
           return replies.map((reply) =>
             reply._id === data._id ? data : reply
@@ -193,7 +200,7 @@ const CommentComponent = React.memo(
 
                   <Box sx={{ display: "flex", alignItems: "center" }}>
                     <Button
-                      onClick={() => handleLike(comment?._id)}
+                      onClick={() => handleLike(comment?._id, comment?.user)}
                       sx={{
                         minWidth: "auto",
                         p: 0,
@@ -319,6 +326,34 @@ const CommentComponent = React.memo(
                         borderRadius: 1,
                       }}
                     >
+                      <Box sx={{ mt: 1 }}>
+                        <TextareaAutosize
+                          className="dark:bg-slate-600 placeholder:font-thin"
+                          minRows={2}
+                          placeholder="Write a reply..."
+                          value={replyContent}
+                          onChange={(e) => setreplyContent(e.target.value)}
+                          style={{
+                            width: "100%",
+                            borderRadius: 8,
+                            padding: "8px 12px",
+                          }}
+                        />
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() =>
+                            submitreply(
+                              comment?._id,
+                              comment?.post,
+                              comment?.user
+                            )
+                          }
+                          sx={{ mt: 1 }}
+                        >
+                          Reply
+                        </Button>
+                      </Box>
                       {reply.map((r) => (
                         <Box
                           className="dark:bg-slate-700 px-2 py-1 rounded-md"
@@ -405,31 +440,6 @@ const CommentComponent = React.memo(
                           </Box>
                         </Box>
                       ))}
-
-                      <Box sx={{ mt: 1 }}>
-                        <TextareaAutosize
-                          className="dark:bg-slate-600 placeholder:font-thin"
-                          minRows={2}
-                          placeholder="Write a reply..."
-                          value={replyContent}
-                          onChange={(e) => setreplyContent(e.target.value)}
-                          style={{
-                            width: "100%",
-                            borderRadius: 8,
-                            padding: "8px 12px",
-                          }}
-                        />
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() =>
-                            submitreply(comment?._id, comment?.post)
-                          }
-                          sx={{ mt: 1 }}
-                        >
-                          Reply
-                        </Button>
-                      </Box>
                     </Box>
                   ))}
               </Box>

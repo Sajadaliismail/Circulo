@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
+  clearNotifications,
   fetchAllChats,
   fetchChatFriends,
   fetchchats,
@@ -124,6 +125,9 @@ const chatsSlice = createSlice({
       state.roomId = "";
       state.friend = "";
     },
+    setNewNotification: (state, action) => {
+      state.notifications.push(action.payload);
+    },
     // setSentMessages: (state, action) => {
     //   const { message, timestamp, type } = action.payload;
     //   const roomId = state.roomId;
@@ -189,6 +193,9 @@ const chatsSlice = createSlice({
       })
       .addCase(getNotifications.fulfilled, (state, action) => {
         state.notifications = action.payload.notification;
+      })
+      .addCase(clearNotifications.fulfilled, (state, action) => {
+        state.notifications = action.payload.notification;
       });
   },
 });
@@ -200,6 +207,7 @@ export const {
   setFriend,
   setRoomId,
   clearChatDefault,
+  setNewNotification,
   //   setReceivedChats,
   //   setSentMessages,
   //   setEmoji,

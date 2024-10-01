@@ -36,6 +36,7 @@ import { useResetRecoilState } from "recoil";
 import { postsAtom } from "../../atoms/postAtoms";
 import { ChatFriendsData, ChatRoomMessages } from "../../atoms/chatAtoms";
 import {
+  clearNotifications,
   fetchChatFriends,
   getNotifications,
 } from "../../features/chats/chatsAsycnThunks";
@@ -47,6 +48,7 @@ import {
   setRoomId,
 } from "../../features/chats/chatsSlice";
 import PostNotification from "./postCardNotifcation";
+import { convertUTCToIST } from "../../pages/Utilitis";
 // import Suggestions from "../HomePageComponents/suggestions";
 const Profile = lazy(() => import("../HomePageComponents/profile"));
 const Suggestions = lazy(() => import("../HomePageComponents/suggestions"));
@@ -73,7 +75,9 @@ export default function Header() {
     }
   };
 
-  const handleClearNotifications = async () => {};
+  const handleClearNotifications = async () => {
+    await dispatch(clearNotifications());
+  };
 
   const handleNotificationClick = async (notification) => {
     if (notification?.type == "request_accepted") {
@@ -225,6 +229,26 @@ export default function Header() {
                     />
                   );
 
+                case "reply":
+                  return (
+                    <PostNotification
+                      postId={noti?.contentId}
+                      fetchUserData={fetchUserData}
+                      key={noti.notificationId}
+                      notification={noti}
+                    />
+                  );
+
+                case "like":
+                  return (
+                    <PostNotification
+                      postId={noti?.contentId}
+                      fetchUserData={fetchUserData}
+                      key={noti.notificationId}
+                      notification={noti}
+                    />
+                  );
+
                 case "request_accepted":
                   return (
                     <MenuItem
@@ -232,7 +256,7 @@ export default function Header() {
                       className="mx-auto"
                       onClick={() => handleNotificationClick(noti)}
                       sx={{
-                        backgroundColor: "#e57d7d",
+                        backgroundColor: "#b1d2fd",
                         fontSize: 14,
                         height: 50,
                         display: "flex",
@@ -243,6 +267,9 @@ export default function Header() {
                       }}
                     >
                       {userData[noti.sender[0]]?.firstName} {noti.message}
+                      <span className="text-xs">
+                        {convertUTCToIST(noti?.createdAt)}
+                      </span>
                     </MenuItem>
                   );
 
@@ -566,6 +593,11 @@ export default function Header() {
                 open={notificationDisplay}
                 onClose={() => setNotificationDisplay(false)}
                 onOpen={() => setNotificationDisplay(true)}
+                sx={{
+                  "& .MuiPaper-root": {
+                    transform: "none !important",
+                  },
+                }}
               >
                 <div className="relative w-full h-full">
                   <div className="w-12 h-1.5 bg-gray-400 rounded-full mx-auto my-2"></div>

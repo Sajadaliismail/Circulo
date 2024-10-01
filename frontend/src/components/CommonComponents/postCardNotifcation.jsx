@@ -2,7 +2,6 @@ import { Box, MenuItem, Typography } from "@mui/material";
 import { useRecoilState } from "recoil";
 import { postDetailFamily } from "../../atoms/postAtoms";
 import { fetchPostData } from "../../fetchRequests/posts";
-import { Comment, Favorite, FavoriteOutlined } from "@mui/icons-material";
 import Post from "../HomePageComponents/post";
 import {
   CardContainer,
@@ -17,6 +16,7 @@ import {
   ModalTrigger,
 } from "../UserPageComponents/AnimatedModal";
 import { useSelector } from "react-redux";
+import { convertUTCToIST } from "../../pages/Utilitis";
 
 const PostNotification = ({ postId, fetchUserData, notification }) => {
   const { userData } = useSelector((state) => state.friends);
@@ -42,10 +42,10 @@ const PostNotification = ({ postId, fetchUserData, notification }) => {
             fetchUserData(author);
           }
         } else {
-          // Handle error
+          return;
         }
       } catch (error) {
-        console.error(error);
+        console.error(error.message);
       } finally {
         setLoading(false);
       }
@@ -66,21 +66,15 @@ const PostNotification = ({ postId, fetchUserData, notification }) => {
     <>
       <Modal>
         <CardContainer className="inter-var">
-          <CardBody
-          // className="bg-gray-50 relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-[#e5e5e5]   dark:border-white/[0.2] border-black/[0.1] h-auto rounded-xl p-3 border"
-          // sx={{
-          //   width: "100%",
-          //   maxWidth: { xs: "100%", sm: "30rem", md: "40rem", lg: "50rem" },
-          // }}
-          >
+          <CardBody>
             <CardItem>
               <ModalTrigger className="m-0 p-0 w-96">
                 <MenuItem
-                  key={notification.notificationId}
+                  key={notification?.notificationId}
                   className="mx-auto"
                   onClick={() => handleOpen()}
                   sx={{
-                    backgroundColor: "#e57d7d",
+                    backgroundColor: "#b1d2fd",
                     fontSize: 14,
                     height: 50,
                     display: "flex",
@@ -90,19 +84,22 @@ const PostNotification = ({ postId, fetchUserData, notification }) => {
                     marginBottom: "5px",
                   }}
                 >
-                  {userData[notification.sender[0]]
-                    ? userData[notification.sender[0]].firstName
+                  {userData[notification?.sender[0]]
+                    ? userData[notification?.sender[0]].firstName
                     : "Someone"}{" "}
-                  {notification.sender.length > 1 ? "and others " : ""}
-                  {notification.message}
+                  {notification?.sender.length > 1 ? "and others " : ""}
+                  {notification?.message}
+                  <span className="text-xs">
+                    {convertUTCToIST(notification?.createdAt)}
+                  </span>
                 </MenuItem>
               </ModalTrigger>
             </CardItem>
           </CardBody>
         </CardContainer>
-        <ModalBody className="bg-white md:min-w-[60%] sm:w-full sm:h-full">
-          <ModalContent className="bg-white overflow-y-scroll w-full ">
-            <div className="p-4 mb-5 h-full flex flex-col">
+        <ModalBody className="bg-white md:min-w-[60%] sm:w-full sm:h-full p-0 m-0">
+          <ModalContent className="bg-white overflow-y-scroll w-full p-0 m-0">
+            <div className="p-1 mb-5 h-full flex flex-col">
               <Box
                 sx={{
                   flex: 1,
