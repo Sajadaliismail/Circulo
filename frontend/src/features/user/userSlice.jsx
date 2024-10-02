@@ -15,9 +15,11 @@ const userSlice = createSlice({
       .addCase(uploadImage.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(uploadImage.fulfilled, (state) => {
+      .addCase(uploadImage.fulfilled, (state, action) => {
         state.status = "";
         state.error = {};
+        const message = action.payload.message;
+        state.user.profilePicture = message.profilePicture;
       })
       .addCase(uploadImage.rejected, (state, action) => {
         state.status = "";

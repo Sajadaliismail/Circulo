@@ -252,17 +252,17 @@ const useChatSocket = () => {
         const id = user?._id;
 
         chatSocket.emit("authenticate", id);
-        console.log("Socket connected");
+        // console.log("Socket connected");
         setSocketConnected(true);
-        enqueueSnackbar("Connection successfull", {
-          variant: "success",
-          autoHideDuration: 1000,
-        });
+        // enqueueSnackbar("Connection successfull", {
+        //   variant: "success",
+        //   autoHideDuration: 1000,
+        // });
       };
 
       setSocketConnected(true);
       const handleDisconnect = () => {
-        console.log("Socket disconnected");
+        // console.log("Socket disconnected");
         setSocketConnected(false);
         enqueueSnackbar("Connection lost. Attempting to reconnect...", {
           variant: "warning",
@@ -413,7 +413,7 @@ const useChatSocket = () => {
       });
 
       chatSocket.on("notification", async (data) => {
-        console.log(data);
+        // console.log(data);
         await dispatch(setNewNotification(data));
       });
       return () => {

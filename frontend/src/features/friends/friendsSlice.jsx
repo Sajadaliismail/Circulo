@@ -26,6 +26,10 @@ const friendsSlice = createSlice({
       const id = action.payload;
       if (state.userData[id]) state.userData[id].onlineStatus = true;
     },
+    setImage: (state, action) => {
+      const { _id, profilePicture } = action.payload;
+      state.userData[_id].profilePicture = [profilePicture];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -54,5 +58,5 @@ const friendsSlice = createSlice({
       });
   },
 });
-export const { setStatus } = friendsSlice.actions;
+export const { setStatus, setImage } = friendsSlice.actions;
 export default friendsSlice.reducer;

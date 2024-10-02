@@ -636,7 +636,6 @@ export default function Header() {
         </Drawer>
       </nav>
       {renderMobileMenu}
-      <Box sx={{ padding: 2 }}></Box>
     </Box>
   );
 }

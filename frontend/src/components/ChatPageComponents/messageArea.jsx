@@ -35,6 +35,7 @@ import chatSocket from "../../features/utilities/Socket-io";
 import VideoCall from "../../pages/VideoCall";
 import { RecieverMessageList, SenderMessageList } from "./message";
 import debounce from "lodash/debounce";
+import AudioRecorder from "./AudioMessage";
 
 const MessageInput = React.memo(
   ({
@@ -156,6 +157,15 @@ const MessageArea = ({
   const [userIsTyping, setUserIsTyping] = useState(false);
   const [isVideoCallActive, setIsVideoCallActive] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
+  const [isRecorded, setIsRecorded] = useState(null);
+
+  const handleAudioRecorded = (blob) => {
+    console.log("Audio Blob:", blob); // Blob of the recorded audio
+    // Store the blob, or save it locally for later use
+    // You can create a URL for playback or other actions
+    const audioUrl = URL.createObjectURL(blob);
+    console.log("Audio URL:", audioUrl);
+  };
 
   const debouncedEmitTyping = useCallback(
     debounce((isTyping) => {
@@ -310,7 +320,7 @@ const MessageArea = ({
         ref={messageEl}
         sx={{
           paddingX: "20px",
-          height: "65vh",
+          height: "70vh",
           overflowY: "auto",
           flexGrow: 1,
           overflowX: "hidden",
@@ -351,6 +361,12 @@ const MessageArea = ({
       >
         <Grid item xs={12} className="dark:text-white">
           {imagePreview && <img src={imagePreview} alt="preview" />}
+          {/* {(isRecording || isRecorded) && (
+            <AudioRecorder
+              setIsRecorded={setIsRecorded}
+              onAudioRecorded={handleAudioRecorded}
+            />
+          )} */}
           <TypingIndicator
             isTyping={messages?.isTyping}
             friend={userData[friend]}

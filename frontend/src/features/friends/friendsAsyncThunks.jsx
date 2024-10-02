@@ -155,6 +155,10 @@ export const sentRequest = createAsyncThunk(
 export const fetchUserDetails = createAsyncThunk(
   "friends/fetchUserDetails",
   async (id, { rejectWithValue, getState }) => {
+    const state = getState();
+    if (state.friends.userData[id]) {
+      return state.friends.userData[id];
+    }
     try {
       const response = await fetch(`${BACKEND}/fetchUserData?userId=${id}`, {
         method: "GET",

@@ -97,9 +97,9 @@ const PostNotification = ({ postId, fetchUserData, notification }) => {
             </CardItem>
           </CardBody>
         </CardContainer>
-        <ModalBody className="bg-white md:min-w-[60%] sm:w-full sm:h-full p-0 m-0">
-          <ModalContent className="bg-white overflow-y-scroll w-full p-0 m-0">
-            <div className="p-1 mb-5 h-full flex flex-col">
+        <ModalBody className="bg-[#e5e7eb] md:min-w-[60%] sm:w-full sm:h-full p-0 m-0">
+          <ModalContent className="bg-[#e5e7eb]  dark:bg-slate-500 overflow-y-scroll w-full p-0 m-0">
+            <div className="p-0 mb-5 h-full flex flex-col">
               <Box
                 sx={{
                   flex: 1,

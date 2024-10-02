@@ -6,7 +6,14 @@ import {
   AccordionSummary,
   Avatar,
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
@@ -16,7 +23,7 @@ import {
   fetchUserDetails,
   removeFriend,
 } from "../features/friends/friendsAsyncThunks";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 
@@ -35,8 +42,9 @@ const UserPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { userId } = useParams();
-
-  const { enqueueSnackbar } = useSnackbar();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogAction, setDialogAction] = useState(null);
+  // const { enqueueSnackbar } = useSnackbar();
   const {
     postsId,
     count,
@@ -47,33 +55,61 @@ const UserPage = () => {
     friendsId,
   } = useFetchPosts(userId);
 
-  const fetchFriendsList = async (id) => {
-    if (relation !== "FRIENDS" && relation !== "SELF") {
-      enqueueSnackbar("Only friends can view this", { variant: "error" });
+  // const handleClose = () => setOpen(false);
+  // const handleRemoveFriend = async () => {
+  //   await dispatch(removeFriend({ friendId: userId }));
+  //   fetchPosts(userId);
+  //   setRelation("NOT_FRIENDS");
+  // };
+
+  const handleDialogClose = () => setDialogOpen(false);
+
+  const handleDialogConfirm = async () => {
+    switch (dialogAction) {
+      case "addFriend":
+        await dispatch(addFriend({ friendId: userId }));
+        setRelation("REQUESTSENT");
+        break;
+      case "removeFriend":
+        await dispatch(removeFriend({ friendId: userId }));
+        fetchPosts(userId);
+        setRelation("NOT_FRIENDS");
+        break;
+      case "cancelRequest":
+        await dispatch(cancelRequest({ friendId: userId }));
+        setRelation("NOT_FRIENDS");
+        break;
+      case "acceptRequest":
+        await dispatch(acceptRequest({ friendId: userId }));
+        fetchPosts(userId);
+        setRelation("FRIENDS");
+        break;
     }
+    handleDialogClose();
   };
 
-  const handleRemoveFriend = async () => {
-    await dispatch(removeFriend({ friendId: userId }));
-    fetchPosts(userId);
-    setRelation("NOT_FRIENDS");
+  const openDialog = (action) => {
+    setDialogAction(action);
+    setDialogOpen(true);
   };
 
-  const handleCancelRequest = async () => {
-    await dispatch(cancelRequest({ friendId: userId }));
-    setRelation("NOT_FRIENDS");
-  };
+  // const handleCancelRequest = async () => {
+  //   await dispatch(cancelRequest({ friendId: userId }));
+  //   setRelation("NOT_FRIENDS");
+  // };
 
-  const handleAddFriend = async () => {
-    await dispatch(addFriend({ friendId: userId }));
-    setRelation("REQUESTSENT");
-  };
+  // const handleAddFriend = async () => {
+  // setOpen(true);
+  // await dispatch(addFriend({ friendId: userId }));
+  // setRelation("REQUESTSENT");
+  // };
 
-  const handleAcceptRequest = async () => {
-    await dispatch(acceptRequest({ friendId: userId }));
-    fetchPosts(userId);
-    setRelation("FRIENDS");
-  };
+  // const handleAcceptRequest = async () => {
+  //   // setOpen(true);
+  //   await dispatch(acceptRequest({ friendId: userId }));
+  //   fetchPosts(userId);
+  //   setRelation("FRIENDS");
+  // };
 
   const handleChat = (id, roomId) => {
     dispatch(setFriend(id));
@@ -98,9 +134,53 @@ const UserPage = () => {
     });
   }, [friendsId]);
 
+  const DialogueComponent = () => {
+    const titles = {
+      addFriend: "Add Friend",
+      removeFriend: "Remove Friend",
+      cancelRequest: "Cancel Friend Request",
+      acceptRequest: "Accept Friend Request",
+    };
+
+    const messages = {
+      addFriend: "Are you sure you want to send a friend request?",
+      removeFriend: "Are you sure you want to remove this friend?",
+      cancelRequest: "Are you sure you want to cancel the friend request?",
+      acceptRequest: "Are you sure you want to accept the friend request?",
+    };
+
+    return (
+      <Dialog
+        open={dialogOpen}
+        PaperProps={{
+          sx: { backgroundColor: "#c4c9d4" },
+        }}
+        onClose={handleDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {titles[dialogAction]}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {messages[dialogAction]}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button onClick={handleDialogConfirm} autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  };
+
   return (
     <>
       <Header> </Header>
+      <DialogueComponent />
       {loading ? (
         <Box
           sx={{
@@ -131,16 +211,14 @@ const UserPage = () => {
               </Typography>
               <Box className="flex flex-col md:flex-row space-y-2 md:space-x-4 mt-2">
                 <Typography variant="body2">
-                  <span onClick={() => fetchFriendsList(userId)}>
-                    {`Friends: ${friendsCount} `}
-                  </span>
+                  <span>{`Friends: ${friendsCount} `}</span>
                   {`| Posts: ${count}`}
                 </Typography>
               </Box>
 
-              {relation && relation === "NOT_FRIENDS" && (
+              {relation === "NOT_FRIENDS" && (
                 <button
-                  onClick={() => handleAddFriend()}
+                  onClick={() => openDialog("addFriend")}
                   className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
                 >
                   <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
@@ -149,7 +227,7 @@ const UserPage = () => {
                   </span>
                 </button>
               )}
-              {relation && relation === "FRIENDS" && (
+              {relation === "FRIENDS" && (
                 <div className="btn-group ">
                   <button
                     onClick={() => {
@@ -163,7 +241,7 @@ const UserPage = () => {
                     </span>
                   </button>
                   <button
-                    onClick={handleRemoveFriend}
+                    onClick={() => openDialog("removeFriend")}
                     className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
                   >
                     <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
@@ -173,7 +251,7 @@ const UserPage = () => {
                   </button>
                 </div>
               )}
-              {relation && relation === "SELF" && (
+              {relation === "SELF" && (
                 <button className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
                   <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
                   <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-cyan-800 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
@@ -181,10 +259,10 @@ const UserPage = () => {
                   </span>
                 </button>
               )}
-              {relation && relation === "REQUESTSENT" && (
+              {relation === "REQUESTSENT" && (
                 <div className="btn-group ">
                   <button
-                    onClick={() => handleCancelRequest()}
+                    onClick={() => openDialog("cancelRequest")}
                     className="relative inline-flex h-9 w-36 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
                   >
                     <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
@@ -203,10 +281,10 @@ const UserPage = () => {
                   </button>
                 </div>
               )}
-              {relation && relation === "REQUESTRECEIVED" && (
+              {relation === "REQUESTRECEIVED" && (
                 <div className="btn-group">
                   <button
-                    onClick={() => handleCancelRequest()}
+                    onClick={() => openDialog("cancelRequest")}
                     className="relative inline-flex h-9 w-32 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
                   >
                     <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
@@ -215,8 +293,7 @@ const UserPage = () => {
                     </span>
                   </button>
                   <button
-                    // disabled={true}
-                    onClick={() => handleAcceptRequest()}
+                    onClick={() => openDialog("acceptRequest")}
                     className="relative inline-flex h-9 w-32 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
                   >
                     <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
@@ -238,42 +315,61 @@ const UserPage = () => {
                 >
                   Friends
                 </AccordionSummary>
-                <AccordionDetails>
-                  {friendsId?.map(
-                    (friend) =>
-                      userData[friend] && (
-                        <Box
-                          key={`friends${userData[friend]?._id}`}
-                          display={"flex"}
-                          alignItems={"center"}
-                          gap={2}
-                          position="relative"
-                          sx={{
-                            padding: 1,
-                            borderRadius: "12px",
-                            letterSpacing: "0.5px",
-                            transition:
-                              "transform 0.3s ease, box-shadow 0.3s ease",
-                            "&:hover": {
-                              transform: "scale(1.05)",
-                              boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.3)",
-                              backgroundColor: "#c4c9d4",
-                              color: "black",
-                            },
-                            cursor: "pointer",
-                          }}
-                          onClick={() => navigate(`profile/${friend}`)}
-                        >
-                          <AnimatedTooltip
-                            key={`friends-${friend}`}
-                            userId={friend}
-                          />
-                          {userData[friend]?.firstName}{" "}
-                          {userData[friend]?.lastName}
-                        </Box>
-                      )
-                  )}
-                </AccordionDetails>
+                {relation && (relation === "FRIENDS" || relation === "SELF") ? (
+                  <AccordionDetails
+                    sx={{
+                      overflow: "scroll",
+                      height: "50vh ",
+                      scrollbarWidth: "none",
+                    }}
+                  >
+                    {friendsId?.map(
+                      (friend) =>
+                        userData[friend] && (
+                          <Box
+                            key={`friends${userData[friend]?._id}`}
+                            display={"flex"}
+                            alignItems={"center"}
+                            gap={2}
+                            position="relative"
+                            sx={{
+                              padding: 1,
+                              borderRadius: "12px",
+                              letterSpacing: "0.5px",
+
+                              transition:
+                                "transform 0.3s ease, box-shadow 0.3s ease",
+                              "&:hover": {
+                                transform: "scale(1.05)",
+                                boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.3)",
+                                backgroundColor: "#c4c9d4",
+                                color: "black",
+                              },
+                              cursor: "pointer",
+                            }}
+                            onClick={() => navigate(`profile/${friend}`)}
+                          >
+                            <AnimatedTooltip
+                              key={`friends-${friend}`}
+                              userId={friend}
+                            />
+                            {userData[friend]?.firstName}{" "}
+                            {userData[friend]?.lastName}
+                          </Box>
+                        )
+                    )}
+                  </AccordionDetails>
+                ) : (
+                  <AccordionDetails>
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                      <Tooltip title="This section is for friends only" arrow>
+                        <p className="text-xl font-semibold">
+                          Only friends <Lock />
+                        </p>
+                      </Tooltip>
+                    </div>
+                  </AccordionDetails>
+                )}
               </Accordion>
             </Box>
           </Box>

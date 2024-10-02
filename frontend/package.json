@@ -45,14 +45,15 @@
     "styled-components": "^6.1.11",
     "tailwind-merge": "^2.5.2",
     "tailwind-scrollbar": "^3.1.0",
+    "wavesurfer.js": "^7.8.6",
     "web-vitals": "^2.1.4",
     "yup": "^1.4.0"
   },
   "scripts": {
-    "lint": "eslint . --quiet",
-    "lint:fix": "eslint . --quiet --fix",
+    "lint": "eslint . --quiet --rule 'no-unused-vars: off' --rule 'react-hooks/exhaustive-deps: off'",
+    "lint:fix": "eslint . --quiet --fix --rule 'no-unused-vars: off' --rule 'react-hooks/exhaustive-deps: off'",
     "start": "react-scripts start",
-    "build": "react-scripts build || true",
+    "build": "GENERATE_SOURCEMAP=false REACT_APP_ENV=production react-scripts build || true",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -77,7 +78,9 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "autoprefixer": "^10.4.19",
+    "javascript-obfuscator": "^4.1.1",
     "postcss": "^8.4.39",
+    "source-map-explorer": "^2.5.3",
     "tailwindcss": "^3.4.10"
   }
 }

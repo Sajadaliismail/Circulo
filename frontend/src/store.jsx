@@ -41,6 +41,7 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
     }),
+  devTools: process.env.REACT_APP_ENV !== "production",
 });
 
 // Create the persistor

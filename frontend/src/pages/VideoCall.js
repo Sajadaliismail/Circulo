@@ -6,7 +6,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -89,7 +88,7 @@ export default function VideoCall({
 
   useEffect(() => {
     const startVideoCall = async () => {
-      console.log(chatSocket.active, "socketactive");
+      // console.log(chatSocket.active, "socketactive");
 
       playAudio();
       try {
@@ -248,7 +247,6 @@ export default function VideoCall({
             maxHeight: isMobile ? "100%" : "80vh",
             margin: "0px",
             width: isMobile ? "100%" : 1200,
-            margin: 0,
             maxWidth: "none",
           },
         }}

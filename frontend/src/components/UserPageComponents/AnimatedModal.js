@@ -123,7 +123,7 @@ export const ModalContent = ({ children, className }) => {
   return (
     <div
       style={{ scrollbarWidth: "none" }}
-      className={cn("flex flex-col flex-1 p-2 md:p-2  ", className)}
+      className={cn("flex flex-col flex-1 p-0 md:p-0  ", className)}
     >
       {children}
     </div>

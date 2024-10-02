@@ -118,9 +118,9 @@ const PostCard = ({ postId, fetchUserData }) => {
             </div>
           </CardBody>
         </CardContainer>
-        <ModalBody className="bg-white">
-          <ModalContent className="bg-white overflow-y-scroll ">
-            <div className="p-4 mb-5 h-full flex flex-col">
+        <ModalBody className="bg-[#e5e7eb] dark:bg-slate-600  md:min-w-[60%] sm:w-full sm:h-full ">
+          <ModalContent className="bg-[#e5e7eb]  dark:bg-slate-500   overflow-y-scroll  ">
+            <div className="p-0 mb-5 h-full flex flex-col">
               <Box
                 sx={{
                   flex: 1,

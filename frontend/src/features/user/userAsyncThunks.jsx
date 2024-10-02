@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { fetchUserDetails } from "../friends/friendsAsyncThunks";
+import { setImage } from "../friends/friendsSlice";
 const BACKEND = process.env.REACT_APP_USER_BACKEND;
 
 export const fetchUser = createAsyncThunk(
@@ -26,7 +27,7 @@ export const fetchUser = createAsyncThunk(
 
 export const uploadImage = createAsyncThunk(
   "user/uploadImage",
-  async (formData, { rejectWithValue }) => {
+  async (formData, { rejectWithValue, dispatch }) => {
     try {
       const imageData = new FormData();
       imageData.append("image", formData);
@@ -36,9 +37,10 @@ export const uploadImage = createAsyncThunk(
         body: imageData,
       });
       const data = await response.json();
-      // console.log(response);
-      if (response.ok) return data;
-      else return rejectWithValue("Error uploading image");
+      if (response.ok) {
+        await dispatch(setImage(data.message));
+        return data;
+      } else return rejectWithValue("Error uploading image");
     } catch (error) {
       console.log(error);
       return rejectWithValue("Error uploading image");

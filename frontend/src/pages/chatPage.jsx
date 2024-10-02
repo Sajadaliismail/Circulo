@@ -172,7 +172,7 @@ export default function ChatPage() {
   }
 
   const renderUserList = () => (
-    <Grid item style={{ padding: "10px", width: "300px" }}>
+    <Grid item style={{ padding: "10px", minWidth: "300px" }}>
       <Typography
         variant="h5"
         sx={{
@@ -211,7 +211,7 @@ export default function ChatPage() {
           "&::-webkit-scrollbar": {
             display: "none",
           },
-          maxHeight: "64vh",
+          maxHeight: "70vh",
           padding: 2,
         }}
       >

@@ -4,7 +4,6 @@ import {
   Box,
   ListItemButton,
   ListItemIcon,
-  ListItemText,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
