@@ -71,7 +71,7 @@ const uploadImage = async (req, res) => {
     };
     await publishMessage("User_imageUpdate_que", message);
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, message });
   } catch (error) {
     console.log(error);
 
