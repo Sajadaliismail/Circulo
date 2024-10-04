@@ -32,6 +32,7 @@ const searchUsers = async (input) => {
             { lastName: { $regex: regex } },
             { email: { $regex: regex } },
           ],
+          $and: [{ isSetupComplete: true }],
         },
       },
       {
