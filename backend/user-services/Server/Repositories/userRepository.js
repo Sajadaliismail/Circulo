@@ -20,6 +20,37 @@ const findUser = async (id) => {
   return user;
 };
 
+const searchUsers = async (input) => {
+  try {
+    const regex = new RegExp(input, "i");
+
+    const users = await User.aggregate([
+      {
+        $match: {
+          $or: [
+            { firstName: { $regex: regex } },
+            { lastName: { $regex: regex } },
+            { email: { $regex: regex } },
+          ],
+        },
+      },
+      {
+        $project: {
+          profilePicture: 1,
+          firstName: 1,
+          lastName: 1,
+          email: 1,
+        },
+      },
+    ]);
+
+    return users;
+  } catch (error) {
+    console.error("Error searching for users:", error);
+    throw error;
+  }
+};
+
 async function getDistanceBetweenUsers(userId1, userId2) {
   try {
     if (!userId1 || !userId2) throw new Error("invalid userId");
@@ -115,4 +146,5 @@ module.exports = {
   deletePost,
   updateStatus,
   getDistanceBetweenUsers,
+  searchUsers,
 };

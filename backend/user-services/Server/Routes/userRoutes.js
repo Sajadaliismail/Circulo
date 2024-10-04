@@ -37,4 +37,6 @@ route.get(
   userProfileController.fetchUserStatus
 );
 
+route.get("/search", verifyToken, userProfileController.searchController);
+
 module.exports = route;

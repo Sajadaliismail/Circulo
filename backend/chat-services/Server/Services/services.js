@@ -69,7 +69,7 @@ const newCommentNotification = async (data) => {
       message: activity,
     });
     await notification.save();
-    console.log("notfication saved", notification);
+    // console.log("notfication saved", notification);
   } catch (error) {
     console.log(error.message);
   }
@@ -96,7 +96,7 @@ const newReplyNotification = async (data) => {
 
 const newLikeNotification = async (data) => {
   try {
-    console.log(data);
+    // console.log(data);
     const { post, postAuthor, likedBy, activity } = data;
 
     const notification = new Notification({

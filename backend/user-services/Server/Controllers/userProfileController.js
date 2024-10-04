@@ -1,4 +1,5 @@
 const userInteractor = require("../Interactors/userInteractor");
+const { searchUsers } = require("../Repositories/userRepository");
 const { publishMessage } = require("../Services/rabbitmq");
 
 const addressSetup = async (req, res) => {
@@ -79,10 +80,22 @@ const uploadImage = async (req, res) => {
   }
 };
 
+const searchController = async (req, res) => {
+  try {
+    const { search } = req.query;
+    const result = await searchUsers(search);
+    return res.status(200).json({ result });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(400).json({ Error: "Error fetching users " });
+  }
+};
+
 module.exports = {
   addressSetup,
   fetchUser,
   uploadImage,
   fetchUserDetails,
   fetchUserStatus,
+  searchController,
 };
