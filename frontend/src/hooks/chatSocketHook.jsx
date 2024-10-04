@@ -250,8 +250,8 @@ const useChatSocket = () => {
       connectSocket();
       const handleConnect = () => {
         const id = user?._id;
-
-        chatSocket.emit("authenticate", id);
+        if (id) chatSocket.emit("authenticate", id);
+        else chatSocket.connect();
         // console.log("Socket connected");
         setSocketConnected(true);
         // enqueueSnackbar("Connection successfull", {
