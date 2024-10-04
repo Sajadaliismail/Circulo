@@ -9,6 +9,7 @@ const {
   UserNotification,
   Notification,
 } = require("../Models/notificationSchema");
+const { getSignedUrlForUpload } = require("../Services/services");
 
 const route = express.Router();
 
@@ -341,5 +342,7 @@ route.get("/clearNotifications", authenticateToken, async (req, res) => {
     return res.status(400).json({ error: "Error clear notifications" });
   }
 });
+
+route.get("/generateAudioUrl", authenticateToken, getSignedUrlForUpload);
 
 module.exports = route;

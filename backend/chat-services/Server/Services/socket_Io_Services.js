@@ -75,6 +75,8 @@ const handleMessage = async (userId, message, type, io, socket) => {
       newMessage.message = message;
     } else if (type === "image") {
       newMessage.imageUrl = message;
+    } else if (type === "voice") {
+      newMessage.voiceUrl = message;
     }
     await newMessage.save();
 

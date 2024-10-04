@@ -1,4 +1,39 @@
 const { Notification } = require("../Models/notificationSchema");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+require("dotenv").config();
+
+const getSignedUrlForUpload = async (req, res) => {
+  try {
+    const s3 = new S3Client({
+      region: "ap-south-1",
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_KEY,
+      },
+    });
+
+    const { fileName, fileType } = req.query;
+
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: fileName,
+      ContentType: fileType,
+    };
+
+    const command = new PutObjectCommand(params);
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+    res.json({ uploadUrl: signedUrl });
+  } catch (error) {
+    console.error("Error generating presigned URL:", error.message);
+    res.status(500).json({ error: "Failed to generate presigned URL" });
+  }
+};
+
+module.exports = { getSignedUrlForUpload };
+
+// const { getSignedUrl } = require("@aws-sdk/s3");
 
 // const handleIncomingRequestNotification = async (data) => {
 //   console.log("incoming request", data);
@@ -80,10 +115,12 @@ const newLikeNotification = async (data) => {
     console.log(error.message);
   }
 };
+
 module.exports = {
   // handleIncomingRequestNotification,
   handleRequestAccepetedNotification,
   newCommentNotification,
   newLikeNotification,
   newReplyNotification,
+  getSignedUrlForUpload,
 };

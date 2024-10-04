@@ -126,21 +126,22 @@ io.on("connection", (socket) => {
     }
   });
 
-  // socket.on("disconnect", async (reason) => {
-  //   try {
-  //     console.log(`User ${socket.id} disconnected due to: ${reason}`);
+  socket.on("disconnect", async (reason) => {
+    try {
+      console.log(`User ${socket.id} disconnected due to: ${reason}`);
 
-  //     if (socket.user) {
-  //       const { userId } = socket.user;
-  //       await userClient.del(userId);
-
-  //       const message = { _id: userId, onlineStatus: false };
-  //       await publishMessage("userStatus", message);
-  //     }
-  //   } catch (error) {
-  //     console.log(error.message);
-  //   }
-  // });
+      if (socket.user) {
+        const { userId } = socket.user;
+        // await userClient.del(userId);
+        if (userId) {
+          const message = { _id: userId, onlineStatus: false };
+          await publishMessage("userStatus", message);
+        }
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  });
 });
 
 module.exports = { io, httpServer };

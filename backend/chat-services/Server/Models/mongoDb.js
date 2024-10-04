@@ -11,6 +11,7 @@ const messageSchema = new mongoose.Schema({
   deletedFor: [{ type: String }],
   emoji: { type: String, default: "" },
   imageUrl: { type: String },
+  voiceUrl: { type: String },
 });
 
 messageSchema.index({ roomId: 1 });
