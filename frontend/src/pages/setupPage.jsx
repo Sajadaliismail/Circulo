@@ -18,14 +18,17 @@ import Navbar from "../components/SetupPage/Navbar";
 import { useDispatch } from "react-redux";
 import { addressSetup } from "../features/auth/authAsyncThunks";
 import { useNavigate } from "react-router-dom";
-import { uploadImage } from "../features/user/userAsyncThunks";
+import { fetchUser, uploadImage } from "../features/user/userAsyncThunks";
 import { useSnackbar } from "notistack";
 import { motion } from "framer-motion";
 import {
+  cancelRequest,
+  getFriends,
   getSuggestions,
   sentRequest,
 } from "../features/friends/friendsAsyncThunks";
 import { setIsSetupComplete } from "../features/auth/authSlice";
+import { Close, PersonAdd } from "@mui/icons-material";
 
 const steps = ["Upload Image", "Your Circle", "People in your circle"];
 
@@ -68,7 +71,7 @@ const SetupPage = () => {
         setErrors(validationErrors);
         return;
       } else {
-        await dispatch(addressSetup(location));
+        // await dispatch(addressSetup(location));
         dispatch(getSuggestions(location.postalCode));
       }
     }
@@ -76,13 +79,20 @@ const SetupPage = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
 
-  const handleFinish = (e) => {
+  const handleFinish = async (e) => {
     e.preventDefault();
+    await dispatch(fetchUser());
+    await dispatch(getFriends());
     dispatch(setIsSetupComplete());
     navigate("/");
   };
   const handleRequest = async (id) => {
     await dispatch(sentRequest({ friendId: id }));
+    dispatch(getSuggestions(location.postalCode));
+  };
+
+  const handleCancelRequest = async (id) => {
+    await dispatch(cancelRequest({ friendId: id }));
     dispatch(getSuggestions(location.postalCode));
   };
 
@@ -181,25 +191,110 @@ const SetupPage = () => {
                         {suggestions &&
                           suggestions?.map((people) => (
                             <Box
-                              key={people.id}
+                              className="mx-auto"
+                              key={`suggestion-${people.id}`}
                               display={"flex"}
-                              alignItems={"center"}
                               gap={2}
+                              position="relative"
+                              sx={{
+                                width: "90%",
+                                padding: 1,
+                                borderRadius: "12px",
+                                letterSpacing: "0.5px",
+                                display: "flex",
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                transition:
+                                  "transform 0.3s ease, box-shadow 0.3s ease",
+                                "&:hover": {
+                                  transform: "scale(1.05)",
+                                  boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.3)",
+                                  backgroundColor: "#c4c9d4",
+                                  color: "black",
+                                },
+                                cursor: "pointer",
+                              }}
                             >
-                              <Avatar src={people?.profilePicture}>
-                                {people.firstName[0]}
-                              </Avatar>
-                              {people.firstName} {people.lastName}
-                              <Button
-                                disabled={people?.hasRequested}
-                                onClick={() => handleRequest(people.id)}
-                                sx={{ marginLeft: "auto" }}
-                              >
-                                {people.hasRequested
-                                  ? "Request sent"
-                                  : "Connect"}
-                              </Button>
+                              <Box className="flex flex-rowitems-center">
+                                <Avatar
+                                  src={people.profilePicture}
+                                  className="object-cover !m-0 !p-0 object-top rounded-full h-14 w-14 border-2 group-hover:scale-105 group-hover:z-100 border-white relative transition duration-500"
+                                >
+                                  {people.firstName && people.firstName[0]}
+                                </Avatar>
+                                <Typography
+                                  sx={{
+                                    textOverflow: "hidden",
+                                    textWrap: "nowrap",
+                                    overflow: "hidden",
+                                    minWidth: "40%",
+                                    ml: 1,
+                                  }}
+                                >
+                                  {people.firstName} {people.lastName}
+                                </Typography>
+                              </Box>
+
+                              {people.hasRequested ? (
+                                <>
+                                  {" "}
+                                  <div className="btn-group flex">
+                                    <Button
+                                      size="small"
+                                      color="error"
+                                      variant="contained"
+                                      sx={{ borderRadius: 50, mr: 1 }}
+                                      onClick={() =>
+                                        handleCancelRequest(people.id)
+                                      }
+                                    >
+                                      <Close />
+                                    </Button>
+                                    <Button
+                                      size="small"
+                                      color="success"
+                                      variant="contained"
+                                      disabled
+                                      sx={{ borderRadius: 50 }}
+                                    >
+                                      <PersonAdd />
+                                    </Button>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="small"
+                                    color="success"
+                                    variant="contained"
+                                    sx={{ borderRadius: 50 }}
+                                    onClick={() => handleRequest(people.id)}
+                                  >
+                                    <PersonAdd />
+                                  </Button>
+                                </>
+                              )}
                             </Box>
+                            // <Box
+                            //   key={people.id}
+                            //   display={"flex"}
+                            //   alignItems={"center"}
+                            //   gap={2}
+                            // >
+                            //   <Avatar src={people?.profilePicture}>
+                            //     {people.firstName[0]}
+                            //   </Avatar>
+                            //   {people.firstName} {people.lastName}
+                            //   <Button
+                            //     disabled={people?.hasRequested}
+                            //     onClick={() => handleRequest(people.id)}
+                            //     sx={{ marginLeft: "auto" }}
+                            //   >
+                            //     {people.hasRequested
+                            //       ? "Request sent"
+                            //       : "Connect"}
+                            //   </Button>
+                            // </Box>
                           ))}
                       </Box>
                     </Box>

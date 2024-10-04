@@ -13,6 +13,12 @@ import {
   AccordionDetails,
   Button,
   SwipeableDrawer,
+  styled,
+  alpha,
+  InputBase,
+  useMediaQuery,
+  useTheme,
+  Avatar,
 } from "@mui/material";
 import { Menu, MenuItem, Fade } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -27,6 +33,7 @@ import {
   Close,
   ExpandMore,
   LogoutRounded,
+  SearchOutlined,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { setLogout } from "../../features/auth/authSlice";
@@ -40,8 +47,9 @@ import {
   fetchChatFriends,
   getNotifications,
 } from "../../features/chats/chatsAsycnThunks";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useCallback, useEffect } from "react";
 import { useState } from "react";
+import _ from "lodash";
 import {
   clearChatDefault,
   setFriend,
@@ -52,6 +60,7 @@ import { convertUTCToIST } from "../../pages/Utilitis";
 // import Suggestions from "../HomePageComponents/suggestions";
 const Profile = lazy(() => import("../HomePageComponents/profile"));
 const Suggestions = lazy(() => import("../HomePageComponents/suggestions"));
+const BACKEND = process.env.REACT_APP_USER_BACKEND;
 
 export default function Header() {
   const { user } = useSelector((state) => state.user);
@@ -67,7 +76,18 @@ export default function Header() {
   const chatmessageReset = useResetRecoilState(ChatRoomMessages);
   const [unreadChatsCount, setUreadChatsCount] = useState(0);
   const [expanded, setExpanded] = useState("panel1");
-  const [postId, setPostId] = useState(null);
+
+  const [anchorElMessage, setAnchorElMessage] = useState(null);
+  const [anchorElNotifcation, setAnchorElNotification] = useState(null);
+  const open = Boolean(anchorElMessage);
+  const openNotification = Boolean(anchorElNotifcation);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationDisplay, setNotificationDisplay] = useState(false);
+  const theme = useTheme();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [users, setUsers] = useState([]);
+
+  // const [postId, setPostId] = useState(null);
 
   const fetchUserData = (id) => {
     if (!userData[id]) {
@@ -99,12 +119,7 @@ export default function Header() {
     setUreadChatsCount(unread);
   }, [chatFriends]);
 
-  const [anchorElMessage, setAnchorElMessage] = useState(null);
-  const [anchorElNotifcation, setAnchorElNotification] = useState(null);
-  const open = Boolean(anchorElMessage);
-  const openNotification = Boolean(anchorElNotifcation);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [notificationDisplay, setNotificationDisplay] = useState(false);
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const handleDrawerToggle = () => {
     setMobileOpen((prevState) => !prevState);
@@ -126,6 +141,38 @@ export default function Header() {
     setAnchorElMessage(null);
   };
 
+  const handleSearchInput = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    if (query.length == 0) setUsers([]);
+  };
+
+  const fetchUsers = async (query) => {
+    if (!query) return;
+    try {
+      const response = await fetch(`${BACKEND}/search?search=${query}`, {
+        credentials: "include",
+      });
+      const data = await response.json();
+      // console.log(data);
+
+      setUsers(data.result);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  // Debounced version of the fetchUsers function
+  const debouncedFetchUsers = useCallback(_.debounce(fetchUsers, 500), []);
+
+  // Trigger the debounced fetch when searchQuery changes
+  useEffect(() => {
+    debouncedFetchUsers(searchQuery);
+    // Cleanup function to cancel debounce on component unmount
+    return () => {
+      debouncedFetchUsers.cancel();
+    };
+  }, [searchQuery, debouncedFetchUsers]);
   const handleLogout = async () => {
     chatSocket.emit("logout");
     postReset();
@@ -147,6 +194,49 @@ export default function Header() {
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
   };
+  const searchList = (
+    <div className="relative rounded-lg bg-gray-700 w-full sm:w-auto">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <SearchOutlined className="text-white dark:text-black" />
+      </div>
+      <input
+        value={searchQuery}
+        onChange={handleSearchInput}
+        type="search"
+        className="block w-full pl-10 pr-3 py-2 rounded-lg bg-gray-800 dark:bg-slate-400 text-white dark:text-black placeholder-gray-400 dark:placeholder:text-black focus:outline-none focus:ring focus:ring-gray-500"
+        placeholder="Search..."
+      />
+
+      {users.length > 0 && (
+        <div className="absolute bg-gray-700 dark:bg-slate-500 mt-2 rounded-lg shadow-lg z-10 w-full max-h-80 overflow-scroll scrollbar-none">
+          {users.map((user) => (
+            <div
+              key={`search-${user._id}`}
+              className="flex items-center p-2 hover:bg-gray-600 cursor-pointer transition duration-300 rounded-lg"
+              onClick={() => {
+                setSearchQuery("");
+                setUsers([]);
+                navigate(`/profile/${user._id}`);
+              }}
+            >
+              <Avatar
+                src={user.profilePicture}
+                className="object-cover rounded-full h-10 w-10 border-2 border-white mr-3"
+                alt={`${user.firstName} ${user.lastName}`}
+              >
+                {user.firstName && user.firstName[0]}
+              </Avatar>
+              <div className="flex flex-col">
+                <Typography className="text-white dark:text-black font-semibold">
+                  {user.firstName} {user.lastName}
+                </Typography>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   const drawer = (
     <Suspense>
@@ -166,6 +256,7 @@ export default function Header() {
           src="/circulo.png"
         />
         <Divider />
+        {searchList}
         <div>
           <Accordion
             expanded={expanded === "panel1"}
@@ -392,6 +483,8 @@ export default function Header() {
             src="/circulo.png"
           />
           <Box sx={{ flexGrow: 1 }} />
+          {!isMobile && <>{searchList}</>}
+
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton
               id="basic-button"

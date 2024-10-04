@@ -45,98 +45,6 @@ import RecordPlugin from "wavesurfer.js/dist/plugins/record.js";
 import { Button, Card, CardContent } from "@mui/material";
 const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
-const MessageInput = React.memo(
-  ({
-    message,
-    setMessage,
-    handleSubmit,
-    friend,
-    roomId,
-    textFieldRef,
-    imagePreview,
-    setImagePreview,
-    handleImageChange,
-    isRecording,
-    startRecording,
-    stopRecording,
-    setUserIsTyping,
-    handleSubmitImage,
-    waveformRef,
-    inputDisabled,
-    isRecorded,
-    sendAudio,
-  }) => {
-    const debouncedSetUserIsTyping = useMemo(
-      () => debounce(setUserIsTyping, 300),
-      [setUserIsTyping]
-    );
-
-    return (
-      <TextField
-        label="Type your message"
-        className="dark:text-white dark:placeholder:text-white"
-        fullWidth
-        value={message}
-        onChange={(e) => {
-          const newMessage = e.target.value;
-          setMessage(newMessage);
-          debouncedSetUserIsTyping(newMessage.trim().length > 0);
-        }}
-        inputRef={textFieldRef}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            debouncedSetUserIsTyping.cancel();
-            setUserIsTyping(false);
-            handleSubmit(friend, roomId);
-          }
-        }}
-        disabled={inputDisabled}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton component="label">
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  disabled={isRecorded}
-                  onChange={handleImageChange}
-                />
-                <Image className="dark:text-white" />
-              </IconButton>
-              <IconButton
-                onClick={isRecording ? stopRecording : startRecording}
-              >
-                {isRecording ? (
-                  <Stop className="dark:text-white" />
-                ) : (
-                  <Mic className="dark:text-white" />
-                )}
-              </IconButton>
-              <IconButton
-                onClick={() => {
-                  if (isRecorded) {
-                    sendAudio();
-                  } else if (imagePreview) {
-                    handleSubmitImage();
-                    setImagePreview(null);
-                  } else {
-                    debouncedSetUserIsTyping.cancel();
-                    setUserIsTyping(false);
-                    handleSubmit(friend, roomId);
-                  }
-                }}
-              >
-                <Send className="dark:text-white" />
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-    );
-  }
-);
-
 const TypingIndicator = React.memo(({ isTyping, friend }) => {
   if (!isTyping) return null;
   return (
@@ -172,8 +80,8 @@ const MessageArea = ({
   const [isVideoCallActive, setIsVideoCallActive] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
+  // const [isPlaying, setIsPlaying] = useState(false);
+  // const [audioUrl, setAudioUrl] = useState(null);
   const [inputDisabled, setInputDisabled] = useState(false);
   const [blobData, setBlobData] = useState(null);
   const [isRecorded, setIsRecorded] = useState(false);
@@ -209,7 +117,7 @@ const MessageArea = ({
           RecordPlugin.create()
         );
 
-        wavesurferRef.current.on("finish", () => setIsPlaying(false));
+        // wavesurferRef.current.on("finish", () => setIsPlaying(false));
       }
       if (recordPluginRef.current) {
         await recordPluginRef.current.startRecording();
@@ -251,14 +159,10 @@ const MessageArea = ({
               const audio = URL.createObjectURL(newBlob);
               // console.log(audio);
               setIsRecorded(true);
-              setAudioUrl(audio);
+              // setAudioUrl(audio);
             }
           }
         );
-
-        if (wavesurferRef.current) {
-          // wavesurferRef.current.destroy();
-        }
 
         setIsRecording(false);
       } catch (error) {
@@ -329,6 +233,11 @@ const MessageArea = ({
     [friend, roomId]
   );
 
+  const debouncedSetUserIsTyping = useMemo(
+    () => debounce(setUserIsTyping, 300),
+    [setUserIsTyping]
+  );
+
   useEffect(() => {
     debouncedEmitTyping(userIsTyping);
     return () => debouncedEmitTyping.cancel();
@@ -356,7 +265,6 @@ const MessageArea = ({
 
     if (textFieldRef.current) {
       textFieldRef.current.focus();
-      // textFieldRef.current.select();
     }
   }, [messages]);
 
@@ -403,7 +311,6 @@ const MessageArea = ({
       wavesurferRef.current.destroy();
     }
     setIsRecorded(false);
-    setAudioUrl(null);
   };
   const removeImage = () => {
     setImagePreview(null);
@@ -502,56 +409,93 @@ const MessageArea = ({
           paddingX: "10px",
         }}
       >
-        <Grid item xs={12} className="dark:text-white">
-          {imagePreview && (
-            <div className="flex flex-row max-h-60 justify-end ">
-              <img width={"25%"} src={imagePreview} alt="preview" />
-              <Button
-                sx={{ height: "20px", marginX: 0, paddingX: 0 }}
-                onClick={removeImage}
-              >
-                <Close />
-              </Button>
-            </div>
-          )}
-          {/* {(isRecording || isRecorded) && (
-            <AudioRecorder
-              setIsRecorded={setIsRecorded}
-              onAudioRecorded={handleAudioRecorded}
-            />
-          )} */}
-          <TypingIndicator
-            isTyping={messages?.isTyping}
-            friend={userData[friend]}
-          />
-          {/* <AudioRecorder /> */}
-          <div className="flex flex-row">
-            <div ref={waveformRef} className="w-full" />
-            {isRecorded && (
-              <button onClick={deleteAudioRecorded}>
-                <DeleteForeverOutlined />
-              </button>
+        <Grid item xs={12} className="dark:text-white relative">
+          <div className="absolute w-full bottom-14 bg-slate-100 shadow-inner dark:bg-slate-200 rounded-md z-[1100] border-solid">
+            {imagePreview && (
+              <div className="flex flex-row max-h-60 justify-end  ">
+                <img width={"25%"} src={imagePreview} alt="preview" />
+                <Button
+                  sx={{ height: "20px", marginX: 0, paddingX: 0 }}
+                  onClick={removeImage}
+                >
+                  <Close />
+                </Button>
+              </div>
             )}
+
+            <TypingIndicator
+              isTyping={messages?.isTyping}
+              friend={userData[friend]}
+            />
+            <div className="flex flex-row">
+              <div ref={waveformRef} className="w-full" />
+              {isRecorded && (
+                <button onClick={deleteAudioRecorded}>
+                  <DeleteForeverOutlined className="dark:text-black" />
+                </button>
+              )}
+            </div>
           </div>
-          <MessageInput
-            message={message}
-            setMessage={setMessage}
-            handleSubmit={handleSubmit}
-            friend={friend}
-            roomId={roomId}
-            textFieldRef={textFieldRef}
-            imagePreview={imagePreview}
-            setImagePreview={setImagePreview}
-            handleImageChange={handleImageChange}
-            isRecording={isRecording}
-            startRecording={startRecording}
-            stopRecording={stopRecording}
-            setUserIsTyping={setUserIsTyping}
-            handleSubmitImage={handleSubmitImage}
-            waveformRef={waveformRef}
-            inputDisabled={inputDisabled}
-            isRecorded={isRecorded}
-            sendAudio={sendAudio}
+          <TextField
+            label="Type your message"
+            className="dark:text-white dark:placeholder:text-white"
+            fullWidth
+            value={message}
+            onChange={(e) => {
+              const newMessage = e.target.value;
+              setMessage(newMessage);
+              debouncedSetUserIsTyping(newMessage.trim().length > 0);
+            }}
+            inputRef={textFieldRef}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                debouncedSetUserIsTyping.cancel();
+                setUserIsTyping(false);
+                handleSubmit(friend, roomId);
+              }
+            }}
+            disabled={inputDisabled}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton component="label">
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      disabled={isRecorded}
+                      onChange={handleImageChange}
+                    />
+                    <Image className="dark:text-white" />
+                  </IconButton>
+                  <IconButton
+                    onClick={isRecording ? stopRecording : startRecording}
+                  >
+                    {isRecording ? (
+                      <Stop className="dark:text-white" />
+                    ) : (
+                      <Mic className="dark:text-white" />
+                    )}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => {
+                      if (isRecorded) {
+                        sendAudio();
+                      } else if (imagePreview) {
+                        handleSubmitImage();
+                        setImagePreview(null);
+                      } else {
+                        debouncedSetUserIsTyping.cancel();
+                        setUserIsTyping(false);
+                        handleSubmit(friend, roomId);
+                      }
+                    }}
+                  >
+                    <Send className="dark:text-white" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
       </Grid>
