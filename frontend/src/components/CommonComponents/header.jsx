@@ -214,7 +214,7 @@ export default function Header() {
     <Box className="bg-slate-100 dark:bg-gray-600 text-gray-900 dark:text-gray-200 p-2 rounded-md  ">
       {notifications && notifications?.length ? (
         <>
-          <div className="max-h-52 overflow-scroll scrollbar-none">
+          <div className="max-h-60 overflow-y-scroll overflow-x-hidden scrollbar-none">
             {notifications.map((noti) => {
               switch (noti.type) {
                 case "comment":
@@ -432,56 +432,60 @@ export default function Header() {
                   }}
                 >
                   {chatFriends.length ? (
-                    chatFriends.map((friend, index) => (
-                      <MenuItem
-                        onClick={() => {
-                          dispatch(setFriend(friend._id));
-                          dispatch(setRoomId(friend.roomId));
-                          navigate("/chats");
-                        }}
-                        sx={{
-                          width: 300,
-                          height: 50,
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          fontWeight: friend.unreadCount === 0 ? "100" : "bold",
-                          bgcolor:
-                            friend.unreadCount > 0
-                              ? "rgba(255,0,0,0.1)"
-                              : "transparent",
-                        }}
-                        key={index}
-                      >
-                        <Box display="flex" alignItems="center">
-                          {userData[friend._id]?.firstName}
-                        </Box>
-
-                        {friend.unreadCount === 0 && (
-                          <span
-                            className="ml-auto"
-                            style={{
-                              fontSize: 12,
-                              color: "gray",
+                    chatFriends.map(
+                      (friend, index) =>
+                        userData[friend._id] && (
+                          <MenuItem
+                            onClick={() => {
+                              dispatch(setFriend(friend._id));
+                              dispatch(setRoomId(friend.roomId));
+                              navigate("/chats");
                             }}
+                            sx={{
+                              width: 300,
+                              height: 50,
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              fontWeight:
+                                friend.unreadCount === 0 ? "100" : "bold",
+                              bgcolor:
+                                friend.unreadCount > 0
+                                  ? "rgba(255,0,0,0.1)"
+                                  : "transparent",
+                            }}
+                            key={index}
                           >
-                            (Read)
-                          </span>
-                        )}
-                        {friend.unreadCount > 0 && (
-                          <>
-                            <span style={{ fontSize: 14 }}>
-                              {friend?.unreadCount} new messages
-                            </span>
-                            <Badge
-                              color="error"
-                              variant="dot"
-                              sx={{ marginRight: 2 }}
-                            ></Badge>
-                          </>
-                        )}
-                      </MenuItem>
-                    ))
+                            <Box display="flex" alignItems="center">
+                              {userData[friend._id]?.firstName}
+                            </Box>
+
+                            {friend.unreadCount === 0 && (
+                              <span
+                                className="ml-auto"
+                                style={{
+                                  fontSize: 12,
+                                  color: "gray",
+                                }}
+                              >
+                                (Read)
+                              </span>
+                            )}
+                            {friend.unreadCount > 0 && (
+                              <>
+                                <span style={{ fontSize: 14 }}>
+                                  {friend?.unreadCount} new messages
+                                </span>
+                                <Badge
+                                  color="error"
+                                  variant="dot"
+                                  sx={{ marginRight: 2 }}
+                                ></Badge>
+                              </>
+                            )}
+                          </MenuItem>
+                        )
+                    )
                   ) : (
                     <MenuItem
                       sx={{
@@ -594,6 +598,7 @@ export default function Header() {
                 sx={{
                   "& .MuiPaper-root": {
                     transform: "none !important",
+                    height: 300,
                   },
                 }}
               >

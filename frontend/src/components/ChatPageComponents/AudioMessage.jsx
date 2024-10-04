@@ -1,31 +1,47 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { IconButton } from "@mui/material";
-import { Mic, Stop } from "@mui/icons-material";
+import React, { useRef, useState, useEffect } from "react";
 import WaveSurfer from "wavesurfer.js";
+import RecordPlugin from "wavesurfer.js/dist/plugins/record.js";
+import { Button, Card, CardContent } from "@mui/material";
+import { Mic, Pause, PlayArrow, Square } from "@mui/icons-material";
 
-const AudioRecorder = ({ onAudioRecorded, setIsRecorded }) => {
+export default function AudioRecorder() {
   const [isRecording, setIsRecording] = useState(false);
-  const [audioURL, setAudioURL] = useState(null);
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(null);
+
   const waveformRef = useRef(null);
   const wavesurferRef = useRef(null);
-  const analyserRef = useRef(null); // New ref for analyser node
-  const dataArrayRef = useRef(null); // New ref for data array used for visualization
+  const recordPluginRef = useRef(null);
+  const recordedChunks = [];
 
   useEffect(() => {
-    if (waveformRef.current && !wavesurferRef.current) {
+    if (waveformRef.current) {
       wavesurferRef.current = WaveSurfer.create({
         container: waveformRef.current,
         waveColor: "violet",
         progressColor: "purple",
-        barWidth: 2,
-        height: 50,
-        responsive: true,
-        cursorWidth: 0,
+        cursorColor: "navy",
+        barWidth: 3,
+        barRadius: 3,
+        cursorWidth: 1,
+        height: 20,
+        barGap: 3,
       });
+
+      wavesurferRef.current.on("click", () => {
+        wavesurferRef.current.play();
+      });
+
+      // Register the recording plugin
+      recordPluginRef.current = wavesurferRef.current.registerPlugin(
+        RecordPlugin.create()
+      );
+
+      // Reset playback state when audio finishes playing
+      wavesurferRef.current.on("finish", () => setIsPlaying(false));
     }
 
+    // Clean up when component is unmounted
     return () => {
       if (wavesurferRef.current) {
         wavesurferRef.current.destroy();
@@ -33,125 +49,77 @@ const AudioRecorder = ({ onAudioRecorded, setIsRecorded }) => {
     };
   }, []);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      if (recordPluginRef.current) {
+        await recordPluginRef.current.startRecording();
+        console.log(
+          "MediaRecorder state after starting:",
+          recordPluginRef.current.mediaRecorder?.state
+        );
+        setIsRecording(true);
+        recordPluginRef.current.mediaRecorder?.addEventListener(
+          "dataavailable",
+          (event) => {
+            console.log(event);
 
-      // Set up the audio context and analyser node for live visualization
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      source.connect(analyser);
-
-      analyserRef.current = analyser; // Store the analyser for later use
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      dataArrayRef.current = dataArray;
-
-      // Start the visualization loop
-      visualize();
-
-      mediaRecorderRef.current.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const audioURL = URL.createObjectURL(blob);
-        setAudioURL(audioURL);
-        chunksRef.current = [];
-
-        if (wavesurferRef.current) {
-          wavesurferRef.current.load(audioURL);
-        }
-
-        if (onAudioRecorded) {
-          onAudioRecorded(blob);
-        }
-      };
-
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Error accessing microphone: ", err);
-    }
-  }, [onAudioRecorded]);
-
-  const stopRecording = useCallback(async () => {
-    await setIsRecorded(true);
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  }, [isRecording, setIsRecorded]);
-
-  const visualize = () => {
-    if (!isRecording || !analyserRef.current) return;
-
-    const analyser = analyserRef.current;
-    const dataArray = dataArrayRef.current;
-
-    const draw = () => {
-      if (!isRecording) return; // Stop drawing when not recording
-
-      analyser.getByteTimeDomainData(dataArray);
-
-      if (wavesurferRef.current) {
-        wavesurferRef.current.drawBuffer(); // Refresh the WaveSurfer display
-        const canvas = document.querySelector("canvas");
-        const canvasCtx = canvas.getContext("2d");
-
-        // Clear the canvas
-        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the waveform
-        canvasCtx.lineWidth = 2;
-        canvasCtx.strokeStyle = "violet";
-        canvasCtx.beginPath();
-
-        const sliceWidth = (canvas.width * 1.0) / dataArray.length;
-        let x = 0;
-
-        for (let i = 0; i < dataArray.length; i++) {
-          const v = dataArray[i] / 128.0;
-          const y = (v * canvas.height) / 2;
-
-          if (i === 0) {
-            canvasCtx.moveTo(x, y);
-          } else {
-            canvasCtx.lineTo(x, y);
+            if (event.data.size > 0) {
+              recordedChunks.push(event.data);
+              console.log(recordedChunks);
+            }
           }
-
-          x += sliceWidth;
-        }
-
-        canvasCtx.lineTo(canvas.width, canvas.height / 2);
-        canvasCtx.stroke();
+        );
       }
+    } catch (err) {
+      console.error("Error starting recording:", err);
+    }
+  };
 
-      requestAnimationFrame(draw);
-    };
+  const stopRecording = async () => {
+    if (recordPluginRef.current) {
+      try {
+        await recordPluginRef.current.stopRecording();
 
-    draw(); // Start drawing
+        recordPluginRef.current.mediaRecorder?.addEventListener(
+          "dataavailable",
+          (event) => {
+            if (event.data.size > 0) {
+              const newBlob = new Blob([event.data], { type: event.data.type });
+
+              const audio = URL.createObjectURL(newBlob);
+              setAudioUrl(audio);
+            }
+          }
+        );
+
+        setIsRecording(false);
+      } catch (error) {
+        setIsRecording(false);
+
+        console.error("Error stopping recording:", error);
+      }
+    }
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <IconButton
-        onClick={isRecording ? stopRecording : startRecording}
-        color={isRecording ? "secondary" : "primary"}
-      >
-        {isRecording ? <Stop /> : <Mic />}
-      </IconButton>
-      <div ref={waveformRef} className="flex-grow h-12" />
-      {audioURL && <audio src={audioURL} controls className="w-full mt-2" />}
-    </div>
-  );
-};
+    <Card className=" max-w-sm mx-auto">
+      <CardContent className="p-2">
+        {/* Waveform container */}
+        <div ref={waveformRef} className="mb-4" />
 
-export default AudioRecorder;
+        {/* Recording and playback buttons */}
+        <div className="flex justify-center space-x-4">
+          {!isRecording ? (
+            <Button onClick={startRecording} disabled={isRecording}>
+              <Mic className="mr-2 h-4 w-4" /> Start Recording
+            </Button>
+          ) : (
+            <Button onClick={stopRecording} variant="destructive">
+              <Square className="mr-2 h-4 w-4" /> Stop Recording
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

@@ -97,7 +97,11 @@ function Posts({ fetchUserData }) {
 
   return (
     <>
-      <PullToRefresh onRefresh={fetchMorePosts} className="max-h-lvh">
+      <PullToRefresh
+        refreshingContent={"Pull Down to fetch new posts"}
+        onRefresh={fetchMorePosts}
+        className="max-h-lvh"
+      >
         <Box
           sx={{
             display: "flex",

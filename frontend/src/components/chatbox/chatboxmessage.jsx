@@ -13,6 +13,7 @@ import AvatarWithUsername from "./withusername";
 import { useSelector } from "react-redux";
 import { AddReaction } from "@mui/icons-material";
 import chatSocket from "../../features/utilities/Socket-io";
+import VoiceMessagePlayer from "../CommonComponents/VoicePlayer";
 
 const ChatBoxMessage = ({
   messageId,
@@ -22,6 +23,8 @@ const ChatBoxMessage = ({
   onRemove,
   emoji,
   roomId,
+  imageUrl,
+  voiceUrl,
 }) => {
   const [actionMessageId, setActionMessageId] = useState();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -73,9 +76,21 @@ const ChatBoxMessage = ({
           />
         )}
         <div className="grid relative">
-          <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl relative">
-            {message}
-          </div>
+          {message && (
+            <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl relative">
+              {message}
+            </div>
+          )}
+          {imageUrl && (
+            <>
+              <img src={imageUrl} className="max-w-40 rounded-md" alt="" />
+            </>
+          )}
+          {voiceUrl && (
+            <div className="max-w-52">
+              <VoiceMessagePlayer audioSrc={voiceUrl} />
+            </div>
+          )}
           {author === user._id ? (
             emoji && (
               <Fab
@@ -209,11 +224,21 @@ const ChatBoxMessage = ({
           </>
         </ClickAwayListener>
       )}
-      <div
-        className={"w-fit max-w-[90%] bg-blue-500 text-white p-2 rounded-xl"}
-      >
-        {message}
-      </div>
+      {message && (
+        <div className="w-fit max-w-[90%] bg-stone-200 p-2 rounded-xl relative">
+          {message}
+        </div>
+      )}
+      {imageUrl && (
+        <>
+          <img src={imageUrl} className="max-w-40 rounded-md" alt="" />
+        </>
+      )}
+      {voiceUrl && (
+        <div className="max-w-52">
+          <VoiceMessagePlayer audioSrc={voiceUrl} />
+        </div>
+      )}
     </div>
   );
 };

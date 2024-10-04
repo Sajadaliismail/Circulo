@@ -10,10 +10,10 @@ import UserPage from "./pages/UserPage";
 // import useChatSocket from "./hooks/chatSocketHook";
 
 function App() {
-  console.log(
-    `Frontend running in ${process.env.REACT_APP_ENV} mode.`,
-    process.env.REACT_ENV === "production"
-  );
+  // console.log(
+  //   `Frontend running in ${process.env.REACT_APP_ENV} mode.`,
+  //   process.env.REACT_ENV === "production"
+  // );
 
   // useChatSocket();
   return (

@@ -4,12 +4,14 @@ import { InputAdornment, TextField } from "@mui/material";
 import { useEffect } from "react";
 import chatSocket from "../../features/utilities/Socket-io";
 import { PulseLoader } from "react-spinners";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setReadMessages } from "../../features/chats/chatsSlice";
 
 const ChatBoxFooter = ({ onSubmit, friend, roomId, isTyping }) => {
   const [userIsTyping, setUserIsTyping] = useState(false);
   const [message, setMessage] = useState("");
   const { userData } = useSelector((state) => state.friends);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     chatSocket.emit("userIsTyping", {
@@ -23,7 +25,7 @@ const ChatBoxFooter = ({ onSubmit, friend, roomId, isTyping }) => {
     if (!message.trim()) {
       return;
     }
-
+    dispatch(setReadMessages(friend));
     onSubmit(message.trim());
     setMessage("");
   };

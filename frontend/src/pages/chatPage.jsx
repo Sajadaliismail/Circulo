@@ -170,7 +170,7 @@ export default function ChatPage() {
   if (loading) {
     return null;
   }
-
+  // console.log(chatMessages);
   const renderUserList = () => (
     <Grid item style={{ padding: "10px", minWidth: "300px" }}>
       <Typography

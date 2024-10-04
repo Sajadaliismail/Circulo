@@ -8,6 +8,10 @@ import React, {
 import {
   ArrowBack,
   Call,
+  Close,
+  Delete,
+  DeleteForever,
+  DeleteForeverOutlined,
   Image,
   Mic,
   Send,
@@ -36,6 +40,10 @@ import VideoCall from "../../pages/VideoCall";
 import { RecieverMessageList, SenderMessageList } from "./message";
 import debounce from "lodash/debounce";
 import AudioRecorder from "./AudioMessage";
+import WaveSurfer from "wavesurfer.js";
+import RecordPlugin from "wavesurfer.js/dist/plugins/record.js";
+import { Button, Card, CardContent } from "@mui/material";
+const CHAT_BACKEND = process.env.REACT_APP_CHAT_BACKEND;
 
 const MessageInput = React.memo(
   ({
@@ -53,6 +61,10 @@ const MessageInput = React.memo(
     stopRecording,
     setUserIsTyping,
     handleSubmitImage,
+    waveformRef,
+    inputDisabled,
+    isRecorded,
+    sendAudio,
   }) => {
     const debouncedSetUserIsTyping = useMemo(
       () => debounce(setUserIsTyping, 300),
@@ -78,6 +90,7 @@ const MessageInput = React.memo(
             handleSubmit(friend, roomId);
           }
         }}
+        disabled={inputDisabled}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -86,6 +99,7 @@ const MessageInput = React.memo(
                   type="file"
                   hidden
                   accept="image/*"
+                  disabled={isRecorded}
                   onChange={handleImageChange}
                 />
                 <Image className="dark:text-white" />
@@ -101,7 +115,9 @@ const MessageInput = React.memo(
               </IconButton>
               <IconButton
                 onClick={() => {
-                  if (imagePreview) {
+                  if (isRecorded) {
+                    sendAudio();
+                  } else if (imagePreview) {
                     handleSubmitImage();
                     setImagePreview(null);
                   } else {
@@ -149,22 +165,158 @@ const MessageArea = ({
   const [userDetails, setUserDetails] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
+
   const textFieldRef = useRef(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [userIsTyping, setUserIsTyping] = useState(false);
   const [isVideoCallActive, setIsVideoCallActive] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
-  const [isRecorded, setIsRecorded] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [inputDisabled, setInputDisabled] = useState(false);
+  const [blobData, setBlobData] = useState(null);
+  const [isRecorded, setIsRecorded] = useState(false);
 
-  const handleAudioRecorded = (blob) => {
-    console.log("Audio Blob:", blob); // Blob of the recorded audio
-    // Store the blob, or save it locally for later use
-    // You can create a URL for playback or other actions
-    const audioUrl = URL.createObjectURL(blob);
-    console.log("Audio URL:", audioUrl);
+  const waveformRef = useRef(null);
+  const wavesurferRef = useRef(null);
+  const recordPluginRef = useRef(null);
+  const recordedChunks = [];
+
+  const startRecording = async () => {
+    console.log("started");
+    if (inputDisabled) return;
+    setInputDisabled(true);
+
+    try {
+      if (waveformRef.current) {
+        wavesurferRef.current = WaveSurfer.create({
+          container: waveformRef.current,
+          waveColor: "#2563eb",
+          progressColor: "#2563eb",
+          cursorColor: "navy",
+          barWidth: 3,
+          barRadius: 3,
+          cursorWidth: 1,
+          height: 50,
+          barGap: 3,
+        });
+
+        wavesurferRef.current.on("click", () => {
+          wavesurferRef.current.play();
+        });
+
+        recordPluginRef.current = wavesurferRef.current.registerPlugin(
+          RecordPlugin.create()
+        );
+
+        wavesurferRef.current.on("finish", () => setIsPlaying(false));
+      }
+      if (recordPluginRef.current) {
+        await recordPluginRef.current.startRecording();
+        console.log(
+          "MediaRecorder state after starting:",
+          recordPluginRef.current.mediaRecorder?.state
+        );
+        setIsRecording(true);
+        recordPluginRef.current.mediaRecorder?.addEventListener(
+          "dataavailable",
+          (event) => {
+            console.log(event);
+
+            if (event.data.size > 0) {
+              recordedChunks.push(event.data);
+              console.log(recordedChunks);
+            }
+          }
+        );
+      }
+      console.log("no recordplugin");
+    } catch (err) {
+      console.error("Error starting recording:", err);
+    }
+  };
+
+  const stopRecording = async () => {
+    console.log("stopped");
+    if (recordPluginRef.current) {
+      try {
+        await recordPluginRef.current.stopRecording();
+
+        await recordPluginRef.current.mediaRecorder?.addEventListener(
+          "dataavailable",
+          (event) => {
+            if (event.data.size > 0) {
+              const newBlob = new Blob([event.data], { type: event.data.type });
+              setBlobData(newBlob);
+              const audio = URL.createObjectURL(newBlob);
+              console.log(audio);
+              setIsRecorded(true);
+              setAudioUrl(audio);
+            }
+          }
+        );
+
+        if (wavesurferRef.current) {
+          // wavesurferRef.current.destroy();
+        }
+
+        setIsRecording(false);
+      } catch (error) {
+        setIsRecording(false);
+
+        console.error("Error stopping recording:", error);
+      }
+    }
+  };
+
+  const sendAudio = async () => {
+    try {
+      setInputDisabled(false);
+
+      const fileName = `recording-${Date.now()}.webm`;
+      const fileType = blobData.type;
+
+      const response = await fetch(
+        `${CHAT_BACKEND}/chats/generateAudioUrl?fileName=${encodeURIComponent(
+          fileName
+        )}&fileType=${encodeURIComponent(fileType)}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+      if (!response.ok) {
+        console.log("Error");
+        return;
+      }
+      const { uploadUrl } = await response.json();
+
+      const responseForUploading = await fetch(uploadUrl, {
+        method: "PUT",
+        body: blobData,
+        headers: {
+          "Content-Type": blobData.type,
+        },
+      });
+      if (responseForUploading.ok) {
+        const fileUrl = `https://circulo.s3.ap-south-1.amazonaws.com/${fileName}`;
+        chatSocket.emit("message", {
+          userId: friend,
+          message: fileUrl,
+          type: "voice",
+        });
+        if (wavesurferRef.current) {
+          wavesurferRef.current.destroy();
+        }
+        setBlobData(null);
+      } else {
+        console.error("Upload failed:", responseForUploading);
+      }
+      setIsRecorded(false);
+    } catch (error) {
+      console.log(error.message);
+    }
   };
 
   const debouncedEmitTyping = useCallback(
@@ -182,12 +334,6 @@ const MessageArea = ({
     debouncedEmitTyping(userIsTyping);
     return () => debouncedEmitTyping.cancel();
   }, [userIsTyping, debouncedEmitTyping]);
-
-  const handleDataAvailable = useCallback((event) => {
-    if (event.data.size > 0) {
-      chunksRef.current.push(event.data);
-    }
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -242,6 +388,7 @@ const MessageArea = ({
           enqueueSnackbar("File size exceeds 3 MB.", { variant: "error" });
           return;
         }
+        setInputDisabled(true);
         setImage(file);
         const objectUrl = URL.createObjectURL(file);
         setImagePreview(objectUrl);
@@ -250,23 +397,20 @@ const MessageArea = ({
     [setImage]
   );
 
-  const startRecording = useCallback(async () => {
-    setIsRecording(true);
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    mediaRecorderRef.current.addEventListener(
-      "dataavailable",
-      handleDataAvailable
-    );
-    mediaRecorderRef.current.start();
-  }, [handleDataAvailable]);
+  const deleteAudioRecorded = () => {
+    setInputDisabled(false);
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
+    if (wavesurferRef.current) {
+      wavesurferRef.current.destroy();
     }
-  }, []);
+    setIsRecorded(false);
+    setAudioUrl(null);
+  };
+  const removeImage = () => {
+    setImagePreview(null);
+    setImage(null);
+    setInputDisabled(false);
+  };
 
   if (!userDetails) {
     return (
@@ -360,7 +504,17 @@ const MessageArea = ({
         }}
       >
         <Grid item xs={12} className="dark:text-white">
-          {imagePreview && <img src={imagePreview} alt="preview" />}
+          {imagePreview && (
+            <div className="flex flex-row max-h-60 justify-end ">
+              <img width={"25%"} src={imagePreview} alt="preview" />
+              <Button
+                sx={{ height: "20px", marginX: 0, paddingX: 0 }}
+                onClick={removeImage}
+              >
+                <Close />
+              </Button>
+            </div>
+          )}
           {/* {(isRecording || isRecorded) && (
             <AudioRecorder
               setIsRecorded={setIsRecorded}
@@ -371,6 +525,15 @@ const MessageArea = ({
             isTyping={messages?.isTyping}
             friend={userData[friend]}
           />
+          {/* <AudioRecorder /> */}
+          <div className="flex flex-row">
+            <div ref={waveformRef} className="w-full" />
+            {isRecorded && (
+              <button onClick={deleteAudioRecorded}>
+                <DeleteForeverOutlined />
+              </button>
+            )}
+          </div>
           <MessageInput
             message={message}
             setMessage={setMessage}
@@ -386,6 +549,10 @@ const MessageArea = ({
             stopRecording={stopRecording}
             setUserIsTyping={setUserIsTyping}
             handleSubmitImage={handleSubmitImage}
+            waveformRef={waveformRef}
+            inputDisabled={inputDisabled}
+            isRecorded={isRecorded}
+            sendAudio={sendAudio}
           />
         </Grid>
       </Grid>

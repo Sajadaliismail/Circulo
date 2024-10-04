@@ -81,17 +81,22 @@ const ChatBox = ({
       >
         {conversations &&
           conversations?.map((conversation) => (
-            <ChatBoxMessage
-              key={`conver-${conversation?._id}`}
-              messageId={conversation?._id}
-              message={conversation?.message}
-              data={conversation}
-              emoji={conversation?.emoji}
-              author={conversation?.senderId}
-              avatar={conversation?.avatar}
-              roomId={roomId}
-              onRemove={(messageId) => onRemove(roomId, messageId)}
-            />
+            <>
+              {/* {console.log(conversation)} */}
+              <ChatBoxMessage
+                key={`conver-${conversation?._id}`}
+                messageId={conversation?._id}
+                message={conversation?.message}
+                imageUrl={conversation?.imageUrl}
+                voiceUrl={conversation?.voiceUrl}
+                data={conversation}
+                emoji={conversation?.emoji}
+                author={conversation?.senderId}
+                avatar={conversation?.avatar}
+                roomId={roomId}
+                onRemove={(messageId) => onRemove(roomId, messageId)}
+              />
+            </>
           ))}
         <div ref={messagesEndRef} />
       </div>

@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Dialog,
   DialogContent,
   Fab,
@@ -10,6 +11,7 @@ import {
 } from "@mui/material";
 import { convertUTCToIST } from "../../pages/Utilitis";
 import { AddReaction, Close } from "@mui/icons-material";
+import VoiceMessagePlayer from "../CommonComponents/VoicePlayer";
 import { useState } from "react";
 
 export const RecieverMessageList = ({ mess }) => {
@@ -22,6 +24,7 @@ export const RecieverMessageList = ({ mess }) => {
   const handleClose = () => {
     setOpen(false);
   };
+
   return (
     <>
       <Box
@@ -29,7 +32,6 @@ export const RecieverMessageList = ({ mess }) => {
           flexGrow: 1,
           display: "flex",
           flexDirection: "column",
-          // width: "100%",
           alignItems: "flex-end",
           textWrap: "wrap",
         }}
@@ -39,12 +41,13 @@ export const RecieverMessageList = ({ mess }) => {
           key={mess._id}
           elevation={2}
           sx={{
-            maxWidth: "45%",
+            maxWidth: "55%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
-            paddingX: mess?.imageUrl ? 0 : 2,
-            paddingY: mess?.imageUrl ? 0 : 0.5,
-            borderRadius: 3,
+            paddingX: mess?.imageUrl || mess?.voiceUrl ? 0 : 2,
+            paddingY: mess?.imageUrl || mess?.voiceUrl ? 0 : 0.5,
+            borderRadius: mess?.imageUrl || mess?.voiceUrl ? 10 : 3,
+
             marginBottom: 1,
             position: "relative",
           }}
@@ -64,25 +67,20 @@ export const RecieverMessageList = ({ mess }) => {
             </Fab>
           )}
           {mess.message && (
-            <Typography
-              variant="subtitle1"
-              sx={{
-                textAlign: "right",
-              }}
-            >
-              {mess?.message}
+            <Typography variant="subtitle1" sx={{ textAlign: "right" }}>
+              {mess.message}
             </Typography>
           )}
-          {mess.imageUrl && (
+          {mess?.imageUrl && (
             <img
-              style={{ maxHeight: "350px" }}
+              style={{ maxHeight: "350px", borderRadius: 5 }}
               alt="message"
               src={mess.imageUrl}
               onClick={handleClickOpen}
             />
           )}
+          {mess.voiceUrl && <VoiceMessagePlayer audioSrc={mess.voiceUrl} />}
         </Box>
-
         <Typography variant="caption">
           {convertUTCToIST(mess.timestamp)}
         </Typography>
@@ -94,7 +92,7 @@ export const RecieverMessageList = ({ mess }) => {
             color="inherit"
             onClick={handleClose}
             aria-label="close"
-            style={{ position: "absolute", top: 8, right: 8 }}
+            sx={{ position: "absolute", top: 8, right: 8 }}
           >
             <Close />
           </IconButton>
@@ -137,13 +135,13 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
           key={mess._id}
           elevation={2}
           sx={{
-            maxWidth: "45%",
+            maxWidth: "55%",
             overflowWrap: "break-word",
             wordWrap: "break-word",
 
-            paddingX: mess?.imageUrl ? 0 : 2,
-            paddingY: mess?.imageUrl ? 0 : 0.5,
-            borderRadius: 3,
+            paddingX: mess?.imageUrl || mess?.voiceUrl ? 0 : 2,
+            paddingY: mess?.imageUrl || mess?.voiceUrl ? 0 : 0.5,
+            borderRadius: mess?.imageUrl || mess?.voiceUrl ? 10 : 3,
             marginBottom: 1,
             position: "relative",
           }}
@@ -212,12 +210,13 @@ export const SenderMessageList = ({ mess, friend, handleEmoji, roomId }) => {
           )}
           {mess.imageUrl && (
             <img
-              style={{ maxHeight: "350px" }}
+              style={{ maxHeight: "350px", borderRadius: 5 }}
               alt="message"
               src={mess.imageUrl}
               onClick={handleClickOpen}
             />
           )}
+          {mess.voiceUrl && <VoiceMessagePlayer audioSrc={mess.voiceUrl} />}
         </Box>
 
         <Typography variant="caption">

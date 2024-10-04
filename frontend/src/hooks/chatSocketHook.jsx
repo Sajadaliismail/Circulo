@@ -264,9 +264,9 @@ const useChatSocket = () => {
       const handleDisconnect = () => {
         // console.log("Socket disconnected");
         setSocketConnected(false);
-        enqueueSnackbar("Connection lost. Attempting to reconnect...", {
-          variant: "warning",
-        });
+        // enqueueSnackbar("Connection lost. Attempting to reconnect...", {
+        //   variant: "warning",
+        // });
 
         connectionTimeout = setTimeout(() => {
           // window.location.reload();
@@ -302,6 +302,7 @@ const useChatSocket = () => {
 
       chatSocket.on("newMessageNotification", (arg) => {
         const { roomId, senderId, message, type, _id } = arg;
+        // console.log(arg);
 
         dispatch(setStatus(senderId));
         setChatMessages((chats) => {
@@ -335,6 +336,19 @@ const useChatSocket = () => {
                 ...chatMessages,
                 {
                   message,
+                  timestamp: Date.now(),
+                  senderId,
+                  _id,
+                },
+              ],
+            };
+          } else if (type === "voice") {
+            prevChats[roomId] = {
+              ...chatRoom,
+              messages: [
+                ...chatMessages,
+                {
+                  voiceUrl: message,
                   timestamp: Date.now(),
                   senderId,
                   _id,
