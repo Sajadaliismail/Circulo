@@ -19,15 +19,13 @@ function Friends() {
   useEffect(() => {
     const fetchFriendsAndUserData = async () => {
       try {
-        if (initialLoad.current) {
-          await dispatch(getFriends());
-          initialLoad.current = false;
-        }
         const friendIds = friends.filter((id) => !userData[id]);
 
         if (friendIds.length > 0) {
           await Promise.all(
-            friendIds.map((id) => dispatch(fetchUserDetails(id)))
+            friendIds.map(async (id) => {
+              await dispatch(fetchUserDetails(id));
+            })
           );
         }
       } catch (error) {

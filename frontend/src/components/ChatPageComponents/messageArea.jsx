@@ -184,7 +184,6 @@ const MessageArea = ({
   const recordedChunks = [];
 
   const startRecording = async () => {
-    console.log("started");
     if (inputDisabled) return;
     setInputDisabled(true);
 
@@ -214,31 +213,31 @@ const MessageArea = ({
       }
       if (recordPluginRef.current) {
         await recordPluginRef.current.startRecording();
-        console.log(
-          "MediaRecorder state after starting:",
-          recordPluginRef.current.mediaRecorder?.state
-        );
+        // console.log(
+        //   "MediaRecorder state after starting:",
+        //   recordPluginRef.current.mediaRecorder?.state
+        // );
         setIsRecording(true);
         recordPluginRef.current.mediaRecorder?.addEventListener(
           "dataavailable",
           (event) => {
-            console.log(event);
+            // console.log(event);
 
             if (event.data.size > 0) {
               recordedChunks.push(event.data);
-              console.log(recordedChunks);
+              // console.log(recordedChunks);
             }
           }
         );
       }
-      console.log("no recordplugin");
+      // console.log("no recordplugin");
     } catch (err) {
       console.error("Error starting recording:", err);
     }
   };
 
   const stopRecording = async () => {
-    console.log("stopped");
+    // console.log("stopped");
     if (recordPluginRef.current) {
       try {
         await recordPluginRef.current.stopRecording();
@@ -250,7 +249,7 @@ const MessageArea = ({
               const newBlob = new Blob([event.data], { type: event.data.type });
               setBlobData(newBlob);
               const audio = URL.createObjectURL(newBlob);
-              console.log(audio);
+              // console.log(audio);
               setIsRecorded(true);
               setAudioUrl(audio);
             }

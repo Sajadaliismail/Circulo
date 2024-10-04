@@ -189,9 +189,10 @@ const UserPage = () => {
             alignItems: "center",
             display: "flex",
             justifyContent: "center",
+            height: "90vh",
           }}
         >
-          <SyncLoader size={8} color="#1976d2" />
+          <SyncLoader size={15} color="#1976d2" />
         </Box>
       ) : (
         <Box className="flex flex-col w-full overflow-hidden h-lvh md:flex-row md:justify-between my-2 mx-1">

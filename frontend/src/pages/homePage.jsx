@@ -40,15 +40,15 @@ export default function Homepage({ msg, setmsg }) {
   if (!user?.firstName) return null;
 
   const Loader = () => (
-    <div className="flex align-middle justify-center items-center my-auto">
-      <DotLoader color="blue" />
+    <div className="flex align-middle justify-center items-center my-auto h-[80vh]">
+      <DotLoader color="#3f73e3" size={90} />
     </div>
   );
 
   return (
     <>
+      <Header fetchUserData={fetchUserData} />
       <Suspense fallback={<Loader />}>
-        <Header fetchUserData={fetchUserData} />
         <Box sx={{ flexGrow: 1 }}>
           <Grid container rowGap={10} spacing={0}>
             <Grid
