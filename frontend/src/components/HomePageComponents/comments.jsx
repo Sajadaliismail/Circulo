@@ -111,7 +111,7 @@ const CommentComponent = React.memo(
     };
 
     const handleLikeReply = async (_id) => {
-      const response = await fetch(`${POST_BACKEND}/likeReply`, {
+      const response = await fetch(`${POST_BACKEND}/posts/likeReply`, {
         method: "POST",
         credentials: "include",
         headers: {
