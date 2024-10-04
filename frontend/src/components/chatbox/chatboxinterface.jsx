@@ -71,6 +71,7 @@ const ChatBox = ({
       }}
     >
       <ChatBoxHeader
+        key={`head-${roomId}`}
         data={data}
         onClose={() => onClose(roomId)}
         onMinimize={() => onMinimize(roomId)}
@@ -84,7 +85,7 @@ const ChatBox = ({
             <>
               {/* {console.log(conversation)} */}
               <ChatBoxMessage
-                key={`conver-${conversation?._id}`}
+                key={`convers-${conversation?._id}`}
                 messageId={conversation?._id}
                 message={conversation?.message}
                 imageUrl={conversation?.imageUrl}

@@ -51,22 +51,24 @@ const VoiceMessagePlayer = ({ audioSrc }) => {
 
   const drawWaveform = () => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const width = canvas.width;
-    const height = canvas.height;
-    const bars = 70;
-    const barWidth = width / bars;
-    const barGap = 2;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      const bars = 70;
+      const barWidth = width / bars;
+      const barGap = 2;
 
-    ctx.fillStyle = "rgba(80, 144, 255, 0.8)";
-    for (let i = 0; i < bars; i++) {
-      const barHeight = Math.random() * height;
-      ctx.fillRect(
-        i * (barWidth + barGap),
-        (height - barHeight) / 2,
-        barWidth,
-        barHeight
-      );
+      ctx.fillStyle = "rgba(80, 144, 255, 0.8)";
+      for (let i = 0; i < bars; i++) {
+        const barHeight = Math.random() * height;
+        ctx.fillRect(
+          i * (barWidth + barGap),
+          (height - barHeight) / 2,
+          barWidth,
+          barHeight
+        );
+      }
     }
   };
 
