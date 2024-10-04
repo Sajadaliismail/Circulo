@@ -32,7 +32,7 @@ notificationSchema.pre("save", async function (next) {
     return next();
   }
 
-  console.log("notification triggered");
+  // console.log("notification triggered");
 
   if (notification.type === "request_accepted") {
     return next();
@@ -80,8 +80,8 @@ notificationSchema.pre("save", async function (next) {
 });
 
 notificationSchema.post("save", async function (doc) {
-  console.log(doc, "postsave");
-  console.log("saved");
+  // console.log(doc, "postsave");
+  // console.log("saved");
 
   await mongoose
     .model("UserNotification")
