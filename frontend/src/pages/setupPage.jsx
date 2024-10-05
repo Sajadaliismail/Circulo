@@ -71,7 +71,7 @@ const SetupPage = () => {
         setErrors(validationErrors);
         return;
       } else {
-        // await dispatch(addressSetup(location));
+        await dispatch(addressSetup(location));
         dispatch(getSuggestions(location.postalCode));
       }
     }
