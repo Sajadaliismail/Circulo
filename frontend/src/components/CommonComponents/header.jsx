@@ -404,6 +404,7 @@ export default function Header() {
         <MenuItem
           sx={{
             display: "flex",
+            mx: "auto",
             justifyContent: "space-between",
             height: 100,
             width: 300,
@@ -678,7 +679,10 @@ export default function Header() {
               size="large"
               aria-label="show notifications"
               color="inherit"
-              onClick={() => setNotificationDisplay(true)}
+              onClick={async () => {
+                await dispatch(getNotifications());
+                setNotificationDisplay(true);
+              }}
             >
               <Badge badgeContent={notifications?.length} color="error">
                 <NotificationsIcon />
